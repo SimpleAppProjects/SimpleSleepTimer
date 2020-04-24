@@ -1,0 +1,3 @@
+rootProject.name='SimpleSleepTimer'
+include ':app'
+include ':circularseekbar'

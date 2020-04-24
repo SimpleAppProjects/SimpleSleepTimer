@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".TimerStartFragment">
+
+    <com.devadvance.circularseekbar.CircularSeekBar
+        android:id="@+id/timerProgressScroller"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:circle_stroke_width="8dp"
+        app:lock_enabled="true"
+        app:move_outside_circle="true"
+        app:start_angle="135"
+        app:end_angle="45"
+        app:circle_progress_color="?attr/colorAccent"
+        app:pointer_color="?attr/colorAccent"
+        app:pointer_halo_color="?attr/colorAccent"
+        app:pointer_halo_color_ontouch="?attr/colorAccent"
+        app:circle_color="?attr/colorOnBackground"
+        app:layout_constraintWidth_max="300dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:progress="5"
+        tools:max="120" />
+
+    <TextView
+        android:id="@+id/progress_text"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:gravity="center"
+        android:layout_marginVertical="36dp"
+        android:layout_marginHorizontal="36dp"
+        android:maxLines="1"
+        android:textAlignment="center"
+        android:textColor="?attr/colorAccent"
+        app:autoSizeTextType="uniform"
+        app:layout_constraintStart_toStartOf="@id/timerProgressScroller"
+        app:layout_constraintEnd_toEndOf="@id/timerProgressScroller"
+        app:layout_constraintTop_toTopOf="@id/timerProgressScroller"
+        app:layout_constraintBottom_toBottomOf="@id/timerProgressScroller"
+        tools:text="00h:05min:00s" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
