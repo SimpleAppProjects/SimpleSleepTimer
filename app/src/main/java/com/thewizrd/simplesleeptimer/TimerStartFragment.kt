@@ -53,6 +53,7 @@ class TimerStartFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        binding.timerProgressScroller.shouldSaveColorState = false
         binding.timerProgressScroller.setOnSeekBarChangeListener(object :
             CircularSeekBar.OnCircularSeekBarChangeListener {
             override fun onProgressChanged(

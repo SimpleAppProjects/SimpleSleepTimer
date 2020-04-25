@@ -54,6 +54,7 @@ class TimerProgressFragment : Fragment() {
 
         // Disable interaction with progress bar
         binding.timerProgressBar.isTouchEnabled = false
+        binding.timerProgressBar.shouldSaveColorState = false
 
         fab?.setImageResource(R.drawable.ic_stop)
     }

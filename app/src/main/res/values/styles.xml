@@ -18,12 +18,14 @@
         <item name="colorOnError">@color/colorOnError</item>
     </style>
 
-    <style name="AppTheme" parent="Base.AppTheme">
+    <style name="AppTheme.Base" parent="Base.AppTheme">
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorPrimaryLight</item>
     </style>
+
+    <style name="AppTheme" parent="AppTheme.Base" />
 
     <style name="AppTheme.Launcher">
         <item name="android:windowBackground">@color/colorPrimaryDark</item>
