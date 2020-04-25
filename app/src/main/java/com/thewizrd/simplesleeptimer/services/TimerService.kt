@@ -127,7 +127,6 @@ class TimerService : Service() {
             }
 
             override fun onFinish() {
-                mIsRunning = false
                 pauseMusicAction()
                 cancelTimer()
             }
