@@ -369,6 +369,11 @@ public class CircularSeekBar extends View {
     protected boolean isTouchEnabled = true;
 
     /**
+     * True if color state should be restored, false if state is restored from resources
+     */
+    protected boolean saveColorState = true;
+
+    /**
      * Initialize the CircularSeekBar with the attributes from the XML style.
      * Uses the defaults defined at the top of this file when an attribute is not specified by the user.
      *
@@ -865,13 +870,15 @@ public class CircularSeekBar extends View {
         state.putParcelable("PARENT", superState);
         state.putInt("MAX", mMax);
         state.putInt("PROGRESS", mProgress);
-        state.putInt("mCircleColor", mCircleColor);
-        state.putInt("mCircleProgressColor", mCircleProgressColor);
-        state.putInt("mPointerColor", mPointerColor);
-        state.putInt("mPointerHaloColor", mPointerHaloColor);
-        state.putInt("mPointerHaloColorOnTouch", mPointerHaloColorOnTouch);
-        state.putInt("mPointerAlpha", mPointerAlpha);
-        state.putInt("mPointerAlphaOnTouch", mPointerAlphaOnTouch);
+        if (saveColorState) {
+            state.putInt("mCircleColor", mCircleColor);
+            state.putInt("mCircleProgressColor", mCircleProgressColor);
+            state.putInt("mPointerColor", mPointerColor);
+            state.putInt("mPointerHaloColor", mPointerHaloColor);
+            state.putInt("mPointerHaloColorOnTouch", mPointerHaloColorOnTouch);
+            state.putInt("mPointerAlpha", mPointerAlpha);
+            state.putInt("mPointerAlphaOnTouch", mPointerAlphaOnTouch);
+        }
         state.putBoolean("lockEnabled", lockEnabled);
         state.putBoolean("isTouchEnabled", isTouchEnabled);
         state.putBoolean("showProgressGlow", showProgressGlow);
@@ -888,13 +895,15 @@ public class CircularSeekBar extends View {
 
         mMax = savedState.getInt("MAX");
         mProgress = savedState.getInt("PROGRESS");
-        mCircleColor = savedState.getInt("mCircleColor");
-        mCircleProgressColor = savedState.getInt("mCircleProgressColor");
-        mPointerColor = savedState.getInt("mPointerColor");
-        mPointerHaloColor = savedState.getInt("mPointerHaloColor");
-        mPointerHaloColorOnTouch = savedState.getInt("mPointerHaloColorOnTouch");
-        mPointerAlpha = savedState.getInt("mPointerAlpha");
-        mPointerAlphaOnTouch = savedState.getInt("mPointerAlphaOnTouch");
+        if (saveColorState) {
+            mCircleColor = savedState.getInt("mCircleColor");
+            mCircleProgressColor = savedState.getInt("mCircleProgressColor");
+            mPointerColor = savedState.getInt("mPointerColor");
+            mPointerHaloColor = savedState.getInt("mPointerHaloColor");
+            mPointerHaloColorOnTouch = savedState.getInt("mPointerHaloColorOnTouch");
+            mPointerAlpha = savedState.getInt("mPointerAlpha");
+            mPointerAlphaOnTouch = savedState.getInt("mPointerAlphaOnTouch");
+        }
         lockEnabled = savedState.getBoolean("lockEnabled");
         isTouchEnabled = savedState.getBoolean("isTouchEnabled");
         showProgressGlow = savedState.getBoolean("showProgressGlow");
@@ -1109,6 +1118,24 @@ public class CircularSeekBar extends View {
      */
     public boolean getIsTouchEnabled() {
         return isTouchEnabled;
+    }
+
+    /**
+     * Set whether color state will be saved
+     *
+     * @param colorStateSaved boolean value. True if color state should be restored, false if state is restored from resources
+     */
+    public void setShouldSaveColorState(boolean colorStateSaved) {
+        this.saveColorState = colorStateSaved;
+    }
+
+    /**
+     * Get whether color state will be saved
+     *
+     * @return Boolean value of true if color state should be restored, false if state is restored from resources
+     */
+    public boolean getShouldSaveColorState() {
+        return saveColorState;
     }
 
 }
