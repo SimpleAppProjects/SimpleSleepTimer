@@ -10,7 +10,7 @@ android {
     defaultConfig {
         applicationId "com.thewizrd.simplesleeptimer"
 
-        testApplicationId "com.thewizrd.simpleweather.test"
+        testApplicationId "com.thewizrd.simplesleeptimer.test"
         // Specifies the fully-qualified class name of the test instrumentation runner.
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         // The following argument makes the Android Test Orchestrator run its
@@ -62,9 +62,8 @@ dependencies {
     implementation 'com.google.android.material:material:1.2.0-alpha06'
 
     implementation 'com.jakewharton.threetenabp:threetenabp:1.2.3'
-    implementation 'com.sdsmdg.harjot:croller:1.0.7'
 
-    testImplementation 'junit:junit:4.12'
+    testImplementation 'junit:junit:4.13'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 }
