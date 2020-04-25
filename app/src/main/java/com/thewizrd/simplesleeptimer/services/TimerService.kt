@@ -92,38 +92,57 @@ class TimerService : Service() {
     private fun startTimer(timeInMin: Int) {
         timer?.cancel()
         timer = object : CountDownTimer((timeInMin * 60000).toLong(), 1) {
+            private var lastMillisUntilFinished: Long = (timeInMin * 60000).toLong()
+
             override fun onTick(millisUntilFinished: Long) {
                 mIsRunning = true
                 val hours = millisUntilFinished / 3600000L
                 val mins = millisUntilFinished % 3600000L / 60000L
                 val secs = (millisUntilFinished / 1000) % 60
 
-                val mNotification = NotificationCompat.Builder(this@TimerService, NOT_CHANNEL_ID)
-                    .setSmallIcon(R.drawable.ic_hourglass_empty)
-                    .setContentTitle(getString(R.string.title_sleeptimer))
-                    .setContentText(String.format(Locale.ROOT, "%02d:%02d:%02d", hours, mins, secs))
-                    .setColor(ContextCompat.getColor(this@TimerService, R.color.colorPrimary))
-                    .setOngoing(true)
-                    .setOnlyAlertOnce(true)
-                    .setSound(null)
-                    .addAction(
-                        NotificationCompat.Action.Builder(
-                            0,
-                            getString(android.R.string.cancel),
-                            getCancelIntent(this@TimerService)
-                        ).build()
-                    )
-                    .setContentIntent(getClickIntent(this@TimerService))
-                    .build()
-
-                NotificationManagerCompat.from(this@TimerService)
-                    .notify(NOTIFICATION_TAG, NOTIFICATION_ID, mNotification)
-
                 this@TimerService.sendBroadcast(
                     Intent(ACTION_TIME_UPDATED)
                         .putExtra(EXTRA_START_TIME_IN_MS, (timeInMin * 60000).toLong())
                         .putExtra(EXTRA_TIME_IN_MS, millisUntilFinished)
                 )
+
+                // Only update notification every second (or so)
+                if ((lastMillisUntilFinished - millisUntilFinished) > 1000) {
+                    val mNotification =
+                        NotificationCompat.Builder(this@TimerService, NOT_CHANNEL_ID)
+                            .setSmallIcon(R.drawable.ic_hourglass_empty)
+                            .setContentTitle(getString(R.string.title_sleeptimer))
+                            .setContentText(
+                                String.format(
+                                    Locale.ROOT,
+                                    "%02d:%02d:%02d",
+                                    hours,
+                                    mins,
+                                    secs
+                                )
+                            )
+                            .setColor(
+                                ContextCompat.getColor(
+                                    this@TimerService,
+                                    R.color.colorPrimary
+                                )
+                            )
+                            .setOngoing(true)
+                            .setOnlyAlertOnce(true)
+                            .setSound(null)
+                            .addAction(
+                                0,
+                                getString(android.R.string.cancel),
+                                getCancelIntent(this@TimerService)
+                            )
+                            .setContentIntent(getClickIntent(this@TimerService))
+                            .build()
+
+                    NotificationManagerCompat.from(this@TimerService)
+                        .notify(NOTIFICATION_TAG, NOTIFICATION_ID, mNotification)
+
+                    lastMillisUntilFinished = millisUntilFinished
+                }
             }
 
             override fun onFinish() {
