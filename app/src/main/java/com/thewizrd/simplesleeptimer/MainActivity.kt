@@ -4,8 +4,6 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
-import android.content.res.ColorStateList
-import android.graphics.Color
 import android.os.Bundle
 import android.os.IBinder
 import android.view.Menu
@@ -40,9 +38,8 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
-        setSupportActionBar(binding.bar)
+        setSupportActionBar(binding.topAppBar)
 
-        binding.fab.supportImageTintList = ColorStateList.valueOf(Color.WHITE)
         binding.fab.setOnClickListener {
             if (mBound) {
                 if (mTimerBinder.isRunning()) {

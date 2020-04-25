@@ -55,7 +55,7 @@ class TimerProgressFragment : Fragment() {
         // Disable interaction with progress bar
         binding.timerProgressBar.isTouchEnabled = false
 
-        fab?.setImageResource(R.drawable.ic_pause)
+        fab?.setImageResource(R.drawable.ic_stop)
     }
 
     override fun onResume() {

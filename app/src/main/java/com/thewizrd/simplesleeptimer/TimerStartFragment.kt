@@ -72,8 +72,25 @@ class TimerStartFragment : Fragment() {
             }
         })
 
-        binding.timerProgressScroller.max = 1440 // 24hrs
-        binding.timerProgressScroller.progress = viewModel.progressTimeInMins
+        binding.timerProgressScroller.max = SleepTimerViewModel.MAX_TIME_IN_MINS
+        binding.timerProgressScroller.progress = SleepTimerViewModel.DEFAULT_TIME_MIN
+
+        binding.minus5minbtn.setOnClickListener {
+            binding.timerProgressScroller.progress =
+                (binding.timerProgressScroller.progress - 5).coerceAtLeast(0)
+        }
+        binding.minus1minbtn.setOnClickListener {
+            binding.timerProgressScroller.progress =
+                (binding.timerProgressScroller.progress - 1).coerceAtLeast(0)
+        }
+        binding.plus1minbtn.setOnClickListener {
+            binding.timerProgressScroller.progress =
+                binding.timerProgressScroller.max.coerceAtMost(binding.timerProgressScroller.progress + 1)
+        }
+        binding.plus5minbtn.setOnClickListener {
+            binding.timerProgressScroller.progress =
+                binding.timerProgressScroller.max.coerceAtMost(binding.timerProgressScroller.progress + 5)
+        }
 
         fab?.setImageResource(R.drawable.ic_play_arrow)
     }
