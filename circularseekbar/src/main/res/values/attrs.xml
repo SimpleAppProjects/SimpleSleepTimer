@@ -23,6 +23,7 @@
         <attr name="start_angle" format="float" />
         <attr name="end_angle" format="float" />
         <attr name="circle_fill" format="color" />
+        <attr name="show_progress_glow" format="boolean" />
     </declare-styleable>
 
 </resources>

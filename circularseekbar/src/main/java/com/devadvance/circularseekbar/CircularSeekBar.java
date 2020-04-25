@@ -77,6 +77,7 @@ public class CircularSeekBar extends View {
     protected static final boolean DEFAULT_MAINTAIN_EQUAL_CIRCLE = true;
     protected static final boolean DEFAULT_MOVE_OUTSIDE_CIRCLE = false;
     protected static final boolean DEFAULT_LOCK_ENABLED = true;
+    protected static final boolean DEFAULT_PROGRESS_GLOW_ENABLED = false;
 
     /**
      * {@code Paint} instance used to draw the inactive circle.
@@ -278,6 +279,12 @@ public class CircularSeekBar extends View {
     protected boolean mUserIsMovingPointer = false;
 
     /**
+     * If true, then the glow effect is shown around the progress circle
+     * If false, then the glow effect is removed around the progress circle
+     */
+    protected boolean showProgressGlow = false;
+
+    /**
      * Represents the clockwise distance from {@code mStartAngle} to the touch angle.
      * Used when touching the CircularSeekBar.
      */
@@ -395,6 +402,7 @@ public class CircularSeekBar extends View {
         mMaintainEqualCircle = attrArray.getBoolean(R.styleable.CircularSeekBar_maintain_equal_circle, DEFAULT_MAINTAIN_EQUAL_CIRCLE);
         mMoveOutsideCircle = attrArray.getBoolean(R.styleable.CircularSeekBar_move_outside_circle, DEFAULT_MOVE_OUTSIDE_CIRCLE);
         lockEnabled = attrArray.getBoolean(R.styleable.CircularSeekBar_lock_enabled, DEFAULT_LOCK_ENABLED);
+        showProgressGlow = attrArray.getBoolean(R.styleable.CircularSeekBar_show_progress_glow, DEFAULT_PROGRESS_GLOW_ENABLED);
 
         // Modulo 360 right now to avoid constant conversion
         mStartAngle = ((360f + (attrArray.getFloat((R.styleable.CircularSeekBar_start_angle), DEFAULT_START_ANGLE) % 360f)) % 360f);
@@ -522,7 +530,9 @@ public class CircularSeekBar extends View {
         canvas.translate(this.getWidth() / 2, this.getHeight() / 2);
 
         canvas.drawPath(mCirclePath, mCirclePaint);
-        canvas.drawPath(mCircleProgressPath, mCircleProgressGlowPaint);
+        if (showProgressGlow) {
+            canvas.drawPath(mCircleProgressPath, mCircleProgressGlowPaint);
+        }
         canvas.drawPath(mCircleProgressPath, mCircleProgressPaint);
 
         canvas.drawPath(mCirclePath, mCircleFillPaint);
@@ -864,6 +874,7 @@ public class CircularSeekBar extends View {
         state.putInt("mPointerAlphaOnTouch", mPointerAlphaOnTouch);
         state.putBoolean("lockEnabled", lockEnabled);
         state.putBoolean("isTouchEnabled", isTouchEnabled);
+        state.putBoolean("showProgressGlow", showProgressGlow);
 
         return state;
     }
@@ -886,6 +897,7 @@ public class CircularSeekBar extends View {
         mPointerAlphaOnTouch = savedState.getInt("mPointerAlphaOnTouch");
         lockEnabled = savedState.getBoolean("lockEnabled");
         isTouchEnabled = savedState.getBoolean("isTouchEnabled");
+        showProgressGlow = savedState.getBoolean("showProgressGlow");
 
         initPaints();
 
