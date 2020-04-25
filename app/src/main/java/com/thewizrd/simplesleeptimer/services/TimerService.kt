@@ -17,6 +17,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.util.ObjectsCompat
+import com.thewizrd.simplesleeptimer.MainActivity
 import com.thewizrd.simplesleeptimer.R
 import java.util.*
 
@@ -112,6 +113,7 @@ class TimerService : Service() {
                             getCancelIntent(this@TimerService)
                         ).build()
                     )
+                    .setContentIntent(getClickIntent(this@TimerService))
                     .build()
 
                 NotificationManagerCompat.from(this@TimerService)
@@ -146,10 +148,22 @@ class TimerService : Service() {
     }
 
     private fun getCancelIntent(context: Context): PendingIntent {
-        val intent = Intent(context.applicationContext, javaClass)
+        val intent = Intent(context.applicationContext, TimerService::class.java)
             .setAction(ACTION_CANCEL_TIMER)
 
         return PendingIntent.getService(
+            context.applicationContext,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT
+        )
+    }
+
+    private fun getClickIntent(context: Context): PendingIntent {
+        val intent = Intent(context.applicationContext, MainActivity::class.java)
+            .setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+
+        return PendingIntent.getActivity(
             context.applicationContext,
             0,
             intent,

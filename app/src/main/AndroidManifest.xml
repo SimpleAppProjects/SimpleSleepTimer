@@ -19,7 +19,8 @@
         <activity
             android:name=".MainActivity"
             android:label="@string/title_sleeptimer"
-            android:theme="@style/AppTheme"></activity>
+            android:theme="@style/AppTheme"
+            android:launchMode="singleTop" />
         <service android:name=".services.TimerService" />
     </application>
 
