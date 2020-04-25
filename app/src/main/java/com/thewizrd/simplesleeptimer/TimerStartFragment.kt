@@ -73,7 +73,7 @@ class TimerStartFragment : Fragment() {
         })
 
         binding.timerProgressScroller.max = SleepTimerViewModel.MAX_TIME_IN_MINS
-        binding.timerProgressScroller.progress = SleepTimerViewModel.DEFAULT_TIME_MIN
+        binding.timerProgressScroller.progress = viewModel.progressTimeInMins
 
         binding.minus5minbtn.setOnClickListener {
             binding.timerProgressScroller.progress =
