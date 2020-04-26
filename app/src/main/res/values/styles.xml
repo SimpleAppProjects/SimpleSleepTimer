@@ -28,7 +28,7 @@
     <style name="AppTheme" parent="AppTheme.Base" />
 
     <style name="AppTheme.Launcher">
-        <item name="android:windowBackground">@color/colorPrimaryDark</item>
+        <item name="android:windowBackground">@drawable/ic_splash_screen</item>
     </style>
 
 </resources>
