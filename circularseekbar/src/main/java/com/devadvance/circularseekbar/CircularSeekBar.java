@@ -402,7 +402,7 @@ public class CircularSeekBar extends View {
         }
 
         mMax = attrArray.getInt(R.styleable.CircularSeekBar_max, DEFAULT_MAX);
-        mProgress = attrArray.getInt(R.styleable.CircularSeekBar_progress, DEFAULT_PROGRESS);
+        mProgress = attrArray.getInt(R.styleable.CircularSeekBar_seekBarProgress, DEFAULT_PROGRESS);
         mCustomRadii = attrArray.getBoolean(R.styleable.CircularSeekBar_use_custom_radii, DEFAULT_USE_CUSTOM_RADII);
         mMaintainEqualCircle = attrArray.getBoolean(R.styleable.CircularSeekBar_maintain_equal_circle, DEFAULT_MAINTAIN_EQUAL_CIRCLE);
         mMoveOutsideCircle = attrArray.getBoolean(R.styleable.CircularSeekBar_move_outside_circle, DEFAULT_MOVE_OUTSIDE_CIRCLE);
