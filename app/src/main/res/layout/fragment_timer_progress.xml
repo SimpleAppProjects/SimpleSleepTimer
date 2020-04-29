@@ -9,18 +9,21 @@
     <com.devadvance.circularseekbar.CircularSeekBar
         android:id="@+id/timerProgressBar"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        android:layout_margin="16dp"
         app:circle_color="?attr/colorOnBackground"
         app:circle_progress_color="?attr/colorAccent"
-        app:circle_stroke_width="8dp"
+        app:circle_stroke_width="4dp"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_max="300dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintWidth_max="300dp"
-        app:pointer_color="@android:color/transparent"
+        app:pointer_color="?attr/colorAccent"
         app:pointer_halo_color="@android:color/transparent"
         app:pointer_halo_color_ontouch="@android:color/transparent"
+        app:pointer_halo_width="0dp"
         tools:max="100"
         tools:progress="50" />
 
@@ -39,6 +42,6 @@
         app:layout_constraintEnd_toEndOf="@id/timerProgressBar"
         app:layout_constraintStart_toStartOf="@id/timerProgressBar"
         app:layout_constraintTop_toTopOf="@id/timerProgressBar"
-        tools:text="01:50:60" />
+        tools:text="01:50:59" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -33,7 +33,6 @@ class TimerProgressFragment : Fragment() {
             .addTransition(Fade(Fade.IN))
             .setDuration(250)
         exitTransition = TransitionSet()
-            .addTransition(Slide(Gravity.TOP))
             .addTransition(Fade(Fade.OUT))
             .setDuration(250)
     }

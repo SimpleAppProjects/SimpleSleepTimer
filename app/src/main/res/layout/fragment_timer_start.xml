@@ -10,17 +10,14 @@
     <com.devadvance.circularseekbar.CircularSeekBar
         android:id="@+id/timerProgressScroller"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         app:circle_color="?attr/colorOnBackground"
         app:circle_progress_color="?attr/colorAccent"
-        app:circle_stroke_width="8dp"
+        app:circle_stroke_width="4dp"
+        app:pointer_halo_width="0dp"
         app:end_angle="45"
-        app:layout_constraintBottom_toTopOf="@id/minus_5minbtn"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_chainStyle="packed"
-        app:layout_constraintWidth_max="300dp"
+        app:layout_constraintWidth_max="200dp"
+        app:layout_constraintDimensionRatio="1:1"
         app:lock_enabled="true"
         app:move_outside_circle="true"
         app:pointer_color="?attr/colorAccent"
@@ -28,7 +25,8 @@
         app:pointer_halo_color_ontouch="?attr/colorAccent"
         app:start_angle="135"
         tools:max="120"
-        tools:progress="5" />
+        tools:progress="5"
+        tools:ignore="MissingConstraints" />
 
     <TextView
         android:id="@+id/progress_text"
@@ -45,59 +43,77 @@
         app:layout_constraintEnd_toEndOf="@id/timerProgressScroller"
         app:layout_constraintStart_toStartOf="@id/timerProgressScroller"
         app:layout_constraintTop_toTopOf="@id/timerProgressScroller"
-        tools:text="00h:05m" />
+        tools:text="5 minutes" />
 
     <Button
         android:id="@+id/minus_5minbtn"
         style="@style/Widget.MaterialComponents.Button.TextButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:minWidth="75dp"
+        android:minWidth="60dp"
         android:text="-5M"
         android:textColor="?attr/colorAccent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/minus_1minbtn"
-        app:layout_constraintHorizontal_chainStyle="packed"
-        app:layout_constraintStart_toStartOf="@id/timerProgressScroller"
-        app:layout_constraintTop_toBottomOf="@id/timerProgressScroller" />
+        tools:ignore="MissingConstraints" />
 
     <Button
         android:id="@+id/minus_1minbtn"
         style="@style/Widget.MaterialComponents.Button.TextButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:minWidth="75dp"
+        android:minWidth="60dp"
         android:text="-1M"
         android:textColor="?attr/colorAccent"
-        app:layout_constraintBottom_toBottomOf="@id/minus_5minbtn"
-        app:layout_constraintEnd_toStartOf="@id/plus_1minbtn"
-        app:layout_constraintStart_toEndOf="@id/minus_5minbtn"
-        app:layout_constraintTop_toTopOf="@id/minus_5minbtn" />
+        tools:ignore="MissingConstraints" />
 
     <Button
         android:id="@+id/plus_1minbtn"
         style="@style/Widget.MaterialComponents.Button.TextButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:minWidth="75dp"
+        android:minWidth="60dp"
         android:text="+1M"
         android:textColor="?attr/colorAccent"
-        app:layout_constraintBottom_toBottomOf="@id/minus_5minbtn"
-        app:layout_constraintEnd_toStartOf="@id/plus_5minbtn"
-        app:layout_constraintStart_toEndOf="@id/minus_1minbtn"
-        app:layout_constraintTop_toTopOf="@id/minus_5minbtn" />
+        tools:ignore="MissingConstraints" />
 
     <Button
         android:id="@+id/plus_5minbtn"
         style="@style/Widget.MaterialComponents.Button.TextButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:minWidth="75dp"
+        android:minWidth="60dp"
         android:text="+5M"
         android:textColor="?attr/colorAccent"
-        app:layout_constraintBottom_toBottomOf="@id/minus_5minbtn"
-        app:layout_constraintEnd_toEndOf="@id/timerProgressScroller"
-        app:layout_constraintStart_toEndOf="@id/plus_1minbtn"
-        app:layout_constraintTop_toTopOf="@id/minus_5minbtn" />
+        tools:ignore="MissingConstraints" />
+
+    <androidx.constraintlayout.helper.widget.Flow
+        android:id="@+id/flow"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:flow_wrapMode="aligned"
+        app:layout_constraintVertical_chainStyle="packed"
+        app:flow_maxElementsWrap="@integer/timerstart_rows"
+        app:flow_horizontalBias="0.5"
+        app:flow_verticalBias="0.5"
+        app:flow_verticalStyle="packed"
+        android:orientation="vertical"
+        app:constraint_referenced_ids="timerProgressScroller,buttonflow"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <androidx.constraintlayout.helper.widget.Flow
+        android:id="@+id/buttonflow"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:flow_wrapMode="aligned"
+        app:layout_constraintVertical_chainStyle="packed"
+        app:flow_horizontalBias="0.5"
+        app:flow_verticalStyle="packed"
+        android:orientation="horizontal"
+        app:constraint_referenced_ids="minus_5minbtn,minus_1minbtn,plus_1minbtn,plus_5minbtn"
+        app:layout_constrainedWidth="true"
+        app:layout_constraintStart_toStartOf="@id/timerProgressScroller"
+        app:layout_constraintTop_toBottomOf="@id/timerProgressScroller" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

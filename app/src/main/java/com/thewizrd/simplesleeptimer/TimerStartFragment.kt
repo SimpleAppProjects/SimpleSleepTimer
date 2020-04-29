@@ -100,7 +100,15 @@ class TimerStartFragment : Fragment() {
         val hours = progress / 60
         val minutes = progress - (hours * 60)
 
-        binding.progressText.text = this.getString(R.string.time_format, hours, minutes)
+        if (hours > 0) {
+            binding.progressText.text = String.format("%02dh:%02dm", hours, minutes)
+        } else {
+            binding.progressText.text = String.format(
+                "%02d %s",
+                minutes,
+                if (minutes == 1) getString(R.string.minute) else getString(R.string.minutes)
+            )
+        }
     }
 
     override fun onDestroyView() {
