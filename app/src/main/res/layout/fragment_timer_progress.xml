@@ -6,19 +6,32 @@
     android:layout_height="match_parent"
     tools:context=".TimerProgressFragment">
 
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/left_guide"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.2" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/right_guide"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.8" />
+
     <com.devadvance.circularseekbar.CircularSeekBar
         android:id="@+id/timerProgressBar"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_margin="16dp"
         app:circle_color="?attr/colorOnBackground"
         app:circle_progress_color="?attr/colorAccent"
         app:circle_stroke_width="4dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintDimensionRatio="1:1"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_max="300dp"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="@id/right_guide"
+        app:layout_constraintHeight_max="360dp"
+        app:layout_constraintStart_toStartOf="@id/left_guide"
         app:layout_constraintTop_toTopOf="parent"
         app:pointer_color="?attr/colorAccent"
         app:pointer_halo_color="@android:color/transparent"

@@ -7,6 +7,20 @@
     tools:context=".TimerStartFragment"
     tools:ignore="HardcodedText">
 
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/left_guide"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.2" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/right_guide"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.8" />
+
     <com.devadvance.circularseekbar.CircularSeekBar
         android:id="@+id/timerProgressScroller"
         android:layout_width="0dp"
@@ -16,7 +30,7 @@
         app:circle_stroke_width="4dp"
         app:pointer_halo_width="0dp"
         app:end_angle="45"
-        app:layout_constraintWidth_max="200dp"
+        app:layout_constraintHeight_max="360dp"
         app:layout_constraintDimensionRatio="1:1"
         app:lock_enabled="true"
         app:move_outside_circle="true"
@@ -28,7 +42,7 @@
         tools:progress="5"
         tools:ignore="MissingConstraints" />
 
-    <TextView
+    <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/progress_text"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -43,7 +57,7 @@
         app:layout_constraintEnd_toEndOf="@id/timerProgressScroller"
         app:layout_constraintStart_toStartOf="@id/timerProgressScroller"
         app:layout_constraintTop_toTopOf="@id/timerProgressScroller"
-        tools:text="5 minutes" />
+        tools:text="5 mins" />
 
     <Button
         android:id="@+id/minus_5minbtn"
@@ -87,7 +101,7 @@
 
     <androidx.constraintlayout.helper.widget.Flow
         android:id="@+id/flow"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         app:flow_wrapMode="aligned"
         app:layout_constraintVertical_chainStyle="packed"
@@ -99,20 +113,20 @@
         app:constraint_referenced_ids="timerProgressScroller,buttonflow"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintStart_toEndOf="@id/left_guide"
+        app:layout_constraintEnd_toStartOf="@id/right_guide" />
 
     <androidx.constraintlayout.helper.widget.Flow
         android:id="@+id/buttonflow"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        app:flow_maxElementsWrap="@integer/buttonflow_columns"
         app:flow_wrapMode="aligned"
         app:layout_constraintVertical_chainStyle="packed"
         app:flow_horizontalBias="0.5"
         app:flow_verticalStyle="packed"
         android:orientation="horizontal"
         app:constraint_referenced_ids="minus_5minbtn,minus_1minbtn,plus_1minbtn,plus_5minbtn"
-        app:layout_constrainedWidth="true"
         app:layout_constraintStart_toStartOf="@id/timerProgressScroller"
         app:layout_constraintTop_toBottomOf="@id/timerProgressScroller" />
 
