@@ -12,12 +12,14 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.thewizrd.simplesleeptimer.R
 import com.thewizrd.simplesleeptimer.databinding.MusicplayerItemBinding
+import com.thewizrd.simplesleeptimer.helpers.RecyclerOnClickListenerInterface
 import com.thewizrd.simplesleeptimer.preferences.Settings
 import com.thewizrd.simplesleeptimer.viewmodels.MusicPlayerViewModel
 
 class PlayerListAdapter : RecyclerView.Adapter<PlayerListAdapter.ViewHolder>() {
     private var mDiffer: AsyncListDiffer<MusicPlayerViewModel>
     private var mCheckedPosition: Int = RecyclerView.NO_POSITION
+    private var onClickListener: RecyclerOnClickListenerInterface? = null
 
     init {
         mDiffer = AsyncListDiffer(this, diffCallback)
@@ -27,6 +29,10 @@ class PlayerListAdapter : RecyclerView.Adapter<PlayerListAdapter.ViewHolder>() {
         companion object {
             const val RADIOBUTTON_UPDATE: Int = 0
         }
+    }
+
+    fun setOnClickListener(listener: RecyclerOnClickListenerInterface?) {
+        onClickListener = listener
     }
 
     private object diffCallback : DiffUtil.ItemCallback<MusicPlayerViewModel>() {
@@ -95,6 +101,7 @@ class PlayerListAdapter : RecyclerView.Adapter<PlayerListAdapter.ViewHolder>() {
                 }
 
                 Settings.setMusicPlayer(getSelectedItem()?.getKey())
+                onClickListener?.onClick(itemView, adapterPosition)
             }
             itemView.setOnClickListener(clickListener)
             binding.radioButton.setOnClickListener(clickListener)

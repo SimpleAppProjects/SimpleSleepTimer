@@ -17,6 +17,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.thewizrd.simplesleeptimer.adapters.PlayerListAdapter
 import com.thewizrd.simplesleeptimer.databinding.FragmentMusicPlayersBinding
+import com.thewizrd.simplesleeptimer.helpers.RecyclerOnClickListenerInterface
 import com.thewizrd.simplesleeptimer.viewmodels.MusicPlayerViewModel
 
 class MusicPlayersFragment : BottomSheetDialogFragment() {
@@ -41,6 +42,11 @@ class MusicPlayersFragment : BottomSheetDialogFragment() {
         binding.navigationIcon.setOnClickListener {
             this.dismiss()
         }
+        playerAdapter.setOnClickListener(object : RecyclerOnClickListenerInterface {
+            override fun onClick(view: View, position: Int) {
+                this@MusicPlayersFragment.dismiss()
+            }
+        })
 
         return binding.root
     }

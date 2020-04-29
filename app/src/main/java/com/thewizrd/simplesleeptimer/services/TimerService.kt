@@ -4,8 +4,10 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.os.Binder
 import android.os.Build
@@ -19,6 +21,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.util.ObjectsCompat
 import com.thewizrd.simplesleeptimer.MainActivity
 import com.thewizrd.simplesleeptimer.R
+import com.thewizrd.simplesleeptimer.preferences.Settings
+import com.thewizrd.simplesleeptimer.utils.StringUtils.Companion.isNullOrWhitespace
 import java.util.*
 
 class TimerService : Service() {
@@ -190,6 +194,43 @@ class TimerService : Service() {
     }
 
     private fun pauseMusicAction() {
+        // Check if audio player preference exists
+        val audioPlayerPref = Settings.getMusicPlayer()
+        if (audioPlayerPref != null) {
+            val data = audioPlayerPref.split("/")
+            if (data.size == 2) {
+                val pkgName = data[0];
+                val activityName = data[1];
+
+                if (!String.isNullOrWhitespace(pkgName) && !String.isNullOrWhitespace(activityName)) {
+                    // Check if the app has a registered MediaButton BroadcastReceiver
+                    val infos = packageManager.queryBroadcastReceivers(
+                        Intent(Intent.ACTION_MEDIA_BUTTON).setPackage(pkgName),
+                        PackageManager.GET_RESOLVED_FILTER
+                    )
+                    var pauseKeyIntent: Intent? = null
+
+                    for (info in infos) {
+                        if (pkgName == info.activityInfo.packageName) {
+                            val event = KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE)
+
+                            pauseKeyIntent = Intent().apply {
+                                putExtra(Intent.EXTRA_KEY_EVENT, event)
+                                action = Intent.ACTION_MEDIA_BUTTON
+                                component = ComponentName(pkgName, info.activityInfo.name)
+                            }
+                            break
+                        }
+                    }
+
+                    if (pauseKeyIntent != null) {
+                        sendBroadcast(pauseKeyIntent)
+                    }
+                }
+            }
+        }
+
+        // Send pause event to which ever player has audio focus
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             val audioMan = this.getSystemService(Context.AUDIO_SERVICE) as AudioManager
             val event = KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE)
