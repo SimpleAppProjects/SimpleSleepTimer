@@ -44,6 +44,7 @@ class TimerProgressFragment : Fragment() {
     ): View? {
         binding = FragmentTimerProgressBinding.inflate(inflater, container, false)
         fab = requireActivity().findViewById(R.id.fab)
+        setHasOptionsMenu(false)
 
         return binding.root
     }

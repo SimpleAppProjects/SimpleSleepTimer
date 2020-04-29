@@ -1,10 +1,7 @@
 package com.thewizrd.simplesleeptimer
 
 import android.os.Bundle
-import android.view.Gravity
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.transition.Fade
@@ -13,6 +10,7 @@ import androidx.transition.TransitionSet
 import com.devadvance.circularseekbar.CircularSeekBar
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.thewizrd.simplesleeptimer.databinding.FragmentTimerStartBinding
+import com.thewizrd.simplesleeptimer.viewmodels.SleepTimerViewModel
 
 class TimerStartFragment : Fragment() {
     private lateinit var binding: FragmentTimerStartBinding
@@ -46,6 +44,8 @@ class TimerStartFragment : Fragment() {
     ): View? {
         binding = FragmentTimerStartBinding.inflate(inflater, container, false)
         fab = activity?.findViewById(R.id.fab)
+
+        setHasOptionsMenu(true)
 
         return binding.root
     }
@@ -109,6 +109,24 @@ class TimerStartFragment : Fragment() {
                 if (minutes == 1) getString(R.string.minute) else getString(R.string.minutes)
             )
         }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        super.onCreateOptionsMenu(menu, inflater)
+        inflater.inflate(R.menu.main_menu, menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.id_player -> {
+                if (activity != null && activity!!.supportFragmentManager.findFragmentByTag("players") == null) {
+                    MusicPlayersFragment().show(activity!!.supportFragmentManager, "players")
+                }
+                return true
+            }
+        }
+
+        return super.onOptionsItemSelected(item)
     }
 
     override fun onDestroyView() {

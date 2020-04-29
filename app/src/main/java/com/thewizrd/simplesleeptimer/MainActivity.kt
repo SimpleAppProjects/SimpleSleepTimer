@@ -3,14 +3,13 @@ package com.thewizrd.simplesleeptimer
 import android.content.*
 import android.os.Bundle
 import android.os.IBinder
-import android.view.Menu
-import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.util.ObjectsCompat
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.snackbar.Snackbar
 import com.thewizrd.simplesleeptimer.databinding.ActivityMainBinding
 import com.thewizrd.simplesleeptimer.services.TimerService
+import com.thewizrd.simplesleeptimer.viewmodels.SleepTimerViewModel
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -27,9 +26,7 @@ class MainActivity : AppCompatActivity() {
             mBound = true
 
             if (mTimerBinder.isRunning()) {
-                supportFragmentManager.beginTransaction()
-                    .replace(R.id.fragment_container, TimerProgressFragment())
-                    .commit()
+                showTimerProgressFragment()
             }
         }
 
@@ -50,13 +47,9 @@ class MainActivity : AppCompatActivity() {
                 if (mTimerBinder.isRunning()) {
                     mTimerBinder.cancelTimer()
 
-                    supportFragmentManager.beginTransaction()
-                        .replace(R.id.fragment_container, TimerStartFragment())
-                        .commit()
+                    showStartTimerFragment()
                 } else {
-                    supportFragmentManager.beginTransaction()
-                        .replace(R.id.fragment_container, TimerProgressFragment())
-                        .commit()
+                    showTimerProgressFragment()
 
                     applicationContext.startService(
                         Intent(applicationContext, TimerService::class.java)
@@ -77,9 +70,7 @@ class MainActivity : AppCompatActivity() {
         // Start fragment
         val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
         if (fragment == null) {
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, TimerStartFragment())
-                .commit()
+            showStartTimerFragment()
         }
     }
 
@@ -97,16 +88,12 @@ class MainActivity : AppCompatActivity() {
                 if (ObjectsCompat.equals(intent?.action, TimerService.ACTION_START_TIMER)) {
                     val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
                     if (fragment !is TimerProgressFragment) {
-                        supportFragmentManager.beginTransaction()
-                            .replace(R.id.fragment_container, TimerProgressFragment())
-                            .commit()
+                        showTimerProgressFragment()
                     }
                 } else if (ObjectsCompat.equals(intent?.action, TimerService.ACTION_CANCEL_TIMER)) {
                     val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
                     if (fragment !is TimerStartFragment) {
-                        supportFragmentManager.beginTransaction()
-                            .replace(R.id.fragment_container, TimerStartFragment())
-                            .commit()
+                        showStartTimerFragment()
                     }
                 }
             }
@@ -120,6 +107,18 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
+    private fun showStartTimerFragment() {
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, TimerStartFragment())
+            .commit()
+    }
+
+    private fun showTimerProgressFragment() {
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, TimerProgressFragment())
+            .commit()
+    }
+
     override fun onPause() {
         unregisterReceiver(mBroadcastReceiver)
         super.onPause()
@@ -129,20 +128,5 @@ class MainActivity : AppCompatActivity() {
         super.onStop()
         unbindService(connection)
         mBound = false
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.main_menu, menu)
-        return super.onCreateOptionsMenu(menu)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.id_settings -> {
-                return true
-            }
-        }
-
-        return super.onOptionsItemSelected(item)
     }
 }

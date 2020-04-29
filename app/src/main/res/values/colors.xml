@@ -21,4 +21,6 @@
     <color name="colorOnBackground">#000000</color>
     <color name="colorOnSurface">#000000</color>
     <color name="colorOnError">#ffffff</color>
+
+    <color name="colorPrimarySurface">@color/colorPrimary</color>
 </resources>

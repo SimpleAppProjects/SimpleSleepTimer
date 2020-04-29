@@ -1,4 +1,4 @@
-package com.thewizrd.simplesleeptimer
+package com.thewizrd.simplesleeptimer.viewmodels
 
 import androidx.lifecycle.ViewModel
 
@@ -8,10 +8,12 @@ class SleepTimerViewModel : ViewModel() {
         const val MAX_TIME_IN_MINS = 120
     }
 
-    var progressTimeInMins: Int = DEFAULT_TIME_MIN
+    var progressTimeInMins: Int =
+        DEFAULT_TIME_MIN
 
     override fun onCleared() {
         super.onCleared()
-        progressTimeInMins = DEFAULT_TIME_MIN
+        progressTimeInMins =
+            DEFAULT_TIME_MIN
     }
 }
