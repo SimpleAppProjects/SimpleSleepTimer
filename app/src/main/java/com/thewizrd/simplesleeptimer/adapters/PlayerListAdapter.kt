@@ -149,7 +149,7 @@ class PlayerListAdapter : RecyclerView.Adapter<PlayerListAdapter.ViewHolder>() {
         mDiffer.submitList(dataset)
     }
 
-    private fun getSelectedItem(): MusicPlayerViewModel? {
+    fun getSelectedItem(): MusicPlayerViewModel? {
         if (mCheckedPosition != RecyclerView.NO_POSITION) {
             return mDiffer.currentList[mCheckedPosition]
         }
