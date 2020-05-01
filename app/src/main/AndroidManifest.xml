@@ -21,7 +21,12 @@
             android:label="@string/title_sleeptimer"
             android:theme="@style/AppTheme"
             android:launchMode="singleTop" />
-        <service android:name=".services.TimerService" />
+
+        <service
+            android:name=".services.TimerService"
+            android:exported="true"
+            android:enabled="true"
+            android:permission="com.thewizrd.simplesleeptimer.permission.SLEEP_TIMER" />
     </application>
 
 </manifest>
