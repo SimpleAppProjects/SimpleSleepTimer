@@ -11,6 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.util.ObjectsCompat
 import androidx.fragment.app.Fragment
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.transition.Fade
 import androidx.transition.Slide
 import androidx.transition.TransitionSet
@@ -73,14 +74,16 @@ class TimerProgressFragment : Fragment() {
                 }
             }
         }
-        requireContext().registerReceiver(
-            mBroadcastReceiver,
-            IntentFilter(TimerService.ACTION_TIME_UPDATED)
-        )
+        LocalBroadcastManager.getInstance(requireContext())
+            .registerReceiver(
+                mBroadcastReceiver,
+                IntentFilter(TimerService.ACTION_TIME_UPDATED)
+            )
     }
 
     override fun onPause() {
-        requireContext().unregisterReceiver(mBroadcastReceiver)
+        LocalBroadcastManager.getInstance(requireContext())
+            .unregisterReceiver(mBroadcastReceiver)
         super.onPause()
     }
 

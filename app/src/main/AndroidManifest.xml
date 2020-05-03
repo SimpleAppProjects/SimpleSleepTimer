@@ -2,6 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.thewizrd.simplesleeptimer">
 
+    <permission
+        android:name="com.thewizrd.simplesleeptimer.permission.SLEEP_TIMER"
+        android:protectionLevel="signature" />
+    <uses-permission android:name="com.thewizrd.simplesleeptimer.permission.SLEEP_TIMER" />
+
     <application
         android:name=".App"
         android:allowBackup="true"
