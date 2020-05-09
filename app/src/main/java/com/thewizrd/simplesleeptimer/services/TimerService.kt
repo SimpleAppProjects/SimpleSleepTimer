@@ -17,6 +17,8 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.util.ObjectsCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.thewizrd.simplesleeptimer.App
+import com.thewizrd.simplesleeptimer.AppState
 import com.thewizrd.simplesleeptimer.MainActivity
 import com.thewizrd.simplesleeptimer.R
 import com.thewizrd.simplesleeptimer.preferences.Settings
@@ -43,6 +45,7 @@ class TimerService : Service() {
     private var timer: CountDownTimer? = null
     private var mIsRunning: Boolean = false
     private var mForegroundNotification: Notification? = null
+    private var mIsBound: Boolean = false
 
     // Binder given to clients
     private val binder = LocalBinder()
@@ -52,7 +55,16 @@ class TimerService : Service() {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             initChannel()
-            startForeground(NOTIFICATION_ID, getForegroundNotification())
+            startForegroundIfNeeded()
+        }
+    }
+
+    private fun startForegroundIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val appState = App.getInstance().getAppState()
+            if (!mIsBound && appState != AppState.FOREGROUND) {
+                startForeground(NOTIFICATION_ID, getForegroundNotification())
+            }
         }
     }
 
@@ -103,6 +115,7 @@ class TimerService : Service() {
                         getCancelIntent(this@TimerService)
                     )
                     .setContentIntent(getClickIntent(this@TimerService))
+                    .setPriority(NotificationCompat.PRIORITY_LOW)
                     .build()
         }
 
@@ -110,8 +123,7 @@ class TimerService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-            startForeground(NOTIFICATION_ID, getForegroundNotification())
+        startForegroundIfNeeded()
 
         if (ObjectsCompat.equals(intent?.action, ACTION_START_TIMER)) {
             if (intent?.hasExtra(EXTRA_TIME_IN_MINS) == true) {
@@ -180,6 +192,7 @@ class TimerService : Service() {
                                 getCancelIntent(this@TimerService)
                             )
                             .setContentIntent(getClickIntent(this@TimerService))
+                            .setPriority(NotificationCompat.PRIORITY_HIGH)
                             .build()
 
                     NotificationManagerCompat.from(this@TimerService)
@@ -213,6 +226,9 @@ class TimerService : Service() {
         timer?.cancel()
         NotificationManagerCompat.from(this@TimerService).cancel(NOTIFICATION_ID)
         stopSelf()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            stopForeground(true)
+        }
     }
 
     private fun getCancelIntent(context: Context): PendingIntent {
@@ -291,6 +307,7 @@ class TimerService : Service() {
     override fun onBind(intent: Intent?): IBinder? {
         // Background restrictions don't apply to bound services
         // We can remove the notification now
+        mIsBound = true
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             stopForeground(true)
 
@@ -319,6 +336,7 @@ class TimerService : Service() {
 
     override fun onRebind(intent: Intent?) {
         super.onRebind(intent)
+        mIsBound = true
 
         // Background restrictions don't apply to bound services
         // We can remove the notification now
@@ -329,8 +347,8 @@ class TimerService : Service() {
     override fun onUnbind(intent: Intent?): Boolean {
         // Since service is unbound, background restrictions now apply
         // Start foreground to notify system
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-            startForeground(NOTIFICATION_ID, getForegroundNotification())
+        mIsBound = false
+        startForegroundIfNeeded()
 
         return super.onUnbind(intent)
     }
