@@ -165,7 +165,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        if (mBottomSheetBehavior.state != BottomSheetBehavior.STATE_COLLAPSED) {
+        if (mBottomSheetBehavior.state != BottomSheetBehavior.STATE_HIDDEN &&
+            mBottomSheetBehavior.state != BottomSheetBehavior.STATE_COLLAPSED
+        ) {
             mBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
             return
         }
