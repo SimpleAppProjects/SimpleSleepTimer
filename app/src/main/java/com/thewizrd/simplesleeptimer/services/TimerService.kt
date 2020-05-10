@@ -224,11 +224,11 @@ class TimerService : Service() {
             mIsRunning = false
         }
         timer?.cancel()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            stopForeground(STOP_FOREGROUND_DETACH)
+        }
         NotificationManagerCompat.from(this@TimerService).cancel(NOTIFICATION_ID)
         stopSelf()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            stopForeground(true)
-        }
     }
 
     private fun getCancelIntent(context: Context): PendingIntent {
