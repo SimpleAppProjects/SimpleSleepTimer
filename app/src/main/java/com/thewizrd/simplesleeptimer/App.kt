@@ -7,7 +7,6 @@ import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatDelegate
-import com.jakewharton.threetenabp.AndroidThreeTen
 
 class App : Application(), ActivityLifecycleCallbacks {
     private lateinit var context: Context
@@ -38,7 +37,6 @@ class App : Application(), ActivityLifecycleCallbacks {
         applicationState = AppState.CLOSED
         mActivitiesStarted = 0
 
-        AndroidThreeTen.init(this)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
         else
