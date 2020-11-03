@@ -3,6 +3,7 @@ package com.thewizrd.simplesleeptimer
 import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.pm.ResolveInfo
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.os.Bundle
@@ -13,6 +14,7 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.core.view.ViewCompat
 import androidx.core.widget.ImageViewCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -22,6 +24,10 @@ import com.thewizrd.simplesleeptimer.helpers.RecyclerOnClickListenerInterface
 import com.thewizrd.simplesleeptimer.preferences.Settings
 import com.thewizrd.simplesleeptimer.utils.ActivityUtils
 import com.thewizrd.simplesleeptimer.viewmodels.MusicPlayerViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.math.roundToInt
 
 class MusicPlayersFragment : Fragment(), BottomSheetCallbackInterface {
@@ -161,54 +167,57 @@ class MusicPlayersFragment : Fragment(), BottomSheetCallbackInterface {
     }
 
     private fun updateSupportedMusicPlayers() {
-        val infos = context?.packageManager?.queryBroadcastReceivers(
+        val infos = requireContext().packageManager.queryBroadcastReceivers(
             Intent(Intent.ACTION_MEDIA_BUTTON), PackageManager.GET_RESOLVED_FILTER
         )
 
-        val supportedPlayers = HashMap<String, MusicPlayerViewModel>()
+        // Sort result
+        Collections.sort(infos, ResolveInfo.DisplayNameComparator(requireContext().packageManager))
 
-        if (infos != null) {
-            for (info in infos) {
-                val appInfo = info.activityInfo.applicationInfo
-                val launchIntent =
-                    context?.packageManager?.getLaunchIntentForPackage(appInfo.packageName)
-                if (launchIntent != null) {
-                    val activityInfo = context?.packageManager?.resolveActivity(
-                        launchIntent,
-                        PackageManager.MATCH_DEFAULT_ONLY
-                    ) ?: continue
+        val supportedPlayers = ArrayList<String>(infos.size)
+        val playerModels = ArrayList<MusicPlayerViewModel>(infos.size)
 
-                    val activityCmpName =
-                        ComponentName(appInfo.packageName, activityInfo.activityInfo.name)
-                    val key =
-                        String.format("%s/%s", appInfo.packageName, activityInfo.activityInfo.name)
-
-                    val label = context?.packageManager?.getApplicationLabel(appInfo).toString()
+        for (info in infos) {
+            val appInfo = info.activityInfo.applicationInfo
+            val launchIntent =
+                requireContext().packageManager.getLaunchIntentForPackage(appInfo.packageName)
+            if (launchIntent != null) {
+                val activityInfo = requireContext().packageManager.resolveActivity(
+                    launchIntent,
+                    PackageManager.MATCH_DEFAULT_ONLY
+                )
+                    ?: continue
+                val activityCmpName =
+                    ComponentName(appInfo.packageName, activityInfo.activityInfo.name)
+                val key =
+                    String.format("%s/%s", appInfo.packageName, activityInfo.activityInfo.name)
+                if (!supportedPlayers.contains(key)) {
+                    val label =
+                        requireContext().packageManager.getApplicationLabel(appInfo).toString()
                     var iconBmp: Bitmap? = null
                     try {
-                        val drawable = context?.packageManager?.getActivityIcon(activityCmpName)
-                        iconBmp = drawable?.toBitmap()
+                        val drawable =
+                            requireContext().packageManager.getActivityIcon(activityCmpName)
+                        iconBmp = drawable.toBitmap()
                     } catch (e: PackageManager.NameNotFoundException) {
                     }
 
-                    if (!supportedPlayers.containsKey(key)) {
-                        supportedPlayers[key] = MusicPlayerViewModel().apply {
-                            mAppLabel = label
-                            mPackageName = appInfo.packageName
-                            mActivityName = activityInfo.activityInfo.name
-                            mBitmapIcon = iconBmp
-                        }
-                    }
+                    playerModels.add(MusicPlayerViewModel().apply {
+                        mAppLabel = label
+                        mPackageName = appInfo.packageName
+                        mActivityName = activityInfo.activityInfo.name
+                        mBitmapIcon = iconBmp
+                    })
+                    supportedPlayers.add(key)
                 }
             }
         }
 
-        supportedPlayers.values.toList().also {
-            playerAdapter.updateItems(it)
+        val playerPref = Settings.getMusicPlayer()
+        val model = playerModels.find { i -> i.getKey() != null && i.getKey() == playerPref }
 
-            val playerPref = Settings.getMusicPlayer()
-            val model =
-                it.find { i -> i.getKey() != null && i.getKey() == playerPref }
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Main) {
+            playerAdapter.updateItems(playerModels)
 
             if (playerPref != null && model is MusicPlayerViewModel && model.mBitmapIcon != null) {
                 binding.musicplayerIcon.setImageBitmap(model.mBitmapIcon)
