@@ -21,21 +21,7 @@ class PlayerListAdapter : RecyclerView.Adapter<PlayerListAdapter.ViewHolder>() {
     private var mCheckedPosition: Int = RecyclerView.NO_POSITION
     private var onClickListener: RecyclerOnClickListenerInterface? = null
 
-    init {
-        mDiffer = AsyncListDiffer(this, diffCallback)
-    }
-
-    class Payload {
-        companion object {
-            const val RADIOBUTTON_UPDATE: Int = 0
-        }
-    }
-
-    fun setOnClickListener(listener: RecyclerOnClickListenerInterface?) {
-        onClickListener = listener
-    }
-
-    private object diffCallback : DiffUtil.ItemCallback<MusicPlayerViewModel>() {
+    private val diffCallback = object : DiffUtil.ItemCallback<MusicPlayerViewModel>() {
         override fun areItemsTheSame(
             oldItem: MusicPlayerViewModel,
             newItem: MusicPlayerViewModel
@@ -52,12 +38,22 @@ class PlayerListAdapter : RecyclerView.Adapter<PlayerListAdapter.ViewHolder>() {
         }
     }
 
-    inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private var binding: MusicplayerItemBinding
+    init {
+        mDiffer = AsyncListDiffer(this, diffCallback)
+    }
 
-        init {
-            binding = MusicplayerItemBinding.bind(itemView)
+    class Payload {
+        companion object {
+            const val RADIOBUTTON_UPDATE: Int = 0
         }
+    }
+
+    fun setOnClickListener(listener: RecyclerOnClickListenerInterface?) {
+        onClickListener = listener
+    }
+
+    inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private var binding = MusicplayerItemBinding.bind(itemView)
 
         fun bindModel(viewModel: MusicPlayerViewModel) {
             if (viewModel.mBitmapIcon == null) {
@@ -81,11 +77,7 @@ class PlayerListAdapter : RecyclerView.Adapter<PlayerListAdapter.ViewHolder>() {
             if (mCheckedPosition == RecyclerView.NO_POSITION) {
                 binding.radioButton.isChecked = false
             } else {
-                if (mCheckedPosition == adapterPosition) {
-                    binding.radioButton.isChecked = true
-                } else {
-                    binding.radioButton.isChecked = false
-                }
+                binding.radioButton.isChecked = mCheckedPosition == adapterPosition
             }
 
             val clickListener = View.OnClickListener {
@@ -123,11 +115,10 @@ class PlayerListAdapter : RecyclerView.Adapter<PlayerListAdapter.ViewHolder>() {
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int, payloads: MutableList<Any>) {
-        val radioBtnUpdateOnly: Boolean
-        if (payloads.isNotEmpty()) {
-            radioBtnUpdateOnly = payloads[0] == Payload.RADIOBUTTON_UPDATE
+        val radioBtnUpdateOnly = if (payloads.isNotEmpty()) {
+            payloads[0] == Payload.RADIOBUTTON_UPDATE
         } else {
-            radioBtnUpdateOnly = false
+            false
         }
 
         if (!radioBtnUpdateOnly) {
@@ -140,10 +131,10 @@ class PlayerListAdapter : RecyclerView.Adapter<PlayerListAdapter.ViewHolder>() {
     fun updateItems(dataset: List<MusicPlayerViewModel>) {
         val currentPref = Settings.getMusicPlayer()
         val item = dataset.find { item -> item.getKey() != null && item.getKey() == currentPref }
-        if (item != null) {
-            mCheckedPosition = dataset.indexOf(item)
+        mCheckedPosition = if (item != null) {
+            dataset.indexOf(item)
         } else {
-            mCheckedPosition = RecyclerView.NO_POSITION
+            RecyclerView.NO_POSITION
         }
 
         mDiffer.submitList(dataset)

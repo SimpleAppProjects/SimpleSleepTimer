@@ -9,8 +9,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
+import androidx.core.view.ViewCompat
 import androidx.core.widget.ImageViewCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -22,20 +22,24 @@ import com.thewizrd.simplesleeptimer.helpers.RecyclerOnClickListenerInterface
 import com.thewizrd.simplesleeptimer.preferences.Settings
 import com.thewizrd.simplesleeptimer.utils.ActivityUtils
 import com.thewizrd.simplesleeptimer.viewmodels.MusicPlayerViewModel
+import kotlin.math.roundToInt
 
 class MusicPlayersFragment : Fragment(), BottomSheetCallbackInterface {
     private lateinit var binding: FragmentMusicPlayersBinding
     private lateinit var playerAdapter: PlayerListAdapter
     private lateinit var mBottomSheetBehavior: BottomSheetBehavior<View>
+    private var windowInsetTop = 0
 
     companion object {
-        private val toolbarHeight =
-            ActivityUtils.dpToPx(App.getInstance().getAppContext(), 48f).toInt()
+        private val _toolbarHeight =
+            ActivityUtils.getAttrDimension(
+                App.getInstance().getAppContext(),
+                android.R.attr.actionBarSize
+            )
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
+    private val toolbarHeight: Int
+        get() = _toolbarHeight + windowInsetTop
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -43,6 +47,11 @@ class MusicPlayersFragment : Fragment(), BottomSheetCallbackInterface {
         savedInstanceState: Bundle?
     ): View? {
         binding = FragmentMusicPlayersBinding.inflate(inflater, container, false)
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
+            windowInsetTop = insets.systemWindowInsetTop
+            insets
+        }
 
         binding.navigationIcon.setOnClickListener {
             mBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
@@ -97,68 +106,58 @@ class MusicPlayersFragment : Fragment(), BottomSheetCallbackInterface {
     }
 
     override fun onSlide(bottomSheet: View, slideOffset: Float) {
-        if (slideOffset >= 1.0f) {
-            binding.bottomSheetToolbar.layoutParams.height = toolbarHeight
-            binding.bottomSheetToolbar.visibility = View.VISIBLE
-        } else if (slideOffset <= 0.00f) {
-            binding.bottomSheetToolbar.visibility = View.GONE
-        } else if (slideOffset > 0.00f) {
-            binding.bottomSheetToolbar.layoutParams.height =
-                (toolbarHeight * slideOffset).toInt()
-            binding.bottomSheetToolbar.visibility = View.INVISIBLE
-        }
+        when {
+            slideOffset >= 1.0f -> {
+                binding.peekGroup.alpha = 0f
+                binding.peekGroup.layoutParams.height = 0
+                binding.peekGroup.visibility = View.GONE
 
-        if (slideOffset >= 1.0f) {
-            val statBarColor =
-                ContextCompat.getColor(requireContext(), R.color.colorSurface)
-            binding.bottomSheetAppbar.setStatusBarForegroundColor(statBarColor)
-        } else {
-            binding.bottomSheetAppbar.statusBarForeground = null
-        }
+                binding.bottomSheetAppbar.layoutParams.height = toolbarHeight
+                binding.bottomSheetAppbar.alpha = 1f
+                binding.bottomSheetAppbar.visibility = View.VISIBLE
+            }
+            slideOffset <= 0.01f -> {
+                binding.peekGroup.alpha = 1.0f
+                binding.peekGroup.visibility = View.VISIBLE
 
-        if (slideOffset >= 0.95f) {
-            val statBarColor =
-                ContextCompat.getColor(requireContext(), R.color.colorSurface)
-            ActivityUtils.setStatusBarColor(requireActivity().window, statBarColor, false)
-        } else {
-            binding.bottomSheetAppbar.statusBarForeground = null
-            ActivityUtils.setStatusBarColor(requireActivity().window, 0, false)
-        }
+                binding.bottomSheetAppbar.layoutParams.height = 0
+                binding.bottomSheetAppbar.alpha = 0f
+                binding.bottomSheetAppbar.visibility = View.GONE
+            }
+            slideOffset >= 0.50f -> {
+                binding.peekGroup.alpha = 0f
+                binding.peekGroup.layoutParams.height = 0
+                binding.peekGroup.visibility = View.GONE
 
-        if (slideOffset <= 0.00f) {
-            binding.bottomSheetPeekgroup.visibility = View.VISIBLE
-            binding.promptText.visibility = View.GONE
-        } else {
-            binding.bottomSheetPeekgroup.visibility = View.GONE
-            binding.promptText.visibility = View.VISIBLE
+                binding.bottomSheetAppbar.layoutParams.height =
+                    (toolbarHeight * slideOffset * 2f).roundToInt().coerceAtMost(toolbarHeight)
+                binding.bottomSheetAppbar.alpha = ((slideOffset - 0.5f) * 2f).coerceAtMost(1f)
+                binding.bottomSheetAppbar.visibility = View.VISIBLE
+            }
+            slideOffset > 0.01f -> {
+                binding.peekGroup.alpha = (1 - (slideOffset * 2f)).coerceAtLeast(0f)
+                binding.peekGroup.layoutParams.height =
+                    (toolbarHeight * (1 - (slideOffset * 2f))).roundToInt()
+                        .coerceAtLeast((toolbarHeight * 0.5).roundToInt())
+                binding.peekGroup.visibility = View.VISIBLE
+
+                binding.bottomSheetAppbar.layoutParams.height =
+                    (toolbarHeight * slideOffset).roundToInt().coerceAtMost(toolbarHeight)
+                binding.bottomSheetAppbar.alpha = 0f
+                binding.bottomSheetAppbar.visibility = View.VISIBLE
+            }
         }
 
         binding.bottomSheetAppbar.requestLayout()
     }
 
     override fun onStateChanged(bottomSheet: View, newState: Int) {
-        if (newState == BottomSheetBehavior.STATE_EXPANDED) {
-            binding.bottomSheetToolbar.visibility = View.VISIBLE
-        } else if (newState == BottomSheetBehavior.STATE_HALF_EXPANDED) {
-            binding.bottomSheetToolbar.visibility = View.GONE
-        }
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
+        // No-op
     }
 
     override fun onResume() {
         super.onResume()
         updateSupportedMusicPlayers()
-    }
-
-    override fun onPause() {
-        super.onPause()
     }
 
     private fun updateSupportedMusicPlayers() {
@@ -177,9 +176,7 @@ class MusicPlayersFragment : Fragment(), BottomSheetCallbackInterface {
                     val activityInfo = context?.packageManager?.resolveActivity(
                         launchIntent,
                         PackageManager.MATCH_DEFAULT_ONLY
-                    )
-
-                    if (activityInfo == null) continue
+                    ) ?: continue
 
                     val activityCmpName =
                         ComponentName(appInfo.packageName, activityInfo.activityInfo.name)

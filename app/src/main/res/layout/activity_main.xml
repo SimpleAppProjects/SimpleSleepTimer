@@ -10,20 +10,19 @@
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        style="@style/Widget.MaterialComponents.AppBarLayout.PrimarySurface"
+        style="@style/Widget.MaterialComponents.AppBarLayout.Surface"
         android:fitsSystemWindows="true"
         app:elevation="0dp"
         app:liftOnScroll="false"
-        app:statusBarForeground="@color/colorPrimarySurface">
+        app:statusBarForeground="@color/colorSurface">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/topAppBar"
-            style="@style/Widget.MaterialComponents.Toolbar.PrimarySurface"
+            style="@style/Widget.MaterialComponents.Toolbar.Surface"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
+            android:layout_height="?android:actionBarSize"
             app:title="@string/title_sleeptimer"
-            app:titleTextColor="@android:color/white"
-            app:titleTextAppearance="@style/TextAppearance.CustomToolbarTitle" />
+            app:titleTextColor="@color/colorPrimaryOnSurface" />
 
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -46,16 +45,26 @@
         app:srcCompat="@drawable/ic_play_arrow"
         app:tint="@android:color/white" />
 
+    <View
+        android:id="@+id/shadow"
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        android:background="@drawable/drop_shadow"
+        android:rotation="180"
+        app:layout_anchor="@id/bottom_sheet"
+        app:layout_anchorGravity="top" />
+
     <FrameLayout
         android:id="@+id/bottom_sheet"
         style="@style/Widget.MaterialComponents.BottomSheet"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:elevation="4dp"
+        android:elevation="0dp"
         android:orientation="vertical"
         app:behavior_fitToContents="true"
         app:behavior_hideable="false"
         app:behavior_peekHeight="48dp"
+        app:gestureInsetBottomIgnored="true"
         app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
         tools:ignore="UnusedAttribute">
 

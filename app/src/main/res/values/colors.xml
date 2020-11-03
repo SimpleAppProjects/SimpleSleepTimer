@@ -23,4 +23,5 @@
     <color name="colorOnError">#ffffff</color>
 
     <color name="colorPrimarySurface">@color/colorPrimary</color>
+    <color name="colorPrimaryOnSurface">@color/colorPrimary</color>
 </resources>

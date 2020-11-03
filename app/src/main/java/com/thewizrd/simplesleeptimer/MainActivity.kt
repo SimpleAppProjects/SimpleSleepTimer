@@ -5,15 +5,14 @@ import android.os.Bundle
 import android.os.IBinder
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.util.ObjectsCompat
-import androidx.core.view.OnApplyWindowInsetsListener
 import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.snackbar.Snackbar
 import com.thewizrd.simplesleeptimer.databinding.ActivityMainBinding
 import com.thewizrd.simplesleeptimer.services.TimerService
+import com.thewizrd.simplesleeptimer.utils.ActivityUtils
 import com.thewizrd.simplesleeptimer.viewmodels.SleepTimerViewModel
 
 class MainActivity : AppCompatActivity() {
@@ -44,10 +43,17 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         binding = ActivityMainBinding.inflate(layoutInflater)
-        val view = binding.root
-        setContentView(view)
+        setContentView(binding.root)
         setSupportActionBar(binding.topAppBar)
+
+        // Fix statusbar
+        ActivityUtils.setStatusBarColor(
+            window,
+            ContextCompat.getColor(this, R.color.colorSurface),
+            true
+        )
 
         val musicPlayersFragment =
             supportFragmentManager.findFragmentById(R.id.musicplayer_fragment) as? MusicPlayersFragment
@@ -69,19 +75,10 @@ class MainActivity : AppCompatActivity() {
             mBottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
         }
 
-        ViewCompat.setOnApplyWindowInsetsListener(binding.bottomSheet, object :
-            OnApplyWindowInsetsListener {
-            override fun onApplyWindowInsets(
-                v: View?,
-                insets: WindowInsetsCompat?
-            ): WindowInsetsCompat {
-                mBottomSheetBehavior.expandedOffset = insets?.systemWindowInsetTop!!
-                return insets
-            }
-        })
-
-        binding.bottomSheet.systemUiVisibility =
-            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+        ViewCompat.setOnApplyWindowInsetsListener(binding.bottomSheet) { v, insets ->
+            mBottomSheetBehavior.expandedOffset = insets.systemWindowInsetTop
+            insets
+        }
 
         binding.fab.setOnClickListener {
             if (mBound) {
@@ -98,8 +95,6 @@ class MainActivity : AppCompatActivity() {
                             .putExtra(TimerService.EXTRA_TIME_IN_MINS, viewModel.progressTimeInMins)
                     )
                 }
-            } else {
-                Snackbar.make(binding.root, "Service not bound", Snackbar.LENGTH_SHORT).show()
             }
         }
 

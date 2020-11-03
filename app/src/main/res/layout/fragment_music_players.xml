@@ -12,19 +12,19 @@
         android:layout_height="wrap_content"
         style="@style/Widget.MaterialComponents.AppBarLayout.Surface"
         android:fitsSystemWindows="true"
+        android:visibility="gone"
         app:elevation="0dp"
+        app:statusBarForeground="@color/colorSurface"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/musicplayer_icon">
+        tools:visibility="visible">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/bottom_sheet_toolbar"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:background="?attr/colorSurface"
-            android:visibility="gone"
-            tools:visibility="visible">
+            android:layout_height="?android:actionBarSize"
+            android:background="?attr/colorSurface">
 
             <androidx.appcompat.widget.AppCompatImageButton
                 android:id="@+id/navigation_icon"
@@ -32,7 +32,7 @@
                 android:layout_height="match_parent"
                 style="@style/Widget.AppCompat.Toolbar.Button.Navigation"
                 app:srcCompat="@drawable/ic_close"
-                android:tint="@color/colorOnSurface"
+                android:tint="@color/colorPrimaryOnSurface"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent" />
@@ -54,8 +54,8 @@
                 android:maxLines="1"
                 android:ellipsize="end"
                 android:text="@string/text_music_player"
-                android:tint="@color/colorOnSurface"
-                android:textAppearance="@style/TextAppearance.CustomToolbarTitle"
+                android:textColor="@color/colorPrimaryOnSurface"
+                android:textAppearance="?attr/textAppearanceHeadline6"
                 android:layout_marginStart="4dp"
                 android:layout_marginLeft="4dp"
                 android:layout_marginTop="4dp"
@@ -72,79 +72,82 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <androidx.constraintlayout.widget.Group
-        android:id="@+id/bottom_sheet_peekgroup"
-        android:layout_width="wrap_content"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/peek_group"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:constraint_referenced_ids="musicplayer_icon,musicplayer_text,arrow" />
-
-    <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/musicplayer_icon"
-        android:layout_width="48dp"
-        android:layout_height="0dp"
-        android:adjustViewBounds="true"
-        android:paddingTop="10dp"
-        android:paddingBottom="10dp"
-        android:paddingStart="10dp"
-        android:paddingEnd="10dp"
-        android:scaleType="fitCenter"
-        app:layout_constraintTop_toTopOf="@id/musicplayer_text"
-        app:layout_constraintBottom_toBottomOf="@id/musicplayer_text"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintVertical_bias="0.5"
-        app:srcCompat="@drawable/ic_music_note"
-        app:tint="?attr/colorAccent" />
-
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/musicplayer_text"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="28dp"
-        android:layout_marginRight="28dp"
-        android:ellipsize="marquee"
-        android:focusable="true"
-        android:marqueeRepeatLimit="marquee_forever"
-        android:paddingTop="16dp"
-        android:paddingBottom="16dp"
-        android:singleLine="true"
-        android:text="@string/text_music_player"
-        android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
-        android:textColor="?attr/colorAccent"
-        app:layout_constrainedWidth="true"
-        app:layout_constraintEnd_toEndOf="@id/center_guide"
-        app:layout_constraintHeight_min="48dp"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toEndOf="@id/musicplayer_icon"
         app:layout_constraintTop_toBottomOf="@id/bottom_sheet_appbar">
 
-        <requestFocus />
-    </androidx.appcompat.widget.AppCompatTextView>
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/musicplayer_icon"
+            android:layout_width="48dp"
+            android:layout_height="0dp"
+            android:adjustViewBounds="true"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:scaleType="fitCenter"
+            app:layout_constraintTop_toTopOf="@id/musicplayer_text"
+            app:layout_constraintBottom_toBottomOf="@id/musicplayer_text"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintVertical_bias="0.5"
+            app:srcCompat="@drawable/ic_music_note"
+            app:tint="?attr/colorAccent" />
 
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/center_guide"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.5" />
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/musicplayer_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="28dp"
+            android:layout_marginRight="28dp"
+            android:ellipsize="marquee"
+            android:gravity="center_vertical"
+            android:focusable="true"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:paddingTop="16dp"
+            android:paddingBottom="16dp"
+            android:singleLine="true"
+            android:text="@string/text_music_player"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+            android:textColor="?attr/colorAccent"
+            app:layout_constrainedWidth="true"
+            app:layout_constraintEnd_toEndOf="@id/center_guide"
+            app:layout_constraintHeight_min="?android:actionBarSize"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toEndOf="@id/musicplayer_icon"
+            app:layout_constraintTop_toTopOf="parent">
 
-    <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/arrow"
-        android:layout_width="48dp"
-        android:layout_height="0dp"
-        android:adjustViewBounds="true"
-        android:paddingTop="10dp"
-        android:paddingBottom="10dp"
-        android:paddingStart="10dp"
-        android:paddingEnd="10dp"
-        android:scaleType="fitCenter"
-        app:layout_constraintTop_toTopOf="@id/musicplayer_text"
-        app:layout_constraintBottom_toBottomOf="@id/musicplayer_text"
-        app:layout_constraintStart_toEndOf="@id/center_guide"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintVertical_bias="0.5"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:srcCompat="@drawable/ic_keyboard_arrow_up"
-        app:tint="?attr/colorAccent" />
+            <requestFocus />
+        </androidx.appcompat.widget.AppCompatTextView>
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/center_guide"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.5" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/arrow"
+            android:layout_width="48dp"
+            android:layout_height="0dp"
+            android:adjustViewBounds="true"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:scaleType="fitCenter"
+            app:layout_constraintTop_toTopOf="@id/musicplayer_text"
+            app:layout_constraintBottom_toBottomOf="@id/musicplayer_text"
+            app:layout_constraintStart_toEndOf="@id/center_guide"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintVertical_bias="0.5"
+            app:layout_constraintHorizontal_bias="1.0"
+            app:srcCompat="@drawable/ic_keyboard_arrow_up"
+            app:tint="?attr/colorAccent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/prompt_text"
@@ -159,13 +162,15 @@
         app:layout_constraintHeight_min="48dp"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/musicplayer_icon" />
+        app:layout_constraintTop_toBottomOf="@id/peek_group" />
 
     <View
         android:id="@+id/shadow"
         android:layout_width="match_parent"
         android:layout_height="2dp"
         android:background="@drawable/drop_shadow"
+        android:elevation="4dp"
+        android:outlineProvider="none"
         app:layout_constraintTop_toBottomOf="@id/prompt_text" />
 
     <androidx.recyclerview.widget.RecyclerView
