@@ -5,9 +5,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <permission
-        android:name="com.thewizrd.simplesleeptimer.permission.SLEEP_TIMER"
+        android:name="{$idPrefix}.permission.SLEEP_TIMER"
         android:protectionLevel="signature" />
-    <uses-permission android:name="com.thewizrd.simplesleeptimer.permission.SLEEP_TIMER" />
+    <uses-permission android:name="{$idPrefix}.permission.SLEEP_TIMER" />
 
     <application
         android:name=".App"
@@ -33,7 +33,7 @@
             android:name=".services.TimerService"
             android:exported="true"
             android:enabled="true"
-            android:permission="com.thewizrd.simplesleeptimer.permission.SLEEP_TIMER" />
+            android:permission="{$idPrefix}.permission.SLEEP_TIMER" />
     </application>
 
 </manifest>

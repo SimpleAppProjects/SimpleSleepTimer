@@ -17,10 +17,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.util.ObjectsCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.thewizrd.simplesleeptimer.App
-import com.thewizrd.simplesleeptimer.AppState
-import com.thewizrd.simplesleeptimer.MainActivity
-import com.thewizrd.simplesleeptimer.R
+import com.thewizrd.simplesleeptimer.*
 import com.thewizrd.simplesleeptimer.preferences.Settings
 import com.thewizrd.simplesleeptimer.utils.StringUtils.Companion.isNullOrWhitespace
 import java.util.*
@@ -40,6 +37,8 @@ class TimerService : Service() {
         const val ACTION_TIME_UPDATED = "SimpleSleepTimer.action.TIME_UPDATED"
         const val EXTRA_START_TIME_IN_MS = "SimpleSleepTimer.extra.START_TIME_IN_MS"
         const val EXTRA_TIME_IN_MS = "SimpleSleepTimer.extra.TIME_IN_MS"
+
+        const val PERMISSION_SLEEP_TIMER = BuildConfig.APPLICATION_ID + ".permission.SLEEP_TIMER"
     }
 
     private var timer: CountDownTimer? = null
@@ -161,7 +160,7 @@ class TimerService : Service() {
                         Intent(ACTION_TIME_UPDATED)
                             .putExtra(EXTRA_START_TIME_IN_MS, (timeInMin * 60000).toLong())
                             .putExtra(EXTRA_TIME_IN_MS, millisUntilFinished),
-                        "com.thewizrd.simplesleeptimer.permission.SLEEP_TIMER"
+                        PERMISSION_SLEEP_TIMER
                     )
 
                     mForegroundNotification =
@@ -209,7 +208,7 @@ class TimerService : Service() {
         }
         this.sendBroadcast(
             Intent(ACTION_START_TIMER),
-            "com.thewizrd.simplesleeptimer.permission.SLEEP_TIMER"
+            PERMISSION_SLEEP_TIMER
         )
         timer?.start()
         mIsRunning = true
@@ -219,7 +218,7 @@ class TimerService : Service() {
         if (mIsRunning) {
             this.sendBroadcast(
                 Intent(ACTION_CANCEL_TIMER),
-                "com.thewizrd.simplesleeptimer.permission.SLEEP_TIMER"
+                PERMISSION_SLEEP_TIMER
             )
             mIsRunning = false
         }
