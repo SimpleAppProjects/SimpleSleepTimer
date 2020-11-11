@@ -6,6 +6,10 @@ Just a simple app to pause audio on your phone before you go to bed
 
 <a href='https://play.google.com/store/apps/details?id=com.thewizrd.simplesleeptimer&pcampaignid=MKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png' width=300/></a>
 
+<b>OR</b>
+
+Download the package (.apk) to sideload from <a href="https://github.com/SimpleAppProjects/SimpleSleepTimer/releases">HERE</a>
+
 ## License
 
     Copyright 2020 Dave Antoine
