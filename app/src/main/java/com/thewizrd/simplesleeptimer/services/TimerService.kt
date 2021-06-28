@@ -17,13 +17,13 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.util.ObjectsCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.thewizrd.shared_resources.helpers.AppState
 import com.thewizrd.simplesleeptimer.*
 import com.thewizrd.simplesleeptimer.preferences.Settings
-import com.thewizrd.simplesleeptimer.utils.StringUtils.Companion.isNullOrWhitespace
+import com.thewizrd.simplesleeptimer.wearable.WearableManager
 import java.util.*
 
 class TimerService : Service() {
-
     companion object {
         const val NOT_CHANNEL_ID = "SimpleSleepTimer.timerservice"
 
@@ -37,14 +37,17 @@ class TimerService : Service() {
         const val ACTION_TIME_UPDATED = "SimpleSleepTimer.action.TIME_UPDATED"
         const val EXTRA_START_TIME_IN_MS = "SimpleSleepTimer.extra.START_TIME_IN_MS"
         const val EXTRA_TIME_IN_MS = "SimpleSleepTimer.extra.TIME_IN_MS"
-
-        const val PERMISSION_SLEEP_TIMER = BuildConfig.APPLICATION_ID + ".permission.SLEEP_TIMER"
     }
+
+    private lateinit var mLocalBroadcastMgr: LocalBroadcastManager
 
     private var timer: CountDownTimer? = null
     private var mIsRunning: Boolean = false
     private var mForegroundNotification: Notification? = null
     private var mIsBound: Boolean = false
+
+    // Wearable
+    private lateinit var mWearManager: WearableManager
 
     // Binder given to clients
     private val binder = LocalBinder()
@@ -56,11 +59,14 @@ class TimerService : Service() {
             initChannel()
             startForegroundIfNeeded()
         }
+
+        mLocalBroadcastMgr = LocalBroadcastManager.getInstance(this)
+        mWearManager = WearableManager(this)
     }
 
     private fun startForegroundIfNeeded() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val appState = App.getInstance().getAppState()
+            val appState = App.instance.applicationState
             if (!mIsBound && appState != AppState.FOREGROUND) {
                 startForeground(NOTIFICATION_ID, getForegroundNotification())
             }
@@ -73,23 +79,23 @@ class TimerService : Service() {
         val mNotifyMgr =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         var mChannel = mNotifyMgr.getNotificationChannel(NOT_CHANNEL_ID)
+        val notChannelName = context.getString(R.string.not_channel_name_timer)
 
         if (mChannel == null) {
-            val notChannelName = context.getString(R.string.not_channel_name_timer)
-
             mChannel = NotificationChannel(
                 NOT_CHANNEL_ID,
                 notChannelName,
                 NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                // Configure the notification channel
-                setShowBadge(false)
-                enableLights(false)
-                enableVibration(false)
-                setSound(null, null)
-            }
-            mNotifyMgr.createNotificationChannel(mChannel)
+            )
         }
+
+        // Configure the notification channel
+        mChannel.name = notChannelName
+        mChannel.setShowBadge(false)
+        mChannel.enableLights(false)
+        mChannel.enableVibration(false)
+        mChannel.setSound(null, null)
+        mNotifyMgr.createNotificationChannel(mChannel)
     }
 
     private fun getForegroundNotification(): Notification {
@@ -146,22 +152,18 @@ class TimerService : Service() {
                 val mins = millisUntilFinished % 3600000L / 60000L
                 val secs = (millisUntilFinished / 1000) % 60
 
-                LocalBroadcastManager.getInstance(this@TimerService)
-                    .sendBroadcast(
-                        Intent(ACTION_TIME_UPDATED)
-                            .putExtra(EXTRA_START_TIME_IN_MS, (timeInMin * 60000).toLong())
-                            .putExtra(EXTRA_TIME_IN_MS, millisUntilFinished)
-                    )
+                val startTimeInMs = (timeInMin * 60000).toLong()
+
+                mLocalBroadcastMgr.sendBroadcast(
+                    Intent(ACTION_TIME_UPDATED)
+                        .putExtra(EXTRA_START_TIME_IN_MS, startTimeInMs)
+                        .putExtra(EXTRA_TIME_IN_MS, millisUntilFinished)
+                )
 
                 // Only update notification every second (or so)
                 if ((lastMillisUntilFinished - millisUntilFinished) > 1000) {
                     // Send public broadcast every second
-                    this@TimerService.sendBroadcast(
-                        Intent(ACTION_TIME_UPDATED)
-                            .putExtra(EXTRA_START_TIME_IN_MS, (timeInMin * 60000).toLong())
-                            .putExtra(EXTRA_TIME_IN_MS, millisUntilFinished),
-                        PERMISSION_SLEEP_TIMER
-                    )
+                    sendPublicTimerUpdate(startTimeInMs, millisUntilFinished)
 
                     mForegroundNotification =
                         NotificationCompat.Builder(this@TimerService, NOT_CHANNEL_ID)
@@ -206,20 +208,14 @@ class TimerService : Service() {
                 cancelTimer()
             }
         }
-        this.sendBroadcast(
-            Intent(ACTION_START_TIMER),
-            PERMISSION_SLEEP_TIMER
-        )
+        sendTimerStarted()
         timer?.start()
         mIsRunning = true
     }
 
     private fun cancelTimer() {
         if (mIsRunning) {
-            this.sendBroadcast(
-                Intent(ACTION_CANCEL_TIMER),
-                PERMISSION_SLEEP_TIMER
-            )
+            sendTimerCancelled()
             mIsRunning = false
         }
         timer?.cancel()
@@ -228,6 +224,24 @@ class TimerService : Service() {
         }
         NotificationManagerCompat.from(this@TimerService).cancel(NOTIFICATION_ID)
         stopSelf()
+    }
+
+    private fun sendPublicTimerUpdate(startTimeInMs: Long, millisUntilFinish: Long) {
+        mWearManager.sendSleepTimerUpdate(startTimeInMs, millisUntilFinish)
+    }
+
+    private fun sendTimerStarted() {
+        mLocalBroadcastMgr.sendBroadcast(
+            Intent(ACTION_START_TIMER)
+        )
+        mWearManager.sendSleepTimerStart()
+    }
+
+    private fun sendTimerCancelled() {
+        mLocalBroadcastMgr.sendBroadcast(
+            Intent(ACTION_CANCEL_TIMER)
+        )
+        mWearManager.sendSleepCancelled()
     }
 
     private fun getCancelIntent(context: Context): PendingIntent {
@@ -260,10 +274,10 @@ class TimerService : Service() {
         if (audioPlayerPref != null) {
             val data = audioPlayerPref.split("/")
             if (data.size == 2) {
-                val pkgName = data[0];
-                val activityName = data[1];
+                val pkgName = data[0]
+                val activityName = data[1]
 
-                if (!String.isNullOrWhitespace(pkgName) && !String.isNullOrWhitespace(activityName)) {
+                if (pkgName.isNotBlank() && activityName.isNotBlank()) {
                     // Check if the app has a registered MediaButton BroadcastReceiver
                     val infos = packageManager.queryBroadcastReceivers(
                         Intent(Intent.ACTION_MEDIA_BUTTON).setPackage(pkgName),
@@ -303,7 +317,7 @@ class TimerService : Service() {
         }
     }
 
-    override fun onBind(intent: Intent?): IBinder? {
+    override fun onBind(intent: Intent?): IBinder {
         // Background restrictions don't apply to bound services
         // We can remove the notification now
         mIsBound = true
@@ -327,6 +341,7 @@ class TimerService : Service() {
 
     override fun onDestroy() {
         cancelTimer()
+        mWearManager.unregister()
         super.onDestroy()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)

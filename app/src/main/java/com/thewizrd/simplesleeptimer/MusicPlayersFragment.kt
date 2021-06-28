@@ -18,12 +18,12 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.thewizrd.shared_resources.helpers.RecyclerOnClickListenerInterface
+import com.thewizrd.shared_resources.viewmodels.MusicPlayerViewModel
 import com.thewizrd.simplesleeptimer.adapters.PlayerListAdapter
 import com.thewizrd.simplesleeptimer.databinding.FragmentMusicPlayersBinding
-import com.thewizrd.simplesleeptimer.helpers.RecyclerOnClickListenerInterface
 import com.thewizrd.simplesleeptimer.preferences.Settings
 import com.thewizrd.simplesleeptimer.utils.ActivityUtils
-import com.thewizrd.simplesleeptimer.viewmodels.MusicPlayerViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.*
@@ -39,7 +39,7 @@ class MusicPlayersFragment : Fragment(), BottomSheetCallbackInterface {
     companion object {
         private val _toolbarHeight =
             ActivityUtils.getAttrDimension(
-                App.getInstance().getAppContext(),
+                App.instance.appContext,
                 android.R.attr.actionBarSize
             )
     }
@@ -78,9 +78,9 @@ class MusicPlayersFragment : Fragment(), BottomSheetCallbackInterface {
             override fun onClick(view: View, position: Int) {
                 mBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
                 val selectedItem = playerAdapter.getSelectedItem()
-                if (selectedItem?.mBitmapIcon != null) {
-                    binding.musicplayerIcon.setImageBitmap(selectedItem.mBitmapIcon)
-                    binding.musicplayerText.text = selectedItem.mAppLabel
+                if (selectedItem?.bitmapIcon != null) {
+                    binding.musicplayerIcon.setImageBitmap(selectedItem.bitmapIcon)
+                    binding.musicplayerText.text = selectedItem.appLabel
                     ImageViewCompat.setImageTintList(binding.musicplayerIcon, null)
                 } else {
                     binding.musicplayerIcon.setImageResource(R.drawable.ic_music_note)
@@ -203,10 +203,10 @@ class MusicPlayersFragment : Fragment(), BottomSheetCallbackInterface {
                     }
 
                     playerModels.add(MusicPlayerViewModel().apply {
-                        mAppLabel = label
-                        mPackageName = appInfo.packageName
-                        mActivityName = activityInfo.activityInfo.name
-                        mBitmapIcon = iconBmp
+                        appLabel = label
+                        packageName = appInfo.packageName
+                        activityName = activityInfo.activityInfo.name
+                        bitmapIcon = iconBmp
                     })
                     supportedPlayers.add(key)
                 }
@@ -214,14 +214,14 @@ class MusicPlayersFragment : Fragment(), BottomSheetCallbackInterface {
         }
 
         val playerPref = Settings.getMusicPlayer()
-        val model = playerModels.find { i -> i.getKey() != null && i.getKey() == playerPref }
+        val model = playerModels.find { i -> i.key != null && i.key == playerPref }
 
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Main) {
             playerAdapter.updateItems(playerModels)
 
-            if (playerPref != null && model is MusicPlayerViewModel && model.mBitmapIcon != null) {
-                binding.musicplayerIcon.setImageBitmap(model.mBitmapIcon)
-                binding.musicplayerText.text = model.mAppLabel
+            if (playerPref != null && model is MusicPlayerViewModel && model.bitmapIcon != null) {
+                binding.musicplayerIcon.setImageBitmap(model.bitmapIcon)
+                binding.musicplayerText.text = model.appLabel
                 ImageViewCompat.setImageTintList(binding.musicplayerIcon, null)
             } else {
                 Settings.setMusicPlayer(null)

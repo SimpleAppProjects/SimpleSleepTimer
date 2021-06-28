@@ -7,7 +7,7 @@ import com.thewizrd.simplesleeptimer.App
 class Settings {
     companion object {
         private val preferences: SharedPreferences =
-            App.getInstance().getSharedPreferences("players", Context.MODE_PRIVATE)
+            App.instance.appContext.getSharedPreferences("players", Context.MODE_PRIVATE)
 
         private const val KEY_MUSICPLAYER: String = "key_musicplayer"
 

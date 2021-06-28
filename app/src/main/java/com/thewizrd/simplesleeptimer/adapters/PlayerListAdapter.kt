@@ -5,42 +5,21 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
-import androidx.core.util.ObjectsCompat
 import androidx.core.widget.ImageViewCompat
-import androidx.recyclerview.widget.AsyncListDiffer
-import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.thewizrd.shared_resources.adapters.MusicPlayerItemDiffer
+import com.thewizrd.shared_resources.helpers.RecyclerOnClickListenerInterface
+import com.thewizrd.shared_resources.viewmodels.MusicPlayerViewModel
 import com.thewizrd.simplesleeptimer.R
 import com.thewizrd.simplesleeptimer.databinding.MusicplayerItemBinding
-import com.thewizrd.simplesleeptimer.helpers.RecyclerOnClickListenerInterface
 import com.thewizrd.simplesleeptimer.preferences.Settings
-import com.thewizrd.simplesleeptimer.viewmodels.MusicPlayerViewModel
 
-class PlayerListAdapter : RecyclerView.Adapter<PlayerListAdapter.ViewHolder>() {
-    private var mDiffer: AsyncListDiffer<MusicPlayerViewModel>
+class PlayerListAdapter : ListAdapter<MusicPlayerViewModel, PlayerListAdapter.ViewHolder>(
+    MusicPlayerItemDiffer()
+) {
     private var mCheckedPosition: Int = RecyclerView.NO_POSITION
     private var onClickListener: RecyclerOnClickListenerInterface? = null
-
-    private val diffCallback = object : DiffUtil.ItemCallback<MusicPlayerViewModel>() {
-        override fun areItemsTheSame(
-            oldItem: MusicPlayerViewModel,
-            newItem: MusicPlayerViewModel
-        ): Boolean {
-            return ObjectsCompat.equals(oldItem.mPackageName, newItem.mPackageName) &&
-                    ObjectsCompat.equals(oldItem.mActivityName, newItem.mActivityName)
-        }
-
-        override fun areContentsTheSame(
-            oldItem: MusicPlayerViewModel,
-            newItem: MusicPlayerViewModel
-        ): Boolean {
-            return ObjectsCompat.equals(oldItem, newItem)
-        }
-    }
-
-    init {
-        mDiffer = AsyncListDiffer(this, diffCallback)
-    }
 
     class Payload {
         companion object {
@@ -56,7 +35,7 @@ class PlayerListAdapter : RecyclerView.Adapter<PlayerListAdapter.ViewHolder>() {
         private var binding = MusicplayerItemBinding.bind(itemView)
 
         fun bindModel(viewModel: MusicPlayerViewModel) {
-            if (viewModel.mBitmapIcon == null) {
+            if (viewModel.bitmapIcon == null) {
                 binding.playerIcon.setImageResource(R.drawable.ic_play_circle_filled)
                 ImageViewCompat.setImageTintList(
                     binding.playerIcon,
@@ -68,9 +47,9 @@ class PlayerListAdapter : RecyclerView.Adapter<PlayerListAdapter.ViewHolder>() {
                     )
                 )
             } else {
-                binding.playerIcon.setImageBitmap(viewModel.mBitmapIcon)
+                binding.playerIcon.setImageBitmap(viewModel.bitmapIcon)
             }
-            binding.playerName.text = viewModel.mAppLabel
+            binding.playerName.text = viewModel.appLabel
         }
 
         fun updateRadioButton() {
@@ -92,7 +71,7 @@ class PlayerListAdapter : RecyclerView.Adapter<PlayerListAdapter.ViewHolder>() {
                     notifyItemChanged(oldPosition, Payload.RADIOBUTTON_UPDATE)
                 }
 
-                Settings.setMusicPlayer(getSelectedItem()?.getKey())
+                Settings.setMusicPlayer(getSelectedItem()?.key)
                 onClickListener?.onClick(itemView, adapterPosition)
             }
             itemView.setOnClickListener(clickListener)
@@ -106,12 +85,8 @@ class PlayerListAdapter : RecyclerView.Adapter<PlayerListAdapter.ViewHolder>() {
         return ViewHolder(view)
     }
 
-    override fun getItemCount(): Int {
-        return mDiffer.currentList.size
-    }
-
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bindModel(mDiffer.currentList[position])
+        holder.bindModel(getItem(position))
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int, payloads: MutableList<Any>) {
@@ -130,19 +105,19 @@ class PlayerListAdapter : RecyclerView.Adapter<PlayerListAdapter.ViewHolder>() {
 
     fun updateItems(dataset: List<MusicPlayerViewModel>) {
         val currentPref = Settings.getMusicPlayer()
-        val item = dataset.find { item -> item.getKey() != null && item.getKey() == currentPref }
+        val item = dataset.find { item -> item.key != null && item.key == currentPref }
         mCheckedPosition = if (item != null) {
             dataset.indexOf(item)
         } else {
             RecyclerView.NO_POSITION
         }
 
-        mDiffer.submitList(dataset)
+        submitList(dataset)
     }
 
     fun getSelectedItem(): MusicPlayerViewModel? {
         if (mCheckedPosition != RecyclerView.NO_POSITION) {
-            return mDiffer.currentList[mCheckedPosition]
+            return getItem(mCheckedPosition)
         }
 
         return null

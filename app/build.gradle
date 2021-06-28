@@ -18,7 +18,7 @@ android {
         // that the app's state is completely cleared between tests.
         testInstrumentationRunnerArguments clearPackageData: 'true'
 
-        minSdkVersion 16
+        minSdkVersion 21
         targetSdkVersion 29
         // NOTE: Version Code Format (TargetSDK, Version Name, Build Number, Variant Code (Android: 00, WearOS: 01)
         versionCode 291010200
@@ -33,14 +33,12 @@ android {
             debuggable true
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            manifestPlaceholders = [idPrefix: 'com.thewizrd.simplesleeptimer.debug']
         }
         release {
             minifyEnabled true
             shrinkResources true
             crunchPngs true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            manifestPlaceholders = [idPrefix: 'com.thewizrd.simplesleeptimer']
         }
     }
 
@@ -48,24 +46,51 @@ android {
         dataBinding = true
         viewBinding = true
     }
+
+    compileOptions {
+        // Flag to enable support for the new language APIs
+        //coreLibraryDesugaringEnabled true
+        // Sets Java compatibility to Java 8
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation project(":shared_resources")
+    wearApp project(':wear')
     implementation project(":circularseekbar")
 
-    // JUnit
-    testImplementation 'junit:junit:4.13.1'
+    // Unit Testing
+    androidTestImplementation 'androidx.test:core:1.3.0'
+
+    // AndroidJUnitRunner and JUnit Rules
+    androidTestImplementation 'androidx.test:runner:1.3.0'
+    androidTestImplementation 'androidx.test:rules:1.3.0'
+
+    // Assertions
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+    androidTestImplementation 'androidx.test.ext:truth:1.3.0'
+    androidTestImplementation 'com.google.truth:truth:1.1.3'
 
-    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.4.10'
-    implementation 'androidx.appcompat:appcompat:1.2.0'
-    implementation 'androidx.core:core-ktx:1.3.2'
+    // Kotlin
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.4.32'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.3'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.4.0'
+    implementation 'androidx.core:core-ktx:1.5.0'
+    implementation 'androidx.preference:preference-ktx:1.1.1'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.3.1'
+
+    implementation 'com.google.android.gms:play-services-wearable:17.1.0'
+
+    implementation 'androidx.appcompat:appcompat:1.3.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.2.0"
-
-    implementation 'com.google.android.material:material:1.2.1'
+    implementation 'com.google.android.material:material:1.3.0'
 
     implementation 'androidx.palette:palette-ktx:1.0.0'
 }

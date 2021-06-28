@@ -1,0 +1,34 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="WearAppTheme" parent="Theme.MaterialComponents.NoActionBar.Bridge">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorPrimaryLight</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+
+    <style name="WearAppTheme.Launcher">
+        <item name="android:background">@drawable/ic_splash_screen</item>
+    </style>
+
+    <style name="WearSettingsTheme" parent="Theme.MaterialComponents.NoActionBar.Bridge">
+        <item name="colorAccent">@color/colorPrimaryLight</item>
+    </style>
+
+    <style name="SettingPrefLayoutStyle">
+        <item name="android:background">@drawable/button_noborder</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingEnd">@dimen/inner_layout_padding</item>
+        <item name="android:paddingStart">@dimen/inner_layout_padding</item>
+        <item name="android:clipChildren">false</item>
+        <item name="android:clipToPadding">false</item>
+    </style>
+
+    <style name="WearDialogTheme" parent="@android:style/Theme.DeviceDefault.Dialog">
+        <item name="android:windowBackground">@color/buttonDisabled</item>
+    </style>
+
+</resources>

@@ -9,6 +9,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.util.ObjectsCompat
 import androidx.core.view.ViewCompat
 import androidx.lifecycle.ViewModelProvider
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.thewizrd.simplesleeptimer.databinding.ActivityMainBinding
 import com.thewizrd.simplesleeptimer.services.TimerService
@@ -138,9 +139,10 @@ class MainActivity : AppCompatActivity() {
             addAction(TimerService.ACTION_START_TIMER)
             addAction(TimerService.ACTION_CANCEL_TIMER)
         }
-        registerReceiver(
-            mBroadcastReceiver, filter
-        )
+        LocalBroadcastManager.getInstance(this)
+            .registerReceiver(
+                mBroadcastReceiver, filter
+            )
     }
 
     private fun showStartTimerFragment() {
@@ -170,7 +172,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onPause() {
-        unregisterReceiver(mBroadcastReceiver)
+        LocalBroadcastManager.getInstance(this)
+            .unregisterReceiver(mBroadcastReceiver)
         super.onPause()
     }
 

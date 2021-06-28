@@ -1,3 +1,5 @@
 rootProject.name='SimpleSleepTimer'
 include ':app'
 include ':circularseekbar'
+include ':wear'
+include ':shared_resources'

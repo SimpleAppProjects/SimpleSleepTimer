@@ -7,35 +7,35 @@ import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatDelegate
+import com.thewizrd.shared_resources.ApplicationLib
+import com.thewizrd.shared_resources.SimpleLibrary
+import com.thewizrd.shared_resources.helpers.AppState
 
-class App : Application(), ActivityLifecycleCallbacks {
-    private lateinit var context: Context
-    private lateinit var applicationState: AppState
-    private var mActivitiesStarted: Int = 0
-
+class App : Application(), ApplicationLib, ActivityLifecycleCallbacks {
     companion object {
-        private lateinit var instance: App
-        fun getInstance(): App {
-            return instance
-        }
+        @JvmStatic
+        lateinit var instance: ApplicationLib
+            private set
     }
 
-    fun getAppContext(): Context {
-        return context
-    }
+    override lateinit var appContext: Context
+        private set
+    override lateinit var applicationState: AppState
+        private set
+    override val isPhone: Boolean = true
 
-    fun getAppState(): AppState {
-        return applicationState
-    }
+    private var mActivitiesStarted: Int = 0
 
     override fun onCreate() {
         super.onCreate()
-        context = applicationContext
+        appContext = applicationContext
         instance = this
-
         registerActivityLifecycleCallbacks(this)
         applicationState = AppState.CLOSED
         mActivitiesStarted = 0
+
+        // Init shared library
+        SimpleLibrary.initialize(this)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
@@ -44,8 +44,8 @@ class App : Application(), ActivityLifecycleCallbacks {
     }
 
     override fun onTerminate() {
+        SimpleLibrary.unregister()
         super.onTerminate()
-        unregisterActivityLifecycleCallbacks(this)
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
@@ -57,28 +57,18 @@ class App : Application(), ActivityLifecycleCallbacks {
     }
 
     override fun onActivityStarted(activity: Activity) {
-        if (mActivitiesStarted == 0)
-            applicationState = AppState.FOREGROUND
-
+        if (mActivitiesStarted == 0) applicationState = AppState.FOREGROUND
         mActivitiesStarted++
     }
 
-    override fun onActivityResumed(activity: Activity) {
-    }
-
-    override fun onActivityPaused(activity: Activity) {
-    }
-
+    override fun onActivityResumed(activity: Activity) {}
+    override fun onActivityPaused(activity: Activity) {}
     override fun onActivityStopped(activity: Activity) {
         mActivitiesStarted--
-
-        if (mActivitiesStarted == 0)
-            applicationState = AppState.BACKGROUND
+        if (mActivitiesStarted == 0) applicationState = AppState.BACKGROUND
     }
 
-    override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {
-    }
-
+    override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
     override fun onActivityDestroyed(activity: Activity) {
         if (activity.localClassName.contains("MainActivity")) {
             applicationState = AppState.CLOSED
