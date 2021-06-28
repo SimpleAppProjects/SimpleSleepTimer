@@ -13,12 +13,14 @@ import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.thewizrd.shared_resources.helpers.WearableHelper
 import com.thewizrd.simplesleeptimer.BuildConfig
 import com.thewizrd.simplesleeptimer.R
 import com.thewizrd.simplesleeptimer.databinding.ActivityWearpermissionsBinding
+import com.thewizrd.simplesleeptimer.utils.ActivityUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -39,6 +41,14 @@ class WearPermissionsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityWearpermissionsBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        setSupportActionBar(binding.topAppBar)
+
+        // Fix statusbar
+        ActivityUtils.setStatusBarColor(
+            window,
+            ContextCompat.getColor(this, R.color.colorSurface),
+            true
+        )
 
         binding.companionPairPref.setOnClickListener {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
