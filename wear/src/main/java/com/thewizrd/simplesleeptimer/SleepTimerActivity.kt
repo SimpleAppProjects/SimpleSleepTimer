@@ -48,37 +48,61 @@ class SleepTimerActivity : WearableListenerActivity() {
                                 )
                             )) {
                                 WearConnectionStatus.DISCONNECTED -> {
-                                    // Navigate
-                                    startActivity(
-                                        Intent(
-                                            this@SleepTimerActivity,
-                                            PhoneSyncActivity::class.java
-                                        )
-                                            .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                                    showProgressBar(false)
+                                    binding.fragmentContainer.visibility = View.GONE
+                                    binding.messageView.setText(R.string.status_disconnected)
+                                    binding.messageView.visibility = View.VISIBLE
+                                    binding.messageView.setOnClickListener(null)
+
+                                    supportFragmentManager.popBackStack(
+                                        null,
+                                        FragmentManager.POP_BACK_STACK_INCLUSIVE
                                     )
-                                    finishAffinity()
+                                    for (fragment in supportFragmentManager.fragments) {
+                                        if (fragment != null) {
+                                            supportFragmentManager.beginTransaction()
+                                                .remove(fragment)
+                                                .commit()
+                                        }
+                                    }
                                 }
                                 WearConnectionStatus.APPNOTINSTALLED -> {
-                                    // Open store on remote device
-                                    val intentAndroid = Intent(Intent.ACTION_VIEW)
-                                        .addCategory(Intent.CATEGORY_BROWSABLE)
-                                        .setData(WearableHelper.getPlayStoreURI())
-                                    RemoteIntent.startRemoteActivity(
-                                        this@SleepTimerActivity, intentAndroid,
-                                        ConfirmationResultReceiver(this@SleepTimerActivity)
-                                    )
+                                    showProgressBar(false)
+                                    binding.fragmentContainer.visibility = View.GONE
+                                    binding.messageView.setText(R.string.error_sleeptimer_notinstalled)
+                                    binding.messageView.visibility = View.VISIBLE
+                                    binding.messageView.setOnClickListener {
+                                        val intentapp = Intent(Intent.ACTION_VIEW)
+                                            .addCategory(Intent.CATEGORY_BROWSABLE)
+                                            .setData(SleepTimerHelper.getPlayStoreURI())
 
-                                    // Navigate to sync activity
-                                    startActivity(
-                                        Intent(
-                                            this@SleepTimerActivity,
-                                            PhoneSyncActivity::class.java
+                                        RemoteIntent.startRemoteActivity(
+                                            this@SleepTimerActivity, intentapp,
+                                            ConfirmationResultReceiver(this@SleepTimerActivity)
                                         )
-                                            .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                                    }
+
+                                    supportFragmentManager.popBackStack(
+                                        null,
+                                        FragmentManager.POP_BACK_STACK_INCLUSIVE
                                     )
-                                    finishAffinity()
+                                    for (fragment in supportFragmentManager.fragments) {
+                                        if (fragment != null) {
+                                            supportFragmentManager.beginTransaction()
+                                                .remove(fragment)
+                                                .commit()
+                                        }
+                                    }
                                 }
-                                else -> {
+                                WearConnectionStatus.CONNECTED -> {
+                                    showProgressBar(false)
+                                    binding.fragmentContainer.visibility = View.VISIBLE
+                                    binding.messageView.visibility = View.GONE
+                                    if (supportFragmentManager.findFragmentById(R.id.fragment_container) == null) {
+                                        supportFragmentManager.beginTransaction()
+                                            .replace(R.id.fragment_container, TimerStartFragment())
+                                            .commit()
+                                    }
                                 }
                             }
                         } else if (SleepTimerHelper.SleepTimerStartPath == intent.action) {
@@ -153,43 +177,6 @@ class SleepTimerActivity : WearableListenerActivity() {
 
         lifecycleScope.launch {
             when (messageEvent.path) {
-                SleepTimerHelper.SleepTimerEnabledPath -> {
-                    val isEnabled: Boolean = messageEvent.data.bytesToBool()
-
-                    showProgressBar(false)
-                    if (isEnabled) {
-                        binding.fragmentContainer.visibility = View.VISIBLE
-                        binding.nosleeptimerMessageview.visibility = View.GONE
-                        supportFragmentManager.beginTransaction()
-                            .replace(R.id.fragment_container, TimerStartFragment())
-                            .commit()
-                    } else {
-                        binding.fragmentContainer.visibility = View.GONE
-                        binding.nosleeptimerMessageview.visibility = View.VISIBLE
-                        binding.nosleeptimerMessageview.setOnClickListener {
-                            val intentapp = Intent(Intent.ACTION_VIEW)
-                                .addCategory(Intent.CATEGORY_BROWSABLE)
-                                .setData(SleepTimerHelper.getPlayStoreURI())
-
-                            RemoteIntent.startRemoteActivity(
-                                this@SleepTimerActivity, intentapp,
-                                ConfirmationResultReceiver(this@SleepTimerActivity)
-                            )
-                        }
-
-                        supportFragmentManager.popBackStack(
-                            null,
-                            FragmentManager.POP_BACK_STACK_INCLUSIVE
-                        )
-                        for (fragment in supportFragmentManager.fragments) {
-                            if (fragment != null) {
-                                supportFragmentManager.beginTransaction()
-                                    .remove(fragment)
-                                    .commit()
-                            }
-                        }
-                    }
-                }
                 SleepTimerHelper.SleepTimerStatusPath, SleepTimerHelper.SleepTimerStartPath -> {
                     val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
                     if (fragment !is TimerProgressFragment) {
@@ -238,12 +225,9 @@ class SleepTimerActivity : WearableListenerActivity() {
 
         // Update statuses
         showProgressBar(true)
-        binding.nosleeptimerMessageview.visibility = View.GONE
+        binding.messageView.visibility = View.GONE
         lifecycleScope.launch {
             updateConnectionStatus()
-            if (mPhoneNodeWithApp != null) {
-                sendMessage(mPhoneNodeWithApp!!.id, SleepTimerHelper.SleepTimerEnabledPath, null)
-            }
         }
     }
 

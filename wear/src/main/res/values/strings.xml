@@ -10,7 +10,6 @@
 
     <!-- Setup -->
     <string name="message_gettingstatus">Getting connection status…</string>
-    <string name="error_notinstalled">Install app on device and try again</string>
     <string name="error_syncing">Unable to sync data</string>
 
     <string name="error_permissiondenied">Permission denied for action. Please check permission on phone app</string>

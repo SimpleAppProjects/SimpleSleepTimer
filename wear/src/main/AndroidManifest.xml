@@ -33,11 +33,7 @@
         </activity>
 
         <activity
-            android:name=".PhoneSyncActivity"
-            android:theme="@style/WearAppTheme" />
-        <activity
             android:name=".SleepTimerActivity"
-            android:exported="true"
             android:label="@string/shortcut_label_sleeptimer"
             android:theme="@style/WearAppTheme" />
 
