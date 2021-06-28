@@ -6,10 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioManager
-import android.os.Binder
-import android.os.Build
-import android.os.CountDownTimer
-import android.os.IBinder
+import android.os.*
 import android.view.KeyEvent
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
@@ -17,7 +14,6 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.util.ObjectsCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.thewizrd.shared_resources.helpers.AppState
 import com.thewizrd.simplesleeptimer.*
 import com.thewizrd.simplesleeptimer.preferences.Settings
 import com.thewizrd.simplesleeptimer.wearable.WearableManager
@@ -26,8 +22,6 @@ import java.util.*
 class TimerService : Service() {
     companion object {
         const val NOT_CHANNEL_ID = "SimpleSleepTimer.timerservice"
-
-        const val NOTIFICATION_TAG = "SimpleSleepTimer.timernotification"
         const val NOTIFICATION_ID = 1000
 
         const val ACTION_START_TIMER = "SimpleSleepTimer.action.START_TIMER"
@@ -57,19 +51,16 @@ class TimerService : Service() {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             initChannel()
-            startForegroundIfNeeded()
         }
+        startForegroundIfNeeded()
 
         mLocalBroadcastMgr = LocalBroadcastManager.getInstance(this)
         mWearManager = WearableManager(this)
     }
 
     private fun startForegroundIfNeeded() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val appState = App.instance.applicationState
-            if (!mIsBound && appState != AppState.FOREGROUND) {
-                startForeground(NOTIFICATION_ID, getForegroundNotification())
-            }
+        if (!mIsBound) {
+            startForeground(NOTIFICATION_ID, getForegroundNotification())
         }
     }
 
@@ -138,7 +129,8 @@ class TimerService : Service() {
         } else if (ObjectsCompat.equals(intent?.action, ACTION_CANCEL_TIMER)) {
             cancelTimer()
         }
-        return super.onStartCommand(intent, flags, startId)
+
+        return START_STICKY
     }
 
     private fun startTimer(timeInMin: Int) {
@@ -165,39 +157,44 @@ class TimerService : Service() {
                     // Send public broadcast every second
                     sendPublicTimerUpdate(startTimeInMs, millisUntilFinished)
 
-                    mForegroundNotification =
-                        NotificationCompat.Builder(this@TimerService, NOT_CHANNEL_ID)
-                            .setSmallIcon(R.drawable.ic_hourglass_empty)
-                            .setContentTitle(getString(R.string.title_sleeptimer))
-                            .setContentText(
-                                String.format(
-                                    Locale.ROOT,
-                                    "%02d:%02d:%02d",
-                                    hours,
-                                    mins,
-                                    secs
+                    if (!mIsBound) {
+                        mForegroundNotification =
+                            NotificationCompat.Builder(this@TimerService, NOT_CHANNEL_ID)
+                                .setSmallIcon(R.drawable.ic_hourglass_empty)
+                                .setContentTitle(getString(R.string.title_sleeptimer))
+                                .setContentText(
+                                    String.format(
+                                        Locale.ROOT,
+                                        "%02d:%02d:%02d",
+                                        hours,
+                                        mins,
+                                        secs
+                                    )
                                 )
-                            )
-                            .setColor(
-                                ContextCompat.getColor(
-                                    this@TimerService,
-                                    R.color.colorPrimary
+                                .setColor(
+                                    ContextCompat.getColor(
+                                        this@TimerService,
+                                        R.color.colorPrimary
+                                    )
                                 )
-                            )
-                            .setOngoing(true)
-                            .setOnlyAlertOnce(true)
-                            .setSound(null)
-                            .addAction(
-                                0,
-                                getString(android.R.string.cancel),
-                                getCancelIntent(this@TimerService)
-                            )
-                            .setContentIntent(getClickIntent(this@TimerService))
-                            .setPriority(NotificationCompat.PRIORITY_HIGH)
-                            .build()
+                                .setOngoing(true)
+                                .setOnlyAlertOnce(true)
+                                .setSound(null)
+                                .addAction(
+                                    0,
+                                    getString(android.R.string.cancel),
+                                    getCancelIntent(this@TimerService)
+                                )
+                                .setContentIntent(getClickIntent(this@TimerService))
+                                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                                .build()
 
-                    NotificationManagerCompat.from(this@TimerService)
-                        .notify(NOTIFICATION_ID, mForegroundNotification!!)
+                        NotificationManagerCompat.from(this@TimerService)
+                            .notify(NOTIFICATION_ID, mForegroundNotification!!)
+                    } else {
+                        NotificationManagerCompat.from(this@TimerService)
+                            .cancel(NOTIFICATION_ID)
+                    }
 
                     lastMillisUntilFinished = millisUntilFinished
                 }
@@ -219,10 +216,8 @@ class TimerService : Service() {
             mIsRunning = false
         }
         timer?.cancel()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            stopForeground(STOP_FOREGROUND_DETACH)
-        }
-        NotificationManagerCompat.from(this@TimerService).cancel(NOTIFICATION_ID)
+        stopForeground(true)
+        NotificationManagerCompat.from(this).cancel(NOTIFICATION_ID)
         stopSelf()
     }
 
@@ -262,7 +257,7 @@ class TimerService : Service() {
 
         return PendingIntent.getActivity(
             context.applicationContext,
-            0,
+            1,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT
         )
@@ -321,8 +316,7 @@ class TimerService : Service() {
         // Background restrictions don't apply to bound services
         // We can remove the notification now
         mIsBound = true
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-            stopForeground(true)
+        stopForeground(true)
 
         return binder
     }
@@ -343,9 +337,7 @@ class TimerService : Service() {
         cancelTimer()
         mWearManager.unregister()
         super.onDestroy()
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-            stopForeground(true)
+        stopForeground(true)
     }
 
     override fun onRebind(intent: Intent?) {
@@ -354,8 +346,7 @@ class TimerService : Service() {
 
         // Background restrictions don't apply to bound services
         // We can remove the notification now
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-            stopForeground(true)
+        stopForeground(true)
     }
 
     override fun onUnbind(intent: Intent?): Boolean {
@@ -364,6 +355,6 @@ class TimerService : Service() {
         mIsBound = false
         startForegroundIfNeeded()
 
-        return super.onUnbind(intent)
+        return true // Allow re-binding
     }
 }

@@ -61,8 +61,18 @@ class App : Application(), ApplicationLib, ActivityLifecycleCallbacks {
         mActivitiesStarted++
     }
 
-    override fun onActivityResumed(activity: Activity) {}
-    override fun onActivityPaused(activity: Activity) {}
+    override fun onActivityResumed(activity: Activity) {
+        if (activity.localClassName.contains("MainActivity")) {
+            applicationState = AppState.FOREGROUND
+        }
+    }
+
+    override fun onActivityPaused(activity: Activity) {
+        if (activity.localClassName.contains("MainActivity")) {
+            applicationState = AppState.BACKGROUND
+        }
+    }
+
     override fun onActivityStopped(activity: Activity) {
         mActivitiesStarted--
         if (mActivitiesStarted == 0) applicationState = AppState.BACKGROUND
