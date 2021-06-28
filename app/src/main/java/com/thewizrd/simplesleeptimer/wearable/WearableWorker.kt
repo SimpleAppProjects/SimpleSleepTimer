@@ -5,7 +5,9 @@ import android.util.Log
 import androidx.core.util.Pair
 import androidx.work.*
 import com.thewizrd.shared_resources.helpers.WearableHelper
+import com.thewizrd.shared_resources.sleeptimer.SleepTimerHelper
 import com.thewizrd.shared_resources.utils.JSONParser
+import com.thewizrd.simplesleeptimer.model.TimerDataModel
 
 class WearableWorker(appContext: Context, params: WorkerParameters) :
     CoroutineWorker(appContext, params) {
@@ -34,6 +36,10 @@ class WearableWorker(appContext: Context, params: WorkerParameters) :
                     .putString(KEY_DATA, jsonData)
                     .build()
             )
+        }
+
+        fun sendSleepTimerStatus(context: Context) {
+            startWork(context, SleepTimerHelper.SleepTimerStatusPath)
         }
 
         private fun startWork(context: Context, intentAction: String) {
@@ -66,6 +72,9 @@ class WearableWorker(appContext: Context, params: WorkerParameters) :
                 val pkgName = pair?.first.toString()
                 val activityName = pair?.second.toString()
                 mWearMgr.startMusicPlayer(nodeID, pkgName, activityName)
+            }
+            SleepTimerHelper.SleepTimerStatusPath -> {
+                mWearMgr.sendSleepTimerUpdate(null, TimerDataModel.getDataModel().toModel())
             }
         }
 

@@ -15,6 +15,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.thewizrd.shared_resources.utils.TimerStringFormatter
 import com.thewizrd.simplesleeptimer.*
 import com.thewizrd.simplesleeptimer.model.TimerDataModel
 import com.thewizrd.simplesleeptimer.preferences.Settings
@@ -224,6 +225,7 @@ class TimerService : Service() {
         } else {
             NotificationManagerCompat.from(this).cancel(NOTIFICATION_ID)
         }
+        sendPublicTimerUpdate()
     }
 
     private fun expireTimer() {
@@ -243,15 +245,15 @@ class TimerService : Service() {
         stopSelf()
     }
 
-    private fun sendPublicTimerUpdate(startTimeInMs: Long, millisUntilFinish: Long) {
-        mWearManager.sendSleepTimerUpdate(startTimeInMs, millisUntilFinish)
+    private fun sendPublicTimerUpdate() {
+        mWearManager.sendSleepTimerUpdate(model.toModel())
     }
 
     private fun sendTimerStarted() {
         mLocalBroadcastMgr.sendBroadcast(
             Intent(ACTION_START_TIMER)
         )
-        mWearManager.sendSleepTimerStart()
+        mWearManager.sendSleepTimerStart(model.toModel())
     }
 
     private fun sendTimerCancelled() {

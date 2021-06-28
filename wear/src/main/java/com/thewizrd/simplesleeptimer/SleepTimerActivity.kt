@@ -7,16 +7,17 @@ import android.content.IntentFilter
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import androidx.core.util.Pair
 import androidx.fragment.app.FragmentManager
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.wearable.intent.RemoteIntent
 import com.thewizrd.shared_resources.helpers.WearConnectionStatus
 import com.thewizrd.shared_resources.helpers.WearableHelper
 import com.thewizrd.shared_resources.sleeptimer.SleepTimerHelper
+import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.shared_resources.utils.*
 import com.thewizrd.simplesleeptimer.controls.CustomConfirmationOverlay
 import com.thewizrd.simplesleeptimer.databinding.ActivitySleeptimerBinding
@@ -30,6 +31,9 @@ class SleepTimerActivity : WearableListenerActivity() {
         private set
 
     private lateinit var binding: ActivitySleeptimerBinding
+
+    private val timerModel: TimerModel by viewModels()
+    private val selectedPlayer: SelectedPlayerViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -113,11 +117,6 @@ class SleepTimerActivity : WearableListenerActivity() {
                                         .intToBytes()
                                 )
 
-                                val selectedPlayer = ViewModelProvider(
-                                    this@SleepTimerActivity,
-                                    ViewModelProvider.NewInstanceFactory()
-                                )
-                                    .get(SelectedPlayerViewModel::class.java)
                                 if (selectedPlayer.keyValue != null) {
                                     val data = selectedPlayer.keyValue!!.split("/").toTypedArray()
                                     if (data.size == 2) {
@@ -178,11 +177,33 @@ class SleepTimerActivity : WearableListenerActivity() {
         lifecycleScope.launch {
             when (messageEvent.path) {
                 SleepTimerHelper.SleepTimerStatusPath, SleepTimerHelper.SleepTimerStartPath -> {
+                    val data = JSONParser.deserializer(
+                        messageEvent.data.bytesToString(),
+                        TimerModel::class.java
+                    )
+
+                    data?.let {
+                        if (timerModel.isRunning || it.isRunning != timerModel.isRunning) {
+                            timerModel.updateModel(it)
+                            if (!it.isRunning) {
+                                timerModel.timerLengthInMins = TimerModel.DEFAULT_TIME_MIN
+                            }
+                        }
+                    } ?: return@launch
+
                     val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
-                    if (fragment !is TimerProgressFragment) {
-                        supportFragmentManager.beginTransaction()
-                            .replace(R.id.fragment_container, TimerProgressFragment())
-                            .commit()
+                    if (timerModel.isRunning) {
+                        if (fragment !is TimerProgressFragment) {
+                            supportFragmentManager.beginTransaction()
+                                .replace(R.id.fragment_container, TimerProgressFragment())
+                                .commit()
+                        }
+                    } else {
+                        if (fragment !is TimerStartFragment) {
+                            supportFragmentManager.beginTransaction()
+                                .replace(R.id.fragment_container, TimerStartFragment())
+                                .commit()
+                        }
                     }
                 }
                 SleepTimerHelper.SleepTimerStopPath -> {
@@ -228,6 +249,13 @@ class SleepTimerActivity : WearableListenerActivity() {
         binding.messageView.visibility = View.GONE
         lifecycleScope.launch {
             updateConnectionStatus()
+            requestTimerStatus()
+        }
+    }
+
+    private suspend fun requestTimerStatus() {
+        if (connect()) {
+            sendMessage(mPhoneNodeWithApp!!.id, SleepTimerHelper.SleepTimerStatusPath, null)
         }
     }
 

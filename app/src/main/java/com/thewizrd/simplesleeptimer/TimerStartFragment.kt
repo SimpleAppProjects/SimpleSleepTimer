@@ -1,26 +1,27 @@
 package com.thewizrd.simplesleeptimer
 
 import android.os.Bundle
+import android.text.format.DateUtils
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.activityViewModels
 import androidx.transition.Fade
 import androidx.transition.Slide
 import androidx.transition.TransitionSet
 import com.devadvance.circularseekbar.CircularSeekBar
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.thewizrd.shared_resources.sleeptimer.TimerModel
+import com.thewizrd.shared_resources.utils.TimerStringFormatter
 import com.thewizrd.simplesleeptimer.databinding.FragmentTimerStartBinding
-import com.thewizrd.simplesleeptimer.services.TimerStringFormatter
-import com.thewizrd.simplesleeptimer.viewmodels.SleepTimerViewModel
 
 class TimerStartFragment : Fragment() {
     private lateinit var binding: FragmentTimerStartBinding
     private var fab: FloatingActionButton? = null
 
-    private lateinit var viewModel: SleepTimerViewModel
+    private val timerModel: TimerModel by activityViewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,11 +35,6 @@ class TimerStartFragment : Fragment() {
             .addTransition(Slide(Gravity.TOP))
             .addTransition(Fade(Fade.OUT))
             .setDuration(250)
-
-        viewModel =
-            ViewModelProvider(requireActivity(), ViewModelProvider.NewInstanceFactory()).get(
-                SleepTimerViewModel::class.java
-            )
     }
 
     override fun onCreateView(
@@ -63,7 +59,7 @@ class TimerStartFragment : Fragment() {
                 progress: Int,
                 fromUser: Boolean
             ) {
-                viewModel.progressTimeInMins = progress
+                timerModel.timerLengthInMs = progress * DateUtils.MINUTE_IN_MILLIS
                 setProgressText(progress)
                 if (progress >= 1) {
                     fab?.post { fab?.show() }
@@ -79,8 +75,8 @@ class TimerStartFragment : Fragment() {
             }
         })
 
-        binding.timerProgressScroller.max = SleepTimerViewModel.MAX_TIME_IN_MINS
-        binding.timerProgressScroller.progress = viewModel.progressTimeInMins
+        binding.timerProgressScroller.max = TimerModel.MAX_TIME_IN_MINS
+        binding.timerProgressScroller.progress = timerModel.timerLengthInMins
 
         binding.minus5minbtn.setOnClickListener {
             binding.timerProgressScroller.progress =
@@ -115,9 +111,5 @@ class TimerStartFragment : Fragment() {
                     requireContext(), R.plurals.minutes_short, minutes
                 )
         }
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
     }
 }

@@ -1,9 +1,7 @@
 package com.thewizrd.shared_resources.sleeptimer
 
-import android.content.pm.PackageManager
 import android.net.Uri
 import com.thewizrd.shared_resources.BuildConfig
-import com.thewizrd.shared_resources.SimpleLibrary
 
 object SleepTimerHelper {
     // Link to Play Store listing
@@ -12,8 +10,6 @@ object SleepTimerHelper {
 
     fun getPlayStoreURI(): Uri = Uri.parse(PLAY_STORE_APP_URI)
 
-    // For WearableListenerService
-    const val SleepTimerEnabledPath = "/status/sleeptimer/enabled"
     const val SleepTimerStartPath = "/status/sleeptimer/start"
     const val SleepTimerStopPath = "/status/sleeptimer/stop"
     const val SleepTimerStatusPath = "/status/sleeptimer/status"
@@ -29,12 +25,5 @@ object SleepTimerHelper {
         var packageName = PACKAGE_NAME
         if (BuildConfig.DEBUG) packageName += ".debug"
         return packageName
-    }
-
-    fun isSleepTimerInstalled(): Boolean = try {
-        val context = SimpleLibrary.instance.app.appContext
-        context.packageManager.getApplicationInfo(getPackageName(), 0).enabled
-    } catch (e: PackageManager.NameNotFoundException) {
-        false
     }
 }

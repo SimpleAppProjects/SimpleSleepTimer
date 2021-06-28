@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_name">SimpleSleepTimer</string>
     <string name="title_sleeptimer">Sleep Timer</string>
+
+    <string name="timer_progress_hours_minutes"><xliff:g id="HOURS" example="02h">%1$02dh</xliff:g>:<xliff:g id="MINUTES" example="30m">%2$02dm</xliff:g></string>
+    <string name="label_btn_plus1min">+1M</string>
+    <string name="label_btn_plus5min">+5M</string>
+    <string name="label_btn_minus1min">-1M</string>
+    <string name="label_btn_minus5min">-5M</string>
 </resources>

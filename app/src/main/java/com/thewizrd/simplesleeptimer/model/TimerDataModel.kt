@@ -1,6 +1,7 @@
 package com.thewizrd.simplesleeptimer.model
 
 import android.text.format.DateUtils
+import com.thewizrd.shared_resources.sleeptimer.TimerModel
 
 class TimerDataModel private constructor() {
     companion object {
@@ -33,5 +34,14 @@ class TimerDataModel private constructor() {
         startTimeInMs = 0
         endTimeInMs = 0
         timerLengthInMs = 0
+    }
+
+    fun toModel(): TimerModel {
+        return TimerModel().also { m ->
+            m.isRunning = this.isRunning
+            m.startTimeInMs = this.startTimeInMs
+            m.endTimeInMs = this.endTimeInMs
+            m.timerLengthInMs = this.timerLengthInMs
+        }
     }
 }

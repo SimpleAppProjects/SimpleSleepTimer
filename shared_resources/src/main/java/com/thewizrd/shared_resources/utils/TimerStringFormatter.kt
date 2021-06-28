@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package com.thewizrd.simplesleeptimer.services
+package com.thewizrd.shared_resources.utils
 
 import android.content.Context
 import android.os.Build
 import android.text.format.DateUtils.*
 import androidx.annotation.PluralsRes
-import com.thewizrd.simplesleeptimer.R
+import com.thewizrd.shared_resources.R
 import java.text.NumberFormat
 
 object TimerStringFormatter {

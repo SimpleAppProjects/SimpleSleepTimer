@@ -9,7 +9,7 @@ import android.util.Log
 import android.view.*
 import android.view.View.OnGenericMotionListener
 import androidx.core.view.ViewCompat
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.wear.widget.WearableLinearLayoutManager
@@ -38,7 +38,7 @@ class MusicPlayersFragment : SwipeDismissFragment(), OnDataChangedListener {
     private var timer: CountDownTimer? = null
     private var onClickListener: RecyclerOnClickListenerInterface? = null
 
-    private lateinit var selectedPlayer: SelectedPlayerViewModel
+    private val selectedPlayer: SelectedPlayerViewModel by activityViewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -79,9 +79,6 @@ class MusicPlayersFragment : SwipeDismissFragment(), OnDataChangedListener {
             }
         }
 
-        selectedPlayer =
-            ViewModelProvider(requireActivity(), ViewModelProvider.NewInstanceFactory())
-                .get(SelectedPlayerViewModel::class.java)
         selectedPlayer.key.observe(this, { s ->
             val mapRequest = PutDataMapRequest.create(SleepTimerHelper.SleepTimerAudioPlayerPath)
             mapRequest.dataMap.putString(SleepTimerHelper.KEY_SELECTEDPLAYER, s)

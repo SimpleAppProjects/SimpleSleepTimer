@@ -65,6 +65,9 @@ class WearableDataListenerService : WearableListenerService() {
             SleepTimerHelper.SleepTimerStopPath -> {
                 stopSleepTimer()
             }
+            SleepTimerHelper.SleepTimerStatusPath -> {
+                WearableWorker.sendSleepTimerStatus(this)
+            }
         }
     }
 

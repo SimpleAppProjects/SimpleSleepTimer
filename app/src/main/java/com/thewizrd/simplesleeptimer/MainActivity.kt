@@ -10,16 +10,16 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.simplesleeptimer.databinding.ActivityMainBinding
 import com.thewizrd.simplesleeptimer.services.TimerService
 import com.thewizrd.simplesleeptimer.utils.ActivityUtils
-import com.thewizrd.simplesleeptimer.viewmodels.SleepTimerViewModel
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var mBottomSheetBehavior: BottomSheetBehavior<View>
 
-    private val viewModel: SleepTimerViewModel by viewModels()
+    private val timerModel: TimerModel by viewModels()
 
     private lateinit var mTimerBinder: TimerService.LocalBinder
     private var mBound: Boolean = false
@@ -92,7 +92,7 @@ class MainActivity : AppCompatActivity() {
                     applicationContext.startService(
                         Intent(applicationContext, TimerService::class.java)
                             .setAction(TimerService.ACTION_START_TIMER)
-                            .putExtra(TimerService.EXTRA_TIME_IN_MINS, viewModel.progressTimeInMins)
+                            .putExtra(TimerService.EXTRA_TIME_IN_MINS, timerModel.timerLengthInMins)
                     )
                 }
             }

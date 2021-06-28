@@ -3,6 +3,7 @@ package com.thewizrd.simplesleeptimer
 import android.content.Intent
 import android.os.Bundle
 import android.support.wearable.input.RotaryEncoder
+import android.text.format.DateUtils
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -11,24 +12,23 @@ import android.view.ViewGroup
 import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.activityViewModels
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.devadvance.circularseekbar.CircularSeekBar
 import com.devadvance.circularseekbar.CircularSeekBar.OnCircularSeekBarChangeListener
 import com.thewizrd.shared_resources.sleeptimer.SleepTimerHelper
-import com.thewizrd.simplesleeptimer.controls.SleepTimerViewModel
+import com.thewizrd.shared_resources.sleeptimer.TimerModel
+import com.thewizrd.shared_resources.utils.TimerStringFormatter
 import com.thewizrd.simplesleeptimer.databinding.FragmentSleeptimerStartBinding
 
 class TimerStartFragment : Fragment() {
     private lateinit var binding: FragmentSleeptimerStartBinding
-    private lateinit var viewModel: SleepTimerViewModel
     private lateinit var backPressedCallback: OnBackPressedCallback
+
+    private val timerModel: TimerModel by activityViewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        viewModel = ViewModelProvider(this, ViewModelProvider.NewInstanceFactory())
-            .get(SleepTimerViewModel::class.java)
 
         backPressedCallback = object : OnBackPressedCallback(false) {
             override fun handleOnBackPressed() {
@@ -49,7 +49,7 @@ class TimerStartFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         binding = FragmentSleeptimerStartBinding.inflate(inflater, container, false)
 
         binding.timerProgressScroller.shouldSaveColorState = false
@@ -60,7 +60,7 @@ class TimerStartFragment : Fragment() {
                 progress: Int,
                 fromUser: Boolean
             ) {
-                viewModel.progressTimeInMins = progress
+                timerModel.timerLengthInMs = progress * DateUtils.MINUTE_IN_MILLIS
                 setProgressText(progress)
                 binding.fab.post {
                     if (progress >= 1) {
@@ -101,8 +101,8 @@ class TimerStartFragment : Fragment() {
         })
         binding.timerProgressScroller.requestFocus()
 
-        binding.timerProgressScroller.max = SleepTimerViewModel.MAX_TIME_IN_MINS
-        binding.timerProgressScroller.progress = viewModel.progressTimeInMins
+        binding.timerProgressScroller.max = TimerModel.MAX_TIME_IN_MINS
+        binding.timerProgressScroller.progress = timerModel.timerLengthInMins
 
         binding.minus5minbtn.setOnClickListener {
             binding.timerProgressScroller.progress =
@@ -131,7 +131,7 @@ class TimerStartFragment : Fragment() {
             LocalBroadcastManager.getInstance(requireContext())
                 .sendBroadcast(
                     Intent(SleepTimerHelper.SleepTimerStartPath)
-                        .putExtra(SleepTimerHelper.EXTRA_TIME_IN_MINS, viewModel.progressTimeInMins)
+                        .putExtra(SleepTimerHelper.EXTRA_TIME_IN_MINS, timerModel.timerLengthInMins)
                 )
         }
 
@@ -167,10 +167,12 @@ class TimerStartFragment : Fragment() {
 
         if (hours > 0) {
             binding.progressText.text =
-                requireContext().getString(R.string.progress_text_hrmin, hours, minutes)
+                getString(R.string.timer_progress_hours_minutes, hours, minutes)
         } else {
             binding.progressText.text =
-                requireContext().getString(R.string.progress_text_min, minutes)
+                TimerStringFormatter.getNumberFormattedQuantityString(
+                    requireContext(), R.plurals.minutes_short, minutes
+                )
         }
     }
 }

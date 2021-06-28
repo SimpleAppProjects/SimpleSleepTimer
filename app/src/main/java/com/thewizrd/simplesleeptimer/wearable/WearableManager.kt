@@ -15,7 +15,9 @@ import com.google.android.gms.wearable.*
 import com.google.android.gms.wearable.CapabilityClient.OnCapabilityChangedListener
 import com.thewizrd.shared_resources.helpers.WearableHelper
 import com.thewizrd.shared_resources.sleeptimer.SleepTimerHelper
+import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.shared_resources.utils.ImageUtils
+import com.thewizrd.shared_resources.utils.JSONParser
 import com.thewizrd.shared_resources.utils.booleanToBytes
 import com.thewizrd.shared_resources.utils.stringToBytes
 import kotlinx.coroutines.*
@@ -158,31 +160,31 @@ class WearableManager(private val mContext: Context) : OnCapabilityChangedListen
         }
     }
 
-    fun sendSleepTimerStart() {
+    fun sendSleepTimerStart(model: TimerModel) {
         scope.launch {
-            if (mWearNodesWithApp.isNullOrEmpty()) return@launch
-            sendMessage(null, SleepTimerHelper.SleepTimerStartPath, null)
+            sendMessage(
+                null, SleepTimerHelper.SleepTimerStartPath,
+                JSONParser.serializer(model, TimerModel::class.java).stringToBytes()
+            )
         }
     }
 
-    fun sendSleepTimerUpdate(timeStartInMillis: Long, timeInMillis: Long) {
+    fun sendSleepTimerUpdate(model: TimerModel) {
         scope.launch {
-            if (mWearNodesWithApp.isNullOrEmpty()) return@launch
-            sendSleepTimerUpdate(null, timeStartInMillis, timeInMillis)
+            sendSleepTimerUpdate(null, model)
         }
     }
 
     fun sendSleepCancelled() {
         scope.launch {
-            if (mWearNodesWithApp.isNullOrEmpty()) return@launch
             sendMessage(null, SleepTimerHelper.SleepTimerStopPath, null)
         }
     }
 
-    suspend fun sendSleepTimerUpdate(nodeID: String?, timeStartInMillis: Long, timeInMillis: Long) {
+    suspend fun sendSleepTimerUpdate(nodeID: String?, model: TimerModel) {
         sendMessage(
             nodeID, SleepTimerHelper.SleepTimerStatusPath,
-            String.format(Locale.ROOT, "%d;%d", timeStartInMillis, timeInMillis).stringToBytes()
+            JSONParser.serializer(model, TimerModel::class.java).stringToBytes()
         )
     }
 

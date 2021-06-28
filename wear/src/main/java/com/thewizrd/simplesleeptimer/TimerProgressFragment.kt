@@ -2,29 +2,29 @@ package com.thewizrd.simplesleeptimer
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.SystemClock
+import android.text.format.DateUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
+import androidx.fragment.app.activityViewModels
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.google.android.gms.wearable.MessageClient.OnMessageReceivedListener
-import com.google.android.gms.wearable.MessageEvent
-import com.google.android.gms.wearable.Wearable
 import com.thewizrd.shared_resources.sleeptimer.SleepTimerHelper
-import com.thewizrd.shared_resources.utils.bytesToString
+import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.simplesleeptimer.databinding.FragmentSleeptimerStopBinding
-import kotlinx.coroutines.launch
 import java.util.*
 
-class TimerProgressFragment : Fragment(), OnMessageReceivedListener {
+class TimerProgressFragment : Fragment() {
     private lateinit var binding: FragmentSleeptimerStopBinding
+
+    private val timerModel: TimerModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         binding = FragmentSleeptimerStopBinding.inflate(inflater, container, false)
 
         binding.timerProgressScroller.isTouchEnabled = false
@@ -38,20 +38,14 @@ class TimerProgressFragment : Fragment(), OnMessageReceivedListener {
         return binding.root
     }
 
-    override fun onMessageReceived(messageEvent: MessageEvent) {
-        viewLifecycleOwner.lifecycleScope.launch {
-            // stringToBytes(String.format(Locale.ROOT, "%d;%d", timeStartInMillis, timeInMillis)));
-            if (messageEvent.data != null && messageEvent.path == SleepTimerHelper.SleepTimerStatusPath) {
-                val data: String = messageEvent.data.bytesToString()
-                val datas = data.split(";").toTypedArray()
-                val startTimeMs = datas[0].toLong()
-                val progressMs = datas[1].toLong()
+    override fun onStart() {
+        super.onStart()
+        startUpdatingTime()
+    }
 
-                binding.timerProgressScroller.max = startTimeMs.toInt()
-                binding.timerProgressScroller.progress = (startTimeMs - progressMs).toInt()
-                setProgressText(progressMs)
-            }
-        }
+    override fun onStop() {
+        stopUpdatingTime()
+        super.onStop()
     }
 
     private fun setProgressText(progressMs: Long) {
@@ -73,14 +67,30 @@ class TimerProgressFragment : Fragment(), OnMessageReceivedListener {
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        Wearable.getMessageClient(requireActivity()).addListener(this)
+    private fun startUpdatingTime() {
+        stopUpdatingTime()
+        binding.root.post(updateRunnable)
     }
 
-    override fun onPause() {
-        Wearable.getMessageClient(requireActivity()).removeListener(this)
-        super.onPause()
+    private fun stopUpdatingTime() {
+        binding.root.removeCallbacks(updateRunnable)
     }
 
+    private val updateRunnable = object : Runnable {
+        override fun run() {
+            val startTime = SystemClock.elapsedRealtime()
+            // If no timers require continuous updates, avoid scheduling the next update.
+            if (!timerModel.isRunning) {
+                return
+            } else {
+                setProgressText(timerModel.remainingTimeInMs + DateUtils.SECOND_IN_MILLIS)
+                binding.timerProgressScroller.max = timerModel.timerLengthInMs.toInt()
+                binding.timerProgressScroller.progress =
+                    (timerModel.timerLengthInMs - timerModel.remainingTimeInMs).toInt()
+            }
+            val endTime = SystemClock.elapsedRealtime()
+
+            binding.root.postOnAnimationDelayed(this, startTime + 20 - endTime)
+        }
+    }
 }
