@@ -6,12 +6,14 @@ import android.app.Application.ActivityLifecycleCallbacks
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.work.Configuration
 import com.thewizrd.shared_resources.ApplicationLib
 import com.thewizrd.shared_resources.SimpleLibrary
 import com.thewizrd.shared_resources.helpers.AppState
 
-class App : Application(), ApplicationLib, ActivityLifecycleCallbacks {
+class App : Application(), ApplicationLib, ActivityLifecycleCallbacks, Configuration.Provider {
     companion object {
         @JvmStatic
         lateinit var instance: ApplicationLib
@@ -83,5 +85,11 @@ class App : Application(), ApplicationLib, ActivityLifecycleCallbacks {
         if (activity.localClassName.contains("MainActivity")) {
             applicationState = AppState.CLOSED
         }
+    }
+
+    override fun getWorkManagerConfiguration(): Configuration {
+        return Configuration.Builder()
+            .setMinimumLoggingLevel(if (BuildConfig.DEBUG) Log.DEBUG else Log.INFO)
+            .build()
     }
 }

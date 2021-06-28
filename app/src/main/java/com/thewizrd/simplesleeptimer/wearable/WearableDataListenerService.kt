@@ -2,17 +2,15 @@ package com.thewizrd.simplesleeptimer.wearable
 
 import android.content.Intent
 import androidx.core.content.ContextCompat
-import androidx.core.util.Pair
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
 import com.thewizrd.shared_resources.helpers.WearableHelper
 import com.thewizrd.shared_resources.sleeptimer.SleepTimerHelper
-import com.thewizrd.shared_resources.utils.*
+import com.thewizrd.shared_resources.utils.bytesToInt
+import com.thewizrd.shared_resources.utils.bytesToString
 import com.thewizrd.simplesleeptimer.MainActivity
 import com.thewizrd.simplesleeptimer.services.TimerService
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 
 class WearableDataListenerService : WearableListenerService() {
     companion object {
@@ -34,53 +32,39 @@ class WearableDataListenerService : WearableListenerService() {
     }
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
-        runBlocking(Dispatchers.Default) {
-            val ctx = this@WearableDataListenerService
-
-            when (messageEvent.path) {
-                WearableHelper.StartActivityPath -> {
-                    val startIntent = Intent(ctx, MainActivity::class.java)
-                        .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                    startActivity(startIntent)
-                }
-                WearableHelper.StartPermissionsActivityPath -> {
-                    val startIntent = Intent(ctx, WearPermissionsActivity::class.java)
-                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    startActivity(startIntent)
-                }
-                WearableHelper.MusicPlayersPath -> {
-                    mWearMgr.sendSupportedMusicPlayers()
-                }
-                WearableHelper.OpenMusicPlayerPath -> {
-                    val jsonData = messageEvent.data.bytesToString()
-                    val pair = JSONParser.deserializer(jsonData, Pair::class.java)
-                    val pkgName = pair?.first.toString()
-                    val activityName = pair?.second.toString()
-                    mWearMgr.startMusicPlayer(messageEvent.sourceNodeId, pkgName, activityName)
-                }
-                WearableHelper.BtDiscoverPath -> {
-                    val deviceName = messageEvent.data.bytesToString()
-                    LocalBroadcastManager.getInstance(ctx)
-                        .sendBroadcast(
-                            Intent(ACTION_GETCONNECTEDNODE)
-                                .putExtra(EXTRA_NODEDEVICENAME, deviceName)
-                        )
-                }
-                SleepTimerHelper.SleepTimerEnabledPath -> {
-                    mWearMgr.sendMessage(
-                        messageEvent.sourceNodeId, SleepTimerHelper.SleepTimerEnabledPath,
-                        SleepTimerHelper.isSleepTimerInstalled().booleanToBytes()
-                    )
-                }
-                SleepTimerHelper.SleepTimerStartPath -> {
-                    val timeInMins = messageEvent.data.bytesToInt()
-                    timeInMins?.let { startSleepTimer(it) }
-                }
-                SleepTimerHelper.SleepTimerStopPath -> {
-                    stopSleepTimer()
-                }
+        when (messageEvent.path) {
+            WearableHelper.StartActivityPath -> {
+                val startIntent = Intent(this, MainActivity::class.java)
+                    .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                startActivity(startIntent)
             }
-            return@runBlocking
+            WearableHelper.StartPermissionsActivityPath -> {
+                val startIntent = Intent(this, WearPermissionsActivity::class.java)
+                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(startIntent)
+            }
+            WearableHelper.MusicPlayersPath -> {
+                WearableWorker.sendSupportedMusicPlayers(this)
+            }
+            WearableHelper.OpenMusicPlayerPath -> {
+                val jsonData = messageEvent.data.bytesToString()
+                WearableWorker.startMusicPlayer(this, messageEvent.sourceNodeId, jsonData)
+            }
+            WearableHelper.BtDiscoverPath -> {
+                val deviceName = messageEvent.data.bytesToString()
+                LocalBroadcastManager.getInstance(this)
+                    .sendBroadcast(
+                        Intent(ACTION_GETCONNECTEDNODE)
+                            .putExtra(EXTRA_NODEDEVICENAME, deviceName)
+                    )
+            }
+            SleepTimerHelper.SleepTimerStartPath -> {
+                val timeInMins = messageEvent.data.bytesToInt()
+                timeInMins?.let { startSleepTimer(it) }
+            }
+            SleepTimerHelper.SleepTimerStopPath -> {
+                stopSleepTimer()
+            }
         }
     }
 

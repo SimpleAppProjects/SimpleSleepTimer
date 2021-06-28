@@ -46,6 +46,9 @@ class TimerService : Service() {
     // Binder given to clients
     private val binder = LocalBinder()
 
+    private val timerThread = HandlerThread("timer")
+    private lateinit var timerHandler: Handler
+
     override fun onCreate() {
         super.onCreate()
 
@@ -56,6 +59,8 @@ class TimerService : Service() {
 
         mLocalBroadcastMgr = LocalBroadcastManager.getInstance(this)
         mWearManager = WearableManager(this)
+        timerThread.start()
+        timerHandler = Handler(timerThread.looper)
     }
 
     private fun startForegroundIfNeeded() {
@@ -134,80 +139,82 @@ class TimerService : Service() {
     }
 
     private fun startTimer(timeInMin: Int) {
-        timer?.cancel()
-        timer = object : CountDownTimer((timeInMin * 60000).toLong(), 1) {
-            private var lastMillisUntilFinished: Long = (timeInMin * 60000).toLong()
+        timerHandler.post {
+            timer?.cancel()
+            timer = object : CountDownTimer((timeInMin * 60000).toLong(), 1) {
+                private var lastMillisUntilFinished: Long = (timeInMin * 60000).toLong()
 
-            override fun onTick(millisUntilFinished: Long) {
-                mIsRunning = true
-                val hours = millisUntilFinished / 3600000L
-                val mins = millisUntilFinished % 3600000L / 60000L
-                val secs = (millisUntilFinished / 1000) % 60
+                override fun onTick(millisUntilFinished: Long) {
+                    mIsRunning = true
+                    val hours = millisUntilFinished / 3600000L
+                    val mins = millisUntilFinished % 3600000L / 60000L
+                    val secs = (millisUntilFinished / 1000) % 60
 
-                val startTimeInMs = (timeInMin * 60000).toLong()
+                    val startTimeInMs = (timeInMin * 60000).toLong()
 
-                mLocalBroadcastMgr.sendBroadcast(
-                    Intent(ACTION_TIME_UPDATED)
-                        .putExtra(EXTRA_START_TIME_IN_MS, startTimeInMs)
-                        .putExtra(EXTRA_TIME_IN_MS, millisUntilFinished)
-                )
+                    mLocalBroadcastMgr.sendBroadcast(
+                        Intent(ACTION_TIME_UPDATED)
+                            .putExtra(EXTRA_START_TIME_IN_MS, startTimeInMs)
+                            .putExtra(EXTRA_TIME_IN_MS, millisUntilFinished)
+                    )
 
-                // Only update notification every second (or so)
-                if ((lastMillisUntilFinished - millisUntilFinished) > 1000) {
-                    // Send public broadcast every second
-                    sendPublicTimerUpdate(startTimeInMs, millisUntilFinished)
+                    // Only update notification every second (or so)
+                    if ((lastMillisUntilFinished - millisUntilFinished) > 1000) {
+                        // Send public broadcast every second
+                        sendPublicTimerUpdate(startTimeInMs, millisUntilFinished)
 
-                    if (!mIsBound) {
-                        mForegroundNotification =
-                            NotificationCompat.Builder(this@TimerService, NOT_CHANNEL_ID)
-                                .setSmallIcon(R.drawable.ic_hourglass_empty)
-                                .setContentTitle(getString(R.string.title_sleeptimer))
-                                .setContentText(
-                                    String.format(
-                                        Locale.ROOT,
-                                        "%02d:%02d:%02d",
-                                        hours,
-                                        mins,
-                                        secs
+                        if (!mIsBound) {
+                            mForegroundNotification =
+                                NotificationCompat.Builder(this@TimerService, NOT_CHANNEL_ID)
+                                    .setSmallIcon(R.drawable.ic_hourglass_empty)
+                                    .setContentTitle(getString(R.string.title_sleeptimer))
+                                    .setContentText(
+                                        String.format(
+                                            Locale.ROOT,
+                                            "%02d:%02d:%02d",
+                                            hours,
+                                            mins,
+                                            secs
+                                        )
                                     )
-                                )
-                                .setColor(
-                                    ContextCompat.getColor(
-                                        this@TimerService,
-                                        R.color.colorPrimary
+                                    .setColor(
+                                        ContextCompat.getColor(
+                                            this@TimerService,
+                                            R.color.colorPrimary
+                                        )
                                     )
-                                )
-                                .setOngoing(true)
-                                .setOnlyAlertOnce(true)
-                                .setSound(null)
-                                .addAction(
-                                    0,
-                                    getString(android.R.string.cancel),
-                                    getCancelIntent(this@TimerService)
-                                )
-                                .setContentIntent(getClickIntent(this@TimerService))
-                                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                                .build()
+                                    .setOngoing(true)
+                                    .setOnlyAlertOnce(true)
+                                    .setSound(null)
+                                    .addAction(
+                                        0,
+                                        getString(android.R.string.cancel),
+                                        getCancelIntent(this@TimerService)
+                                    )
+                                    .setContentIntent(getClickIntent(this@TimerService))
+                                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                                    .build()
 
-                        NotificationManagerCompat.from(this@TimerService)
-                            .notify(NOTIFICATION_ID, mForegroundNotification!!)
-                    } else {
-                        NotificationManagerCompat.from(this@TimerService)
-                            .cancel(NOTIFICATION_ID)
+                            NotificationManagerCompat.from(this@TimerService)
+                                .notify(NOTIFICATION_ID, mForegroundNotification!!)
+                        } else {
+                            NotificationManagerCompat.from(this@TimerService)
+                                .cancel(NOTIFICATION_ID)
+                        }
+
+                        lastMillisUntilFinished = millisUntilFinished
                     }
+                }
 
-                    lastMillisUntilFinished = millisUntilFinished
+                override fun onFinish() {
+                    pauseMusicAction()
+                    cancelTimer()
                 }
             }
-
-            override fun onFinish() {
-                pauseMusicAction()
-                cancelTimer()
-            }
+            sendTimerStarted()
+            timer?.start()
+            mIsRunning = true
         }
-        sendTimerStarted()
-        timer?.start()
-        mIsRunning = true
     }
 
     private fun cancelTimer() {
@@ -301,15 +308,9 @@ class TimerService : Service() {
         }
 
         // Send pause event to which ever player has audio focus
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            val audioMan = this.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-            val event = KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE)
-            audioMan.dispatchMediaKeyEvent(event)
-        } else {
-            val intent = Intent("com.android.music.musicservicecommand")
-            intent.putExtra("command", "pause")
-            this.sendBroadcast(intent)
-        }
+        val audioMan = this.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        val event = KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE)
+        audioMan.dispatchMediaKeyEvent(event)
     }
 
     override fun onBind(intent: Intent?): IBinder {
@@ -336,6 +337,8 @@ class TimerService : Service() {
     override fun onDestroy() {
         cancelTimer()
         mWearManager.unregister()
+        timerHandler.removeCallbacksAndMessages(null)
+        timerThread.quit()
         super.onDestroy()
         stopForeground(true)
     }
