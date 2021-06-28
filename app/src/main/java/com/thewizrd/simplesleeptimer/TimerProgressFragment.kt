@@ -1,29 +1,23 @@
 package com.thewizrd.simplesleeptimer
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.os.Bundle
+import android.os.SystemClock
+import android.text.format.DateUtils
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.util.ObjectsCompat
 import androidx.fragment.app.Fragment
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.transition.Fade
 import androidx.transition.Slide
 import androidx.transition.TransitionSet
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.thewizrd.simplesleeptimer.databinding.FragmentTimerProgressBinding
-import com.thewizrd.simplesleeptimer.services.TimerService
+import com.thewizrd.simplesleeptimer.model.TimerDataModel
 
 class TimerProgressFragment : Fragment() {
     private lateinit var binding: FragmentTimerProgressBinding
     private var fab: FloatingActionButton? = null
-
-    private lateinit var mBroadcastReceiver: BroadcastReceiver
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,7 +36,7 @@ class TimerProgressFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         binding = FragmentTimerProgressBinding.inflate(inflater, container, false)
         fab = requireActivity().findViewById(R.id.fab)
 
@@ -59,49 +53,64 @@ class TimerProgressFragment : Fragment() {
         fab?.setImageResource(R.drawable.ic_stop)
     }
 
-    override fun onResume() {
-        super.onResume()
-        mBroadcastReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                if (ObjectsCompat.equals(intent?.action, TimerService.ACTION_TIME_UPDATED)) {
-                    val progressMs = intent?.getLongExtra(TimerService.EXTRA_TIME_IN_MS, 0) ?: 0
-                    val startTimeMs =
-                        intent?.getLongExtra(TimerService.EXTRA_START_TIME_IN_MS, 0) ?: 0
-
-                    binding.timerProgressBar.max = startTimeMs.toInt()
-                    binding.timerProgressBar.progress = (startTimeMs - progressMs).toInt()
-                    setProgressText(progressMs)
-                }
-            }
-        }
-        LocalBroadcastManager.getInstance(requireContext())
-            .registerReceiver(
-                mBroadcastReceiver,
-                IntentFilter(TimerService.ACTION_TIME_UPDATED)
-            )
+    override fun onStart() {
+        super.onStart()
+        startUpdatingTime()
     }
 
-    override fun onPause() {
-        LocalBroadcastManager.getInstance(requireContext())
-            .unregisterReceiver(mBroadcastReceiver)
-        super.onPause()
+    override fun onStop() {
+        stopUpdatingTime()
+        super.onStop()
     }
 
     fun setProgressText(progressMs: Long) {
-        val hours = progressMs / 3600000L
-        val mins = progressMs % 3600000L / 60000L
+        val hours = progressMs / DateUtils.HOUR_IN_MILLIS
+        val mins = progressMs % DateUtils.HOUR_IN_MILLIS / DateUtils.MINUTE_IN_MILLIS
         val secs = (progressMs / 1000) % 60
 
-        if (hours > 0) {
-            binding.progressText.text = String.format("%02d:%02d:%02d", hours, mins, secs)
-        } else if (mins > 0) {
-            binding.progressText.text = String.format("%02d:%02d", mins, secs)
-        } else {
-            binding.progressText.text = String.format("%02d", secs)
+        when {
+            hours > 0 -> {
+                binding.progressText.text = String.format("%02d:%02d:%02d", hours, mins, secs)
+            }
+            mins > 0 -> {
+                binding.progressText.text = String.format("%02d:%02d", mins, secs)
+            }
+            else -> {
+                binding.progressText.text = String.format("%02d", secs)
+            }
         }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+    }
+
+    private fun startUpdatingTime() {
+        stopUpdatingTime()
+        binding.root.post(updateRunnable)
+    }
+
+    private fun stopUpdatingTime() {
+        binding.root.removeCallbacks(updateRunnable)
+    }
+
+    private val updateRunnable = object : Runnable {
+        private val model = TimerDataModel.getDataModel()
+
+        override fun run() {
+            val startTime = SystemClock.elapsedRealtime()
+            // If no timers require continuous updates, avoid scheduling the next update.
+            if (!model.isRunning) {
+                return
+            } else {
+                setProgressText(model.remainingTimeInMs + DateUtils.SECOND_IN_MILLIS)
+                binding.timerProgressBar.max = model.timerLengthInMs.toInt()
+                binding.timerProgressBar.progress =
+                    (model.timerLengthInMs - model.remainingTimeInMs).toInt()
+            }
+            val endTime = SystemClock.elapsedRealtime()
+
+            binding.root.postOnAnimationDelayed(this, startTime + 20 - endTime)
+        }
     }
 }

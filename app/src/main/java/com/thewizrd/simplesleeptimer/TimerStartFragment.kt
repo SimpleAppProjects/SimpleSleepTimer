@@ -13,6 +13,7 @@ import androidx.transition.TransitionSet
 import com.devadvance.circularseekbar.CircularSeekBar
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.thewizrd.simplesleeptimer.databinding.FragmentTimerStartBinding
+import com.thewizrd.simplesleeptimer.services.TimerStringFormatter
 import com.thewizrd.simplesleeptimer.viewmodels.SleepTimerViewModel
 
 class TimerStartFragment : Fragment() {
@@ -44,7 +45,7 @@ class TimerStartFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         binding = FragmentTimerStartBinding.inflate(inflater, container, false)
         fab = activity?.findViewById(R.id.fab)
 
@@ -106,13 +107,13 @@ class TimerStartFragment : Fragment() {
         val minutes = progress - (hours * 60)
 
         if (hours > 0) {
-            binding.progressText.text = String.format("%02dh:%02dm", hours, minutes)
+            binding.progressText.text =
+                getString(R.string.timer_progress_hours_minutes, hours, minutes)
         } else {
-            binding.progressText.text = String.format(
-                "%02d %s",
-                minutes,
-                if (minutes == 1) getString(R.string.minute) else getString(R.string.minutes)
-            )
+            binding.progressText.text =
+                TimerStringFormatter.getNumberFormattedQuantityString(
+                    requireContext(), R.plurals.minutes_short, minutes
+                )
         }
     }
 

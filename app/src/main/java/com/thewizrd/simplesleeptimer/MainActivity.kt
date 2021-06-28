@@ -4,11 +4,10 @@ import android.content.*
 import android.os.Bundle
 import android.os.IBinder
 import android.view.View
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.core.util.ObjectsCompat
 import androidx.core.view.ViewCompat
-import androidx.lifecycle.ViewModelProvider
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.thewizrd.simplesleeptimer.databinding.ActivityMainBinding
@@ -20,7 +19,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var mBottomSheetBehavior: BottomSheetBehavior<View>
 
-    private lateinit var viewModel: SleepTimerViewModel
+    private val viewModel: SleepTimerViewModel by viewModels()
 
     private lateinit var mTimerBinder: TimerService.LocalBinder
     private var mBound: Boolean = false
@@ -99,11 +98,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        viewModel = ViewModelProvider(
-            this,
-            ViewModelProvider.NewInstanceFactory()
-        ).get(SleepTimerViewModel::class.java)
-
         // Start fragment
         val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
         if (fragment == null) {
@@ -121,16 +115,19 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         mBroadcastReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                if (ObjectsCompat.equals(intent?.action, TimerService.ACTION_START_TIMER)) {
-                    val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
-                    if (fragment !is TimerProgressFragment) {
-                        showTimerProgressFragment()
+            override fun onReceive(context: Context, intent: Intent?) {
+                val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
+
+                when (intent?.action) {
+                    TimerService.ACTION_START_TIMER -> {
+                        if (fragment !is TimerProgressFragment) {
+                            showTimerProgressFragment()
+                        }
                     }
-                } else if (ObjectsCompat.equals(intent?.action, TimerService.ACTION_CANCEL_TIMER)) {
-                    val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
-                    if (fragment !is TimerStartFragment) {
-                        showStartTimerFragment()
+                    TimerService.ACTION_CANCEL_TIMER -> {
+                        if (fragment !is TimerStartFragment) {
+                            showStartTimerFragment()
+                        }
                     }
                 }
             }
@@ -140,9 +137,7 @@ class MainActivity : AppCompatActivity() {
             addAction(TimerService.ACTION_CANCEL_TIMER)
         }
         LocalBroadcastManager.getInstance(this)
-            .registerReceiver(
-                mBroadcastReceiver, filter
-            )
+            .registerReceiver(mBroadcastReceiver, filter)
     }
 
     private fun showStartTimerFragment() {

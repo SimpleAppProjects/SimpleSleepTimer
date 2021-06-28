@@ -7,14 +7,16 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.os.*
+import android.text.format.DateUtils
 import android.view.KeyEvent
+import android.widget.RemoteViews
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import androidx.core.util.ObjectsCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.thewizrd.simplesleeptimer.*
+import com.thewizrd.simplesleeptimer.model.TimerDataModel
 import com.thewizrd.simplesleeptimer.preferences.Settings
 import com.thewizrd.simplesleeptimer.wearable.WearableManager
 import java.util.*
@@ -25,18 +27,16 @@ class TimerService : Service() {
         const val NOTIFICATION_ID = 1000
 
         const val ACTION_START_TIMER = "SimpleSleepTimer.action.START_TIMER"
+        const val ACTION_UPDATE_TIMER = "SimpleSleepTimer.action.UPDATE_TIMER"
         const val ACTION_CANCEL_TIMER = "SimpleSleepTimer.action.CANCEL_TIMER"
-        const val EXTRA_TIME_IN_MINS = "SimpleSleepTimer.extra.TIME_IN_MINUTES"
+        private const val ACTION_EXPIRE_TIMER = "SimpleSleepTimer.action.EXPIRE_TIMER"
 
-        const val ACTION_TIME_UPDATED = "SimpleSleepTimer.action.TIME_UPDATED"
-        const val EXTRA_START_TIME_IN_MS = "SimpleSleepTimer.extra.START_TIME_IN_MS"
-        const val EXTRA_TIME_IN_MS = "SimpleSleepTimer.extra.TIME_IN_MS"
+        const val EXTRA_TIME_IN_MINS = "SimpleSleepTimer.extra.TIME_IN_MINUTES"
     }
 
     private lateinit var mLocalBroadcastMgr: LocalBroadcastManager
+    private lateinit var mAlarmManager: AlarmManager
 
-    private var timer: CountDownTimer? = null
-    private var mIsRunning: Boolean = false
     private var mForegroundNotification: Notification? = null
     private var mIsBound: Boolean = false
 
@@ -46,8 +46,8 @@ class TimerService : Service() {
     // Binder given to clients
     private val binder = LocalBinder()
 
-    private val timerThread = HandlerThread("timer")
-    private lateinit var timerHandler: Handler
+    // Timer
+    private val model = TimerDataModel.getDataModel()
 
     override fun onCreate() {
         super.onCreate()
@@ -58,14 +58,14 @@ class TimerService : Service() {
         startForegroundIfNeeded()
 
         mLocalBroadcastMgr = LocalBroadcastManager.getInstance(this)
+        mAlarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
         mWearManager = WearableManager(this)
-        timerThread.start()
-        timerHandler = Handler(timerThread.looper)
     }
 
     private fun startForegroundIfNeeded() {
         if (!mIsBound) {
             startForeground(NOTIFICATION_ID, getForegroundNotification())
+            updateNotification()
         }
     }
 
@@ -101,21 +101,16 @@ class TimerService : Service() {
                     .setSmallIcon(R.drawable.ic_hourglass_empty)
                     .setContentTitle(getString(R.string.title_sleeptimer))
                     .setContentText("--:--:--")
-                    .setColor(
-                        ContextCompat.getColor(
-                            this@TimerService,
-                            R.color.colorPrimary
-                        )
-                    )
+                    .setColor(ContextCompat.getColor(this, R.color.colorPrimary))
                     .setOngoing(true)
                     .setOnlyAlertOnce(true)
                     .setSound(null)
                     .addAction(
                         0,
                         getString(android.R.string.cancel),
-                        getCancelIntent(this@TimerService)
+                        getCancelIntent(this)
                     )
-                    .setContentIntent(getClickIntent(this@TimerService))
+                    .setContentIntent(getClickIntent(this))
                     .setPriority(NotificationCompat.PRIORITY_LOW)
                     .build()
         }
@@ -123,106 +118,126 @@ class TimerService : Service() {
         return mForegroundNotification!!
     }
 
+    private fun updateNotification() {
+        val remainingTime = model.remainingTimeInMs
+
+        mForegroundNotification =
+            NotificationCompat.Builder(this, NOT_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_hourglass_empty)
+                .setContentTitle(getString(R.string.title_sleeptimer))
+                .setColor(ContextCompat.getColor(this, R.color.colorPrimary))
+                .setOngoing(true)
+                .setOnlyAlertOnce(true)
+                .setShowWhen(false)
+                .setSound(null)
+                .addAction(
+                    0,
+                    getString(android.R.string.cancel),
+                    getCancelIntent(this)
+                )
+                .setContentIntent(getClickIntent(this))
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .apply {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        val chronoBase = SystemClock.elapsedRealtime() + remainingTime
+
+                        val remoteViews =
+                            RemoteViews(packageName, R.layout.chronometer_notif_content)
+                        remoteViews.setChronometerCountDown(R.id.chronometer, true)
+                        remoteViews.setChronometer(
+                            R.id.chronometer,
+                            chronoBase,
+                            null,
+                            model.isRunning
+                        )
+                        setCustomContentView(remoteViews)
+                    } else {
+                        setContentText(
+                            TimerStringFormatter.formatTimeRemaining(
+                                this@TimerService, remainingTime
+                            )
+                        )
+                    }
+                }
+                .setStyle(NotificationCompat.DecoratedCustomViewStyle())
+                .build()
+
+        NotificationManagerCompat.from(this)
+            .notify(NOTIFICATION_ID, mForegroundNotification!!)
+
+        if (model.isRunning && remainingTime > DateUtils.MINUTE_IN_MILLIS) {
+            val pi = getUpdateIntent()
+
+            val nextMinuteChange = remainingTime % DateUtils.MINUTE_IN_MILLIS
+            val triggerTime = System.currentTimeMillis() + nextMinuteChange
+            schedulePendingIntent(pi, triggerTime)
+        } else {
+            val pi = getUpdateIntent(true)
+            if (pi != null) {
+                mAlarmManager.cancel(pi)
+                pi.cancel()
+            }
+        }
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         startForegroundIfNeeded()
 
-        if (ObjectsCompat.equals(intent?.action, ACTION_START_TIMER)) {
-            if (intent?.hasExtra(EXTRA_TIME_IN_MINS) == true) {
-                val timeInMin = intent.getIntExtra(EXTRA_TIME_IN_MINS, 0)
-                startTimer(timeInMin)
+        when (intent?.action) {
+            ACTION_START_TIMER -> {
+                if (intent.hasExtra(EXTRA_TIME_IN_MINS)) {
+                    val timeInMin = intent.getIntExtra(EXTRA_TIME_IN_MINS, 0)
+                    if (timeInMin > 0) {
+                        startTimer(timeInMin)
+                    }
+                }
             }
-        } else if (ObjectsCompat.equals(intent?.action, ACTION_CANCEL_TIMER)) {
-            cancelTimer()
+            ACTION_UPDATE_TIMER -> {
+                updateTimer()
+            }
+            ACTION_CANCEL_TIMER -> {
+                cancelTimer()
+            }
+            ACTION_EXPIRE_TIMER -> {
+                expireTimer()
+            }
         }
 
         return START_STICKY
     }
 
     private fun startTimer(timeInMin: Int) {
-        timerHandler.post {
-            timer?.cancel()
-            timer = object : CountDownTimer((timeInMin * 60000).toLong(), 1) {
-                private var lastMillisUntilFinished: Long = (timeInMin * 60000).toLong()
+        model.startTimer(timeInMin)
+        sendTimerStarted()
 
-                override fun onTick(millisUntilFinished: Long) {
-                    mIsRunning = true
-                    val hours = millisUntilFinished / 3600000L
-                    val mins = millisUntilFinished % 3600000L / 60000L
-                    val secs = (millisUntilFinished / 1000) % 60
+        // Setup expire intent
+        updateExpireIntent()
 
-                    val startTimeInMs = (timeInMin * 60000).toLong()
+        // Update timer notification
+        updateTimer()
+    }
 
-                    mLocalBroadcastMgr.sendBroadcast(
-                        Intent(ACTION_TIME_UPDATED)
-                            .putExtra(EXTRA_START_TIME_IN_MS, startTimeInMs)
-                            .putExtra(EXTRA_TIME_IN_MS, millisUntilFinished)
-                    )
-
-                    // Only update notification every second (or so)
-                    if ((lastMillisUntilFinished - millisUntilFinished) > 1000) {
-                        // Send public broadcast every second
-                        sendPublicTimerUpdate(startTimeInMs, millisUntilFinished)
-
-                        if (!mIsBound) {
-                            mForegroundNotification =
-                                NotificationCompat.Builder(this@TimerService, NOT_CHANNEL_ID)
-                                    .setSmallIcon(R.drawable.ic_hourglass_empty)
-                                    .setContentTitle(getString(R.string.title_sleeptimer))
-                                    .setContentText(
-                                        String.format(
-                                            Locale.ROOT,
-                                            "%02d:%02d:%02d",
-                                            hours,
-                                            mins,
-                                            secs
-                                        )
-                                    )
-                                    .setColor(
-                                        ContextCompat.getColor(
-                                            this@TimerService,
-                                            R.color.colorPrimary
-                                        )
-                                    )
-                                    .setOngoing(true)
-                                    .setOnlyAlertOnce(true)
-                                    .setSound(null)
-                                    .addAction(
-                                        0,
-                                        getString(android.R.string.cancel),
-                                        getCancelIntent(this@TimerService)
-                                    )
-                                    .setContentIntent(getClickIntent(this@TimerService))
-                                    .setPriority(NotificationCompat.PRIORITY_HIGH)
-                                    .build()
-
-                            NotificationManagerCompat.from(this@TimerService)
-                                .notify(NOTIFICATION_ID, mForegroundNotification!!)
-                        } else {
-                            NotificationManagerCompat.from(this@TimerService)
-                                .cancel(NOTIFICATION_ID)
-                        }
-
-                        lastMillisUntilFinished = millisUntilFinished
-                    }
-                }
-
-                override fun onFinish() {
-                    pauseMusicAction()
-                    cancelTimer()
-                }
-            }
-            sendTimerStarted()
-            timer?.start()
-            mIsRunning = true
+    private fun updateTimer() {
+        if (!mIsBound) {
+            updateNotification()
+        } else {
+            NotificationManagerCompat.from(this).cancel(NOTIFICATION_ID)
         }
     }
 
+    private fun expireTimer() {
+        pauseMusicAction()
+        cancelTimer()
+    }
+
     private fun cancelTimer() {
-        if (mIsRunning) {
+        cancelUpdateIntent()
+        cancelExpireIntent()
+        if (model.isRunning) {
             sendTimerCancelled()
-            mIsRunning = false
+            model.stopTimer()
         }
-        timer?.cancel()
         stopForeground(true)
         NotificationManagerCompat.from(this).cancel(NOTIFICATION_ID)
         stopSelf()
@@ -268,6 +283,80 @@ class TimerService : Service() {
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT
         )
+    }
+
+    private fun getUpdateIntent(): PendingIntent {
+        return getUpdateIntent(false)!!
+    }
+
+    private fun getUpdateIntent(cancel: Boolean = false): PendingIntent? {
+        val flags = if (cancel) {
+            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_NO_CREATE
+        } else {
+            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_UPDATE_CURRENT
+        }
+
+        val i = Intent(this, TimerService::class.java)
+            .setAction(ACTION_UPDATE_TIMER)
+
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            PendingIntent.getForegroundService(this, 0, i, flags)
+        } else {
+            PendingIntent.getService(this, 0, i, flags)
+        }
+    }
+
+    private fun cancelUpdateIntent() {
+        val pi = getUpdateIntent(true)
+        if (pi != null) {
+            mAlarmManager.cancel(pi)
+            pi.cancel()
+        }
+    }
+
+    private fun getExpireIntent(): PendingIntent {
+        return getExpireIntent(false)!!
+    }
+
+    private fun getExpireIntent(cancel: Boolean = false): PendingIntent? {
+        val flags = if (cancel) {
+            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_NO_CREATE
+        } else {
+            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_UPDATE_CURRENT
+        }
+
+        val i = Intent(this, TimerService::class.java)
+            .setAction(ACTION_EXPIRE_TIMER)
+
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            PendingIntent.getForegroundService(this, 0, i, flags)
+        } else {
+            PendingIntent.getService(this, 0, i, flags)
+        }
+    }
+
+    private fun updateExpireIntent() {
+        scheduleExpirePendingIntent(getExpireIntent())
+    }
+
+    private fun cancelExpireIntent() {
+        val pi = getExpireIntent(true)
+        if (pi != null) {
+            mAlarmManager.cancel(pi)
+            pi.cancel()
+        }
+    }
+
+    private fun scheduleExpirePendingIntent(pi: PendingIntent) {
+        schedulePendingIntent(pi, model.endTimeInMs)
+    }
+
+    private fun schedulePendingIntent(pi: PendingIntent, rtcExpireTimeInMs: Long) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            mAlarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, rtcExpireTimeInMs, pi)
+        } else {
+            mAlarmManager.setExact(AlarmManager.RTC_WAKEUP, rtcExpireTimeInMs, pi)
+        }
     }
 
     private fun pauseMusicAction() {
@@ -323,7 +412,7 @@ class TimerService : Service() {
     }
 
     inner class LocalBinder : Binder() {
-        fun isRunning(): Boolean = mIsRunning
+        fun isRunning(): Boolean = model.isRunning
 
         fun cancelTimer() {
             this@TimerService.cancelTimer()
@@ -337,8 +426,6 @@ class TimerService : Service() {
     override fun onDestroy() {
         cancelTimer()
         mWearManager.unregister()
-        timerHandler.removeCallbacksAndMessages(null)
-        timerThread.quit()
         super.onDestroy()
         stopForeground(true)
     }
