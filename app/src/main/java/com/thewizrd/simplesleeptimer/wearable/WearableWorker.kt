@@ -42,6 +42,10 @@ class WearableWorker(appContext: Context, params: WorkerParameters) :
             startWork(context, SleepTimerHelper.SleepTimerStatusPath)
         }
 
+        fun sendSelectedAudioPlayer(context: Context) {
+            startWork(context, SleepTimerHelper.SleepTimerAudioPlayerPath)
+        }
+
         private fun startWork(context: Context, intentAction: String) {
             startWork(context, Data.Builder().putString(KEY_ACTION, intentAction).build())
         }
@@ -75,6 +79,9 @@ class WearableWorker(appContext: Context, params: WorkerParameters) :
             }
             SleepTimerHelper.SleepTimerStatusPath -> {
                 mWearMgr.sendSleepTimerUpdate(null, TimerDataModel.getDataModel().toModel())
+            }
+            SleepTimerHelper.SleepTimerAudioPlayerPath -> {
+                mWearMgr.sendSelectedAudioPlayer()
             }
         }
 

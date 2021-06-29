@@ -24,6 +24,7 @@ import com.thewizrd.simplesleeptimer.adapters.PlayerListAdapter
 import com.thewizrd.simplesleeptimer.databinding.FragmentMusicPlayersBinding
 import com.thewizrd.simplesleeptimer.preferences.Settings
 import com.thewizrd.simplesleeptimer.utils.ActivityUtils
+import com.thewizrd.simplesleeptimer.wearable.WearableWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.*
@@ -51,7 +52,7 @@ class MusicPlayersFragment : Fragment(), BottomSheetCallbackInterface {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         binding = FragmentMusicPlayersBinding.inflate(inflater, container, false)
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
@@ -76,7 +77,6 @@ class MusicPlayersFragment : Fragment(), BottomSheetCallbackInterface {
 
         playerAdapter.setOnClickListener(object : RecyclerOnClickListenerInterface {
             override fun onClick(view: View, position: Int) {
-                mBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
                 val selectedItem = playerAdapter.getSelectedItem()
                 if (selectedItem?.bitmapIcon != null) {
                     binding.musicplayerIcon.setImageBitmap(selectedItem.bitmapIcon)
@@ -95,6 +95,8 @@ class MusicPlayersFragment : Fragment(), BottomSheetCallbackInterface {
                         )
                     )
                 }
+
+                WearableWorker.sendSelectedAudioPlayer(requireContext())
             }
         })
 

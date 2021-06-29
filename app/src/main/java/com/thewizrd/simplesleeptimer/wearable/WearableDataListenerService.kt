@@ -9,7 +9,7 @@ import com.thewizrd.shared_resources.helpers.WearableHelper
 import com.thewizrd.shared_resources.sleeptimer.SleepTimerHelper
 import com.thewizrd.shared_resources.utils.bytesToInt
 import com.thewizrd.shared_resources.utils.bytesToString
-import com.thewizrd.simplesleeptimer.MainActivity
+import com.thewizrd.simplesleeptimer.SleepTimerActivity
 import com.thewizrd.simplesleeptimer.services.TimerService
 
 class WearableDataListenerService : WearableListenerService() {
@@ -34,7 +34,7 @@ class WearableDataListenerService : WearableListenerService() {
     override fun onMessageReceived(messageEvent: MessageEvent) {
         when (messageEvent.path) {
             WearableHelper.StartActivityPath -> {
-                val startIntent = Intent(this, MainActivity::class.java)
+                val startIntent = Intent(this, SleepTimerActivity::class.java)
                     .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                 startActivity(startIntent)
             }

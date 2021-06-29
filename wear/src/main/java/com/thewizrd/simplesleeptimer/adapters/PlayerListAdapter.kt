@@ -62,11 +62,7 @@ class PlayerListAdapter(owner: ViewModelStoreOwner) :
                     notifyItemChanged(oldPosition, Payload.RADIOBUTTON_UPDATE)
                 }
 
-                if (selectedItem != null) {
-                    selectedPlayer.setKey(selectedItem!!.key)
-                } else {
-                    selectedPlayer.setKey(null)
-                }
+                selectedPlayer.setKey(selectedItem?.key)
 
                 onClickListener?.onClick(itemView, adapterPosition)
             }

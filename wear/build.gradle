@@ -51,7 +51,6 @@ android {
 
 dependencies {
     implementation project(":shared_resources")
-    implementation project(":circularseekbar")
 
     // Kotlin
     implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.4.32'
@@ -64,11 +63,12 @@ dependencies {
     implementation 'androidx.fragment:fragment-ktx:1.3.5'
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.3.1'
 
-    implementation 'com.google.android.support:wearable:2.8.1'
-    implementation 'com.google.android.gms:play-services-wearable:17.1.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
     implementation 'androidx.recyclerview:recyclerview:1.2.1'
-    implementation 'androidx.wear:wear:1.1.0'
-    compileOnly 'com.google.android.wearable:wearable:2.8.1'
     implementation 'com.google.android.material:material:1.3.0'
+
+    implementation 'androidx.wear:wear:1.1.0'
+    implementation 'com.google.android.gms:play-services-wearable:17.1.0'
+    implementation 'com.google.android.support:wearable:2.8.1'
+    compileOnly 'com.google.android.wearable:wearable:2.8.1'
 }

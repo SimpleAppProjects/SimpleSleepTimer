@@ -9,7 +9,7 @@ class LaunchActivity : Activity() {
         setTheme(R.style.AppTheme)
         super.onCreate(savedInstanceState)
 
-        startActivity(Intent(this, MainActivity::class.java))
+        startActivity(Intent(this, SleepTimerActivity::class.java))
         finishAffinity()
     }
 }

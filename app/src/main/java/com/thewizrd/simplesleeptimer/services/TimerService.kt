@@ -63,8 +63,8 @@ class TimerService : Service() {
         mWearManager = WearableManager(this)
     }
 
-    private fun startForegroundIfNeeded() {
-        if (!mIsBound) {
+    private fun startForegroundIfNeeded(forceForeground: Boolean = false) {
+        if (!mIsBound || forceForeground) {
             startForeground(NOTIFICATION_ID, getForegroundNotification())
             updateNotification()
         }
@@ -276,7 +276,7 @@ class TimerService : Service() {
     }
 
     private fun getClickIntent(context: Context): PendingIntent {
-        val intent = Intent(context.applicationContext, MainActivity::class.java)
+        val intent = Intent(context.applicationContext, SleepTimerActivity::class.java)
             .setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
 
         return PendingIntent.getActivity(
@@ -445,7 +445,7 @@ class TimerService : Service() {
         // Since service is unbound, background restrictions now apply
         // Start foreground to notify system
         mIsBound = false
-        startForegroundIfNeeded()
+        startForegroundIfNeeded(true)
 
         return true // Allow re-binding
     }

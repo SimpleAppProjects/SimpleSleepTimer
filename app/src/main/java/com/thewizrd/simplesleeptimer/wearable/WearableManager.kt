@@ -20,6 +20,7 @@ import com.thewizrd.shared_resources.utils.ImageUtils
 import com.thewizrd.shared_resources.utils.JSONParser
 import com.thewizrd.shared_resources.utils.booleanToBytes
 import com.thewizrd.shared_resources.utils.stringToBytes
+import com.thewizrd.simplesleeptimer.preferences.Settings
 import kotlinx.coroutines.*
 import kotlinx.coroutines.tasks.await
 import java.util.*
@@ -186,6 +187,19 @@ class WearableManager(private val mContext: Context) : OnCapabilityChangedListen
             nodeID, SleepTimerHelper.SleepTimerStatusPath,
             JSONParser.serializer(model, TimerModel::class.java).stringToBytes()
         )
+    }
+
+    suspend fun sendSelectedAudioPlayer() {
+        val mapRequest = PutDataMapRequest.create(SleepTimerHelper.SleepTimerAudioPlayerPath)
+        mapRequest.dataMap.putString(SleepTimerHelper.KEY_SELECTEDPLAYER, Settings.getMusicPlayer())
+        //mapRequest.setUrgent()
+        try {
+            Wearable.getDataClient(mContext)
+                .putDataItem(mapRequest.asPutDataRequest())
+                .await()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error", e)
+        }
     }
 
     suspend fun sendMessage(nodeID: String?, path: String, data: ByteArray?) {

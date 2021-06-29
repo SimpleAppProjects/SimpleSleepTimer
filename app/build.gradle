@@ -63,7 +63,6 @@ android {
 dependencies {
     implementation project(":shared_resources")
     wearApp project(':wear')
-    implementation project(":circularseekbar")
 
     // Unit Testing
     androidTestImplementation 'androidx.test:core:1.3.0'

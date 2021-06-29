@@ -33,6 +33,16 @@ class TimerModel : ViewModel() {
         this.timerLengthInMs = model.timerLengthInMs
     }
 
+    fun startTimer() {
+        this.isRunning = true
+        this.startTimeInMs = System.currentTimeMillis()
+        this.endTimeInMs = this.startTimeInMs + this.timerLengthInMs
+    }
+
+    fun stopTimer() {
+        this.isRunning = false
+    }
+
     override fun onCleared() {
         super.onCleared()
         isRunning = false
