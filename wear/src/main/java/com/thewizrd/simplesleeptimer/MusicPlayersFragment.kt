@@ -4,11 +4,13 @@ import android.content.Intent
 import android.content.res.Resources
 import android.os.Bundle
 import android.os.CountDownTimer
-import android.support.wearable.input.RotaryEncoder
 import android.util.Log
 import android.view.*
-import android.view.View.OnGenericMotionListener
+import androidx.core.view.InputDeviceCompat
+import androidx.core.view.MotionEventCompat
 import androidx.core.view.ViewCompat
+import androidx.core.view.ViewConfigurationCompat
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -22,13 +24,13 @@ import com.thewizrd.shared_resources.utils.ImageUtils
 import com.thewizrd.shared_resources.viewmodels.MusicPlayerViewModel
 import com.thewizrd.simplesleeptimer.adapters.PlayerListAdapter
 import com.thewizrd.simplesleeptimer.databinding.FragmentMusicplayersSleepBinding
-import com.thewizrd.simplesleeptimer.fragments.SwipeDismissFragment
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.util.*
+import kotlin.math.roundToInt
 
-class MusicPlayersFragment : SwipeDismissFragment(), OnDataChangedListener {
+class MusicPlayersFragment : Fragment(), OnDataChangedListener {
     companion object {
         private const val TAG = "MusicPlayersFragment"
     }
@@ -92,29 +94,28 @@ class MusicPlayersFragment : SwipeDismissFragment(), OnDataChangedListener {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        val outerView = super.onCreateView(inflater, container, savedInstanceState)
-        binding = FragmentMusicplayersSleepBinding.inflate(inflater, outerView as ViewGroup?, true)
+    ): View {
+        binding = FragmentMusicplayersSleepBinding.inflate(inflater, container, false)
 
         binding.playerList.setHasFixedSize(true)
         binding.playerList.isEdgeItemsCenteringEnabled = false
         binding.playerList.layoutManager = WearableLinearLayoutManager(requireActivity(), null)
-        binding.playerList.setOnGenericMotionListener(OnGenericMotionListener { v, event ->
-            if (event.action == MotionEvent.ACTION_SCROLL && RotaryEncoder.isFromRotaryEncoder(event)) {
-
+        binding.playerList.setOnGenericMotionListener { v, ev ->
+            if (ev.action == MotionEvent.ACTION_SCROLL &&
+                ev.isFromSource(InputDeviceCompat.SOURCE_ROTARY_ENCODER)
+            ) {
                 // Don't forget the negation here
-                val delta =
-                    -RotaryEncoder.getRotaryAxisValue(event) * RotaryEncoder.getScaledScrollFactor(
-                        requireActivity()
-                    )
-
-                // Swap these axes if you want to do horizontal scrolling instead
-                v.scrollBy(0, Math.round(delta))
-
-                return@OnGenericMotionListener true
+                val delta = -ev.getAxisValue(MotionEventCompat.AXIS_SCROLL) *
+                        ViewConfigurationCompat.getScaledVerticalScrollFactor(
+                            ViewConfiguration.get(v.context), v.context
+                        )
+                // Swap these axes to scroll horizontally instead
+                v.scrollBy(0, delta.roundToInt())
+                true
+            } else {
+                false
             }
-            false
-        })
+        }
         binding.playerList.requestFocus()
 
         mAdapter = PlayerListAdapter(requireActivity())
@@ -124,10 +125,9 @@ class MusicPlayersFragment : SwipeDismissFragment(), OnDataChangedListener {
             }
         })
         binding.playerList.adapter = mAdapter
+        binding.playerList.visibility = View.GONE
 
-        binding.playerGroup.visibility = View.GONE
-
-        return outerView
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -144,21 +144,20 @@ class MusicPlayersFragment : SwipeDismissFragment(), OnDataChangedListener {
             private val paddingEnd = ViewCompat.getPaddingEnd(binding.playerList)
 
             override fun onPreDraw(): Boolean {
+                if (binding.playerList.visibility != View.VISIBLE || binding.playerList.measuredWidth <= 0) return true
                 binding.playerList.viewTreeObserver.removeOnPreDrawListener(this)
 
                 val verticalPadding =
                     resources.getDimensionPixelSize(R.dimen.inner_frame_layout_padding)
-
                 val mScreenHeight = Resources.getSystem().displayMetrics.heightPixels
                 val mScreenWidth = Resources.getSystem().displayMetrics.widthPixels
-
                 val rightEdge = Math.min(binding.playerList.measuredWidth, mScreenWidth)
                 val bottomEdge = Math.min(binding.playerList.measuredHeight, mScreenHeight)
                 val verticalInset = (FACTOR * Math.max(rightEdge, bottomEdge)).toInt()
 
                 binding.playerList.setPaddingRelative(
                     paddingStart,
-                    if (mIsRound) verticalInset else verticalPadding,
+                    paddingTop,
                     paddingEnd,
                     paddingBottom + if (mIsRound) verticalInset else verticalPadding
                 )
@@ -295,7 +294,7 @@ class MusicPlayersFragment : SwipeDismissFragment(), OnDataChangedListener {
 
             binding.noplayersMessageview.visibility =
                 if (viewModels.size > 0) View.GONE else View.VISIBLE
-            binding.playerGroup.visibility = if (viewModels.size > 0) View.VISIBLE else View.GONE
+            binding.playerList.visibility = if (viewModels.size > 0) View.VISIBLE else View.GONE
             viewLifecycleOwner.lifecycleScope.launch {
                 if (binding.playerList.visibility == View.VISIBLE && !binding.playerList.hasFocus()) {
                     binding.playerList.requestFocus()

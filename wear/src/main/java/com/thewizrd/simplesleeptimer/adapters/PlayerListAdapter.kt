@@ -12,10 +12,16 @@ import com.thewizrd.shared_resources.helpers.RecyclerOnClickListenerInterface
 import com.thewizrd.shared_resources.viewmodels.MusicPlayerViewModel
 import com.thewizrd.simplesleeptimer.R
 import com.thewizrd.simplesleeptimer.SelectedPlayerViewModel
+import com.thewizrd.simplesleeptimer.databinding.ItemHeaderBinding
 import com.thewizrd.simplesleeptimer.databinding.MusicplayerItemSleeptimerBinding
 
 class PlayerListAdapter(owner: ViewModelStoreOwner) :
-    ListAdapter<MusicPlayerViewModel, PlayerListAdapter.ViewHolder>(MusicPlayerItemDiffer()) {
+    ListAdapter<MusicPlayerViewModel, RecyclerView.ViewHolder>(MusicPlayerItemDiffer()) {
+    companion object {
+        private const val HEADER_TYPE = 0
+        private const val ITEM_TYPE = 1
+    }
+
     private var mCheckedPosition = RecyclerView.NO_POSITION
     private var onClickListener: RecyclerOnClickListenerInterface? = null
 
@@ -31,9 +37,11 @@ class PlayerListAdapter(owner: ViewModelStoreOwner) :
         onClickListener = listener
     }
 
-    inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val binding = MusicplayerItemSleeptimerBinding.bind(itemView)
+    inner class HeaderViewHolder(binding: ItemHeaderBinding) :
+        RecyclerView.ViewHolder(binding.root) {}
 
+    inner class ViewHolder(private val binding: MusicplayerItemSleeptimerBinding) :
+        RecyclerView.ViewHolder(binding.root) {
         fun bindModel(viewModel: MusicPlayerViewModel) {
             if (viewModel.bitmapIcon == null) {
                 binding.appIcon.setImageResource(R.drawable.ic_play_circle_filled)
@@ -71,28 +79,66 @@ class PlayerListAdapter(owner: ViewModelStoreOwner) :
         }
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val inflater = LayoutInflater.from(parent.context)
-        val view = inflater.inflate(R.layout.musicplayer_item_sleeptimer, parent, false)
-        return ViewHolder(view)
+    override fun getItemCount(): Int {
+        return super.getItemCount() + 1
     }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bindModel(getItem(position))
+    override fun getItem(position: Int): MusicPlayerViewModel {
+        return super.getItem(position - 1)
     }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int, payloads: List<Any>) {
-        val radioBtnUpdateOnly = if (payloads.isNotEmpty()) {
-            payloads[0] == Payload.RADIOBUTTON_UPDATE
+    override fun getItemViewType(position: Int): Int {
+        return if (position == 0) {
+            HEADER_TYPE
         } else {
-            false
+            ITEM_TYPE
         }
+    }
 
-        if (!radioBtnUpdateOnly) {
-            super.onBindViewHolder(holder, position, payloads)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        return if (viewType == HEADER_TYPE) {
+            HeaderViewHolder(
+                ItemHeaderBinding.inflate(
+                    LayoutInflater.from(parent.context),
+                    parent,
+                    false
+                )
+            )
+        } else {
+            ViewHolder(
+                MusicplayerItemSleeptimerBinding.inflate(
+                    LayoutInflater.from(parent.context),
+                    parent,
+                    false
+                )
+            )
         }
+    }
 
-        holder.updateRadioButtom()
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        if (holder is ViewHolder) {
+            holder.bindModel(getItem(position))
+        }
+    }
+
+    override fun onBindViewHolder(
+        holder: RecyclerView.ViewHolder,
+        position: Int,
+        payloads: List<Any>
+    ) {
+        if (holder is ViewHolder) {
+            val radioBtnUpdateOnly = if (payloads.isNotEmpty()) {
+                payloads[0] == Payload.RADIOBUTTON_UPDATE
+            } else {
+                false
+            }
+
+            if (!radioBtnUpdateOnly) {
+                super.onBindViewHolder(holder, position, payloads)
+            }
+
+            holder.updateRadioButtom()
+        }
     }
 
     fun updateItems(dataset: List<MusicPlayerViewModel>) {

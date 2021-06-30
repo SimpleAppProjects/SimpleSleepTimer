@@ -3,13 +3,22 @@ package com.thewizrd.shared_resources.controls
 import android.content.Context
 import android.util.AttributeSet
 import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.ViewConfiguration
+import android.view.ViewGroup
 import androidx.annotation.RestrictTo
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.InputDeviceCompat
+import androidx.core.view.MotionEventCompat
+import androidx.core.view.ViewConfigurationCompat
 import androidx.core.view.updateLayoutParams
 import com.devadvance.circularseekbar.CircularSeekBar
 import com.thewizrd.shared_resources.R
 import com.thewizrd.shared_resources.databinding.ViewTimerStartBinding
 import com.thewizrd.shared_resources.utils.TimerStringFormatter
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.sign
 
 class TimerStartView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
@@ -21,6 +30,7 @@ class TimerStartView @JvmOverloads constructor(
         super.onFinishInflate()
 
         isTransitionGroup = true
+        descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
 
         binding.timerProgressScroller.shouldSaveColorState = false
         binding.timerProgressScroller.setOnSeekBarChangeListener(object :
@@ -40,6 +50,34 @@ class TimerStartView @JvmOverloads constructor(
             override fun onStopTrackingTouch(seekBar: CircularSeekBar?) {
             }
         })
+        binding.timerProgressScroller.setOnGenericMotionListener { v, ev ->
+            if (ev.action == MotionEvent.ACTION_SCROLL &&
+                ev.isFromSource(InputDeviceCompat.SOURCE_ROTARY_ENCODER)
+            ) {
+                // Don't forget the negation here
+                val delta = -ev.getAxisValue(MotionEventCompat.AXIS_SCROLL) *
+                        ViewConfigurationCompat.getScaledVerticalScrollFactor(
+                            ViewConfiguration.get(context), context
+                        )
+
+                // Swap these axes to scroll horizontally instead
+                val sign = delta.sign
+                if (sign > 0) {
+                    binding.timerProgressScroller.progress = min(
+                        binding.timerProgressScroller.progress + 1,
+                        binding.timerProgressScroller.max
+                    )
+                } else if (sign < 0) {
+                    binding.timerProgressScroller.progress = max(
+                        binding.timerProgressScroller.progress - 1, 0
+                    )
+                }
+
+                true
+            } else {
+                false
+            }
+        }
 
         binding.minus5minbtn.setOnClickListener {
             binding.timerProgressScroller.progress =
@@ -57,6 +95,8 @@ class TimerStartView @JvmOverloads constructor(
             binding.timerProgressScroller.progress =
                 binding.timerProgressScroller.max.coerceAtMost(binding.timerProgressScroller.progress + 5)
         }
+
+        binding.timerProgressScroller.requestFocus()
     }
 
     fun setOnProgressChangedListener(listener: OnProgressChangedListener?) {

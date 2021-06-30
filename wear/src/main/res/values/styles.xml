@@ -10,7 +10,7 @@
     </style>
 
     <style name="WearAppTheme.Launcher">
-        <item name="android:background">@drawable/ic_splash_screen</item>
+        <item name="android:windowBackground">@drawable/ic_splash_screen</item>
     </style>
 
     <style name="WearSettingsTheme" parent="Theme.MaterialComponents.NoActionBar.Bridge">

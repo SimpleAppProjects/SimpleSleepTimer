@@ -18,6 +18,8 @@ import androidx.core.view.marginBottom
 import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.lifecycleScope
 import androidx.transition.TransitionManager
+import androidx.wear.widget.drawer.WearableDrawerLayout
+import androidx.wear.widget.drawer.WearableDrawerView
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.material.transition.MaterialFadeThrough
 import com.google.android.wearable.intent.RemoteIntent
@@ -95,6 +97,7 @@ class SleepTimerActivity : WearableListenerActivity() {
                                         showProgressBar(false)
                                         showErrorMessage(false)
                                         binding.bottomActionDrawer.visibility = View.VISIBLE
+                                        binding.bottomActionDrawer.controller.peekDrawer()
                                         binding.bottomActionDrawer.clearAnimation()
                                         if (timerModel.isRunning || binding.timerStartView.getTimerProgress() >= 1) {
                                             binding.fab.post { binding.fab.show() }
@@ -131,6 +134,35 @@ class SleepTimerActivity : WearableListenerActivity() {
             addAction(WearableHelper.MusicPlayersPath)
         }
 
+        binding.drawerLayout.setDrawerStateCallback(object :
+            WearableDrawerLayout.DrawerStateCallback() {
+            override fun onDrawerOpened(
+                layout: WearableDrawerLayout?,
+                drawerView: WearableDrawerView?
+            ) {
+                super.onDrawerOpened(layout, drawerView)
+                drawerView?.let { requestDrawerFocus(it, true) }
+            }
+
+            override fun onDrawerClosed(
+                layout: WearableDrawerLayout?,
+                drawerView: WearableDrawerView?
+            ) {
+                super.onDrawerClosed(layout, drawerView)
+                drawerView?.let { requestDrawerFocus(it, false) }
+                binding.fragmentContainer.requestFocus()
+            }
+
+            override fun onDrawerStateChanged(layout: WearableDrawerLayout?, newState: Int) {
+                super.onDrawerStateChanged(layout, newState)
+                if (newState == WearableDrawerView.STATE_IDLE) {
+                    if (binding.bottomActionDrawer.isPeeking && !binding.fragmentContainer.hasFocus()) {
+                        requestDrawerFocus(false)
+                        binding.fragmentContainer.requestFocus()
+                    }
+                }
+            }
+        })
         binding.bottomActionDrawer.setIsLocked(false)
         binding.bottomActionDrawer.controller.peekDrawer()
 
@@ -220,6 +252,7 @@ class SleepTimerActivity : WearableListenerActivity() {
                     } else {
                         showTimerStartView()
                     }
+                    binding.fragmentContainer.requestFocus()
                 }
                 SleepTimerHelper.SleepTimerStopPath -> {
                     timerModel.stopTimer()
@@ -312,12 +345,21 @@ class SleepTimerActivity : WearableListenerActivity() {
     }
 
     /* Views */
+    override fun onBackPressed() {
+        if (binding.bottomActionDrawer.isOpened) {
+            binding.bottomActionDrawer.controller.peekDrawer()
+            return
+        }
+        super.onBackPressed()
+    }
+
     private fun showTimerStartView() {
         stopUpdatingTime()
 
         binding.timerProgressView.visibility = View.GONE
         binding.timerStartView.visibility = View.VISIBLE
         peekBottomDrawer()
+        binding.fragmentContainer.requestFocus()
 
         updateFab()
     }
@@ -326,6 +368,7 @@ class SleepTimerActivity : WearableListenerActivity() {
         binding.timerProgressView.visibility = View.VISIBLE
         binding.timerStartView.visibility = View.GONE
         closeBottomDrawer()
+        binding.fragmentContainer.requestFocus()
 
         updateFab()
 
@@ -396,10 +439,28 @@ class SleepTimerActivity : WearableListenerActivity() {
         }
     }
 
+    private fun requestDrawerFocus(focus: Boolean) {
+        requestDrawerFocus(binding.bottomActionDrawer, focus)
+    }
+
+    private fun requestDrawerFocus(drawer: WearableDrawerView, focus: Boolean) {
+        drawer.descendantFocusability =
+            if (focus) ViewGroup.FOCUS_AFTER_DESCENDANTS else ViewGroup.FOCUS_BLOCK_DESCENDANTS
+        if (focus) {
+            drawer.requestFocus()
+        } else {
+            drawer.clearFocus()
+        }
+    }
+
     private fun showErrorMessage(show: Boolean) {
         lifecycleScope.launch {
             binding.fragmentContainer.visibility = if (show) View.GONE else View.VISIBLE
             binding.messageView.visibility = if (show) View.VISIBLE else View.GONE
+            if (!show && !binding.bottomActionDrawer.isOpened && !binding.fragmentContainer.hasFocus()) {
+                binding.fragmentContainer.requestFocus()
+            }
+            binding.fragmentContainer.requestFocus()
         }
     }
 
