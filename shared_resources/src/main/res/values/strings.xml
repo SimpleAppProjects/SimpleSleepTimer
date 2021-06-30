@@ -2,6 +2,12 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_name">SimpleSleepTimer</string>
     <string name="title_sleeptimer">Sleep Timer</string>
+    <string name="title_sleeptimer_remote">Sleep Timer (Remote)</string>
+
+    <string name="not_channel_name_timer">Timer Notification</string>
+    <string name="title_audioplayer">Audio Player</string>
+    <string name="select_player_pause_prompt">Select an audio player to pause once timer is finished (only needed if audio does not pause normally)</string>
+    <string name="error_nomusicplayers">Unable to find any media players</string>
 
     <string name="timer_progress_hours_minutes"><xliff:g id="HOURS" example="02h">%1$02dh</xliff:g>:<xliff:g id="MINUTES" example="30m">%2$02dm</xliff:g></string>
     <string name="label_btn_plus1min">+1M</string>

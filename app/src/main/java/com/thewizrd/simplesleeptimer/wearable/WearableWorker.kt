@@ -6,8 +6,8 @@ import androidx.core.util.Pair
 import androidx.work.*
 import com.thewizrd.shared_resources.helpers.WearableHelper
 import com.thewizrd.shared_resources.sleeptimer.SleepTimerHelper
+import com.thewizrd.shared_resources.sleeptimer.TimerDataModel
 import com.thewizrd.shared_resources.utils.JSONParser
-import com.thewizrd.simplesleeptimer.model.TimerDataModel
 
 class WearableWorker(appContext: Context, params: WorkerParameters) :
     CoroutineWorker(appContext, params) {

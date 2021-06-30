@@ -23,7 +23,8 @@ import com.thewizrd.shared_resources.sleeptimer.SleepTimerHelper
 import com.thewizrd.shared_resources.utils.ImageUtils
 import com.thewizrd.shared_resources.viewmodels.MusicPlayerViewModel
 import com.thewizrd.simplesleeptimer.adapters.PlayerListAdapter
-import com.thewizrd.simplesleeptimer.databinding.FragmentMusicplayersSleepBinding
+import com.thewizrd.simplesleeptimer.adapters.PlayerListRemoteAdapter
+import com.thewizrd.simplesleeptimer.databinding.FragmentMusicPlayersBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -35,7 +36,7 @@ class MusicPlayersFragment : Fragment(), OnDataChangedListener {
         private const val TAG = "MusicPlayersFragment"
     }
 
-    private lateinit var binding: FragmentMusicplayersSleepBinding
+    private lateinit var binding: FragmentMusicPlayersBinding
     private lateinit var mAdapter: PlayerListAdapter
     private var timer: CountDownTimer? = null
     private var onClickListener: RecyclerOnClickListenerInterface? = null
@@ -95,7 +96,7 @@ class MusicPlayersFragment : Fragment(), OnDataChangedListener {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = FragmentMusicplayersSleepBinding.inflate(inflater, container, false)
+        binding = FragmentMusicPlayersBinding.inflate(inflater, container, false)
 
         binding.playerList.setHasFixedSize(true)
         binding.playerList.isEdgeItemsCenteringEnabled = false
@@ -118,7 +119,7 @@ class MusicPlayersFragment : Fragment(), OnDataChangedListener {
         }
         binding.playerList.requestFocus()
 
-        mAdapter = PlayerListAdapter(requireActivity())
+        mAdapter = PlayerListRemoteAdapter(requireActivity())
         mAdapter.setOnClickListener(object : RecyclerOnClickListenerInterface {
             override fun onClick(view: View, position: Int) {
                 onClickListener?.onClick(view, position)

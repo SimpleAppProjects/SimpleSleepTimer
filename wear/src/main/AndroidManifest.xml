@@ -3,12 +3,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.thewizrd.simplesleeptimer">
 
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
     <uses-feature android:name="android.hardware.type.watch" />
 
     <application
         android:name=".App"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/title_sleeptimer"
         android:supportsRtl="true"
         android:theme="@style/WearAppTheme.Launcher"
@@ -23,9 +26,12 @@
         -->
         <meta-data
             android:name="com.google.android.wearable.standalone"
-            android:value="false" />
+            android:value="true" />
 
-        <activity android:name=".LaunchActivity">
+        <activity
+            android:name=".LaunchLocalActivity"
+            android:label="@string/title_sleeptimer"
+            android:theme="@style/WearAppTheme.Launcher">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -33,9 +39,39 @@
         </activity>
 
         <activity
-            android:name=".SleepTimerActivity"
-            android:label="@string/shortcut_label_sleeptimer"
+            android:name=".LaunchActivity"
+            android:icon="@mipmap/ic_launcher_remote"
+            android:roundIcon="@mipmap/ic_launcher_remote_round"
+            android:label="@string/title_sleeptimer_remote"
+            android:theme="@style/WearAppTheme.Launcher">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".SleepTimerLocalActivity"
+            android:label="@string/title_sleeptimer"
             android:theme="@style/WearAppTheme" />
+
+        <activity
+            android:name=".SleepTimerActivity"
+            android:label="@string/title_sleeptimer_remote"
+            android:theme="@style/WearAppTheme" />
+
+        <service
+            android:name=".services.TimerService"
+            android:exported="false"
+            android:enabled="true" />
+
+        <receiver
+            android:name=".receivers.UpdateBroadcastReceiver"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
 
         <service
             android:name=".wearable.WearableDataListenerService"

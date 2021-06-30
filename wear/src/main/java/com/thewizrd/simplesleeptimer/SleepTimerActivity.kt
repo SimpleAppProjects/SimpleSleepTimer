@@ -35,6 +35,9 @@ import com.thewizrd.simplesleeptimer.helpers.ConfirmationResultReceiver
 import kotlinx.coroutines.launch
 import kotlin.math.max
 
+/**
+ * Sleep Timer remote control activity for connected device
+ */
 class SleepTimerActivity : WearableListenerActivity() {
     override lateinit var broadcastReceiver: BroadcastReceiver
         private set

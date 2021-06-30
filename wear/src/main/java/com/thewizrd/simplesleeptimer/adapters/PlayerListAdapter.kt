@@ -3,34 +3,30 @@ package com.thewizrd.simplesleeptimer.adapters
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelStoreOwner
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.thewizrd.shared_resources.adapters.MusicPlayerItemDiffer
 import com.thewizrd.shared_resources.helpers.RecyclerOnClickListenerInterface
 import com.thewizrd.shared_resources.viewmodels.MusicPlayerViewModel
 import com.thewizrd.simplesleeptimer.R
-import com.thewizrd.simplesleeptimer.SelectedPlayerViewModel
 import com.thewizrd.simplesleeptimer.databinding.ItemHeaderBinding
-import com.thewizrd.simplesleeptimer.databinding.MusicplayerItemSleeptimerBinding
+import com.thewizrd.simplesleeptimer.databinding.MusicplayerItemBinding
+import com.thewizrd.simplesleeptimer.preferences.Settings
 
-class PlayerListAdapter(owner: ViewModelStoreOwner) :
+open class PlayerListAdapter :
     ListAdapter<MusicPlayerViewModel, RecyclerView.ViewHolder>(MusicPlayerItemDiffer()) {
     companion object {
         private const val HEADER_TYPE = 0
         private const val ITEM_TYPE = 1
     }
 
-    private var mCheckedPosition = RecyclerView.NO_POSITION
+    protected var mCheckedPosition = RecyclerView.NO_POSITION
     private var onClickListener: RecyclerOnClickListenerInterface? = null
 
-    private val selectedPlayer =
-        ViewModelProvider(owner, ViewModelProvider.NewInstanceFactory())
-            .get(SelectedPlayerViewModel::class.java)
-
-    private object Payload {
-        var RADIOBUTTON_UPDATE = 0
+    class Payload {
+        companion object {
+            const val RADIOBUTTON_UPDATE: Int = 0
+        }
     }
 
     fun setOnClickListener(listener: RecyclerOnClickListenerInterface?) {
@@ -38,9 +34,9 @@ class PlayerListAdapter(owner: ViewModelStoreOwner) :
     }
 
     inner class HeaderViewHolder(binding: ItemHeaderBinding) :
-        RecyclerView.ViewHolder(binding.root) {}
+        RecyclerView.ViewHolder(binding.root)
 
-    inner class ViewHolder(private val binding: MusicplayerItemSleeptimerBinding) :
+    inner class ViewHolder(private val binding: MusicplayerItemBinding) :
         RecyclerView.ViewHolder(binding.root) {
         fun bindModel(viewModel: MusicPlayerViewModel) {
             if (viewModel.bitmapIcon == null) {
@@ -70,13 +66,16 @@ class PlayerListAdapter(owner: ViewModelStoreOwner) :
                     notifyItemChanged(oldPosition, Payload.RADIOBUTTON_UPDATE)
                 }
 
-                selectedPlayer.setKey(selectedItem?.key)
-
+                onMusicPlayerSelected(selectedItem?.key)
                 onClickListener?.onClick(itemView, adapterPosition)
             }
             itemView.setOnClickListener(clickListener)
             binding.radioButton.setOnClickListener(clickListener)
         }
+    }
+
+    protected open fun onMusicPlayerSelected(key: String?) {
+        Settings.setMusicPlayer(key)
     }
 
     override fun getItemCount(): Int {
@@ -106,7 +105,7 @@ class PlayerListAdapter(owner: ViewModelStoreOwner) :
             )
         } else {
             ViewHolder(
-                MusicplayerItemSleeptimerBinding.inflate(
+                MusicplayerItemBinding.inflate(
                     LayoutInflater.from(parent.context),
                     parent,
                     false
@@ -141,17 +140,9 @@ class PlayerListAdapter(owner: ViewModelStoreOwner) :
         }
     }
 
-    fun updateItems(dataset: List<MusicPlayerViewModel>) {
-        val currentPref = selectedPlayer.key.value
-        var item: MusicPlayerViewModel? = null
-
-        for (it in dataset) {
-            if (it.key != null && it.key == currentPref) {
-                item = it
-                break
-            }
-        }
-
+    open fun updateItems(dataset: List<MusicPlayerViewModel>) {
+        val currentPref = Settings.getMusicPlayer()
+        val item = dataset.find { item -> item.key != null && item.key == currentPref }
         mCheckedPosition = if (item != null) {
             dataset.indexOf(item)
         } else {

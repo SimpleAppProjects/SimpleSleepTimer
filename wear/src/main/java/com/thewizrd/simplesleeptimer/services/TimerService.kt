@@ -10,7 +10,6 @@ import android.media.AudioManager
 import android.os.*
 import android.text.format.DateUtils
 import android.view.KeyEvent
-import android.widget.RemoteViews
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -20,7 +19,6 @@ import com.thewizrd.shared_resources.sleeptimer.TimerDataModel
 import com.thewizrd.shared_resources.utils.TimerStringFormatter
 import com.thewizrd.simplesleeptimer.*
 import com.thewizrd.simplesleeptimer.preferences.Settings
-import com.thewizrd.simplesleeptimer.wearable.WearableManager
 import java.util.*
 
 class TimerService : Service() {
@@ -42,9 +40,6 @@ class TimerService : Service() {
     private var mForegroundNotification: Notification? = null
     private var mIsBound: Boolean = false
 
-    // Wearable
-    private lateinit var mWearManager: WearableManager
-
     // Binder given to clients
     private val binder = LocalBinder()
 
@@ -61,7 +56,6 @@ class TimerService : Service() {
 
         mLocalBroadcastMgr = LocalBroadcastManager.getInstance(this)
         mAlarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        mWearManager = WearableManager(this)
     }
 
     private fun startForegroundIfNeeded(forceForeground: Boolean = false) {
@@ -126,7 +120,7 @@ class TimerService : Service() {
         mForegroundNotification =
             NotificationCompat.Builder(this, NOT_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_hourglass_empty)
-                .setContentTitle(getString(R.string.title_sleeptimer))
+                //.setContentTitle(getString(R.string.title_sleeptimer))
                 .setColor(ContextCompat.getColor(this, R.color.colorPrimary))
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
@@ -142,18 +136,9 @@ class TimerService : Service() {
                 .setCategory(NotificationCompat.CATEGORY_ALARM)
                 .apply {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                        val chronoBase = SystemClock.elapsedRealtime() + remainingTime
-
-                        val remoteViews =
-                            RemoteViews(packageName, R.layout.chronometer_notif_content)
-                        remoteViews.setChronometerCountDown(R.id.chronometer, true)
-                        remoteViews.setChronometer(
-                            R.id.chronometer,
-                            chronoBase,
-                            null,
-                            model.isRunning
-                        )
-                        setCustomContentView(remoteViews)
+                        setUsesChronometer(true)
+                        setChronometerCountDown(true)
+                        setWhen(model.endTimeInMs)
                     } else {
                         setContentText(
                             TimerStringFormatter.formatTimeRemaining(
@@ -162,7 +147,7 @@ class TimerService : Service() {
                         )
                     }
                 }
-                .setStyle(NotificationCompat.DecoratedCustomViewStyle())
+                //.setStyle(NotificationCompat.DecoratedCustomViewStyle())
                 .build()
 
         NotificationManagerCompat.from(this)
@@ -226,7 +211,6 @@ class TimerService : Service() {
         } else {
             NotificationManagerCompat.from(this).cancel(NOTIFICATION_ID)
         }
-        sendPublicTimerUpdate()
     }
 
     private fun expireTimer() {
@@ -246,22 +230,16 @@ class TimerService : Service() {
         stopSelf()
     }
 
-    private fun sendPublicTimerUpdate() {
-        mWearManager.sendSleepTimerUpdate(model.toModel())
-    }
-
     private fun sendTimerStarted() {
         mLocalBroadcastMgr.sendBroadcast(
             Intent(ACTION_START_TIMER)
         )
-        mWearManager.sendSleepTimerStart(model.toModel())
     }
 
     private fun sendTimerCancelled() {
         mLocalBroadcastMgr.sendBroadcast(
             Intent(ACTION_CANCEL_TIMER)
         )
-        mWearManager.sendSleepCancelled()
     }
 
     private fun getCancelIntent(context: Context): PendingIntent {
@@ -277,7 +255,7 @@ class TimerService : Service() {
     }
 
     private fun getClickIntent(context: Context): PendingIntent {
-        val intent = Intent(context.applicationContext, SleepTimerActivity::class.java)
+        val intent = Intent(context.applicationContext, SleepTimerLocalActivity::class.java)
             .setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
 
         return PendingIntent.getActivity(
@@ -399,8 +377,9 @@ class TimerService : Service() {
             }
         }
 
-        // Send pause event to which ever player has audio focus
         val audioMan = this.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+
+        // Send pause event to which ever player has audio focus
         val event = KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE)
         audioMan.dispatchMediaKeyEvent(event)
 
@@ -445,7 +424,6 @@ class TimerService : Service() {
 
     override fun onDestroy() {
         cancelTimer()
-        mWearManager.unregister()
         super.onDestroy()
         stopForeground(true)
     }

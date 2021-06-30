@@ -1,7 +1,6 @@
-package com.thewizrd.simplesleeptimer.model
+package com.thewizrd.shared_resources.sleeptimer
 
 import android.text.format.DateUtils
-import com.thewizrd.shared_resources.sleeptimer.TimerModel
 
 class TimerDataModel private constructor() {
     companion object {

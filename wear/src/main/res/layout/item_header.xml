@@ -8,4 +8,4 @@
     android:layout_marginEnd="@dimen/inner_layout_padding"
     android:paddingStart="8dp"
     android:paddingEnd="8dp"
-    android:text="@string/prompt_select_audioplayer" />
+    android:text="@string/select_player_pause_prompt" />

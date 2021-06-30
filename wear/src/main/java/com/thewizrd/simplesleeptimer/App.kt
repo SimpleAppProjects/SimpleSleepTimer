@@ -58,9 +58,5 @@ class App : Application(), ApplicationLib, Application.ActivityLifecycleCallback
     }
 
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
-    override fun onActivityDestroyed(activity: Activity) {
-        if (activity.localClassName.contains("SleepTimerActivity")) {
-            applicationState = AppState.CLOSED
-        }
-    }
+    override fun onActivityDestroyed(activity: Activity) {}
 }
