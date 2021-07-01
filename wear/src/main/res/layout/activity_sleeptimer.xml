@@ -40,14 +40,12 @@
             android:id="@+id/timerStartView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:transitionGroup="true"
             android:visibility="visible" />
 
-        <com.thewizrd.shared_resources.controls.TimeProgressView
+        <com.thewizrd.shared_resources.controls.TimerProgressView
             android:id="@+id/timerProgressView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:transitionGroup="true"
             android:visibility="gone" />
 
     </FrameLayout>
@@ -58,7 +56,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="24dp"
         android:layout_gravity="bottom|center_horizontal"
-        app:fabCustomSize="36dp"
+        app:fabCustomSize="@dimen/timer_fab_size"
         app:srcCompat="@drawable/ic_play_arrow"
         android:visibility="gone"
         tools:visibility="visible" />

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="TimerStart5Style" parent="@style/Widget.MaterialComponents.Button.TextButton">
+        <item name="android:visibility">visible</item>
+    </style>
+</resources>

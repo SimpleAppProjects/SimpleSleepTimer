@@ -84,7 +84,7 @@ class MusicPlayersFragment : Fragment(), BottomSheetCallbackInterface {
                     ImageViewCompat.setImageTintList(binding.musicplayerIcon, null)
                 } else {
                     binding.musicplayerIcon.setImageResource(R.drawable.ic_music_note)
-                    binding.musicplayerText.setText(R.string.text_music_player)
+                    binding.musicplayerText.setText(R.string.title_audioplayer)
                     ImageViewCompat.setImageTintList(
                         binding.musicplayerIcon,
                         ColorStateList.valueOf(
@@ -228,7 +228,7 @@ class MusicPlayersFragment : Fragment(), BottomSheetCallbackInterface {
             } else {
                 Settings.setMusicPlayer(null)
                 binding.musicplayerIcon.setImageResource(R.drawable.ic_music_note)
-                binding.musicplayerText.setText(R.string.text_music_player)
+                binding.musicplayerText.setText(R.string.title_audioplayer)
                 ImageViewCompat.setImageTintList(
                     binding.musicplayerIcon,
                     ColorStateList.valueOf(

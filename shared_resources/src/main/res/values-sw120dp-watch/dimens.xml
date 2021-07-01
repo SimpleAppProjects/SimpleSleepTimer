@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="timerProgress_button_minSize">32dp</dimen>
+    <dimen name="timerStart_button_minSize">18dp</dimen>
+    <dimen name="button_flow_bottom_margin">48dp</dimen>
+    <dimen name="timer_fab_size">24dp</dimen>
+</resources>

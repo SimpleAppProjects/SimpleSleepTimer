@@ -7,6 +7,9 @@ import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
 import com.thewizrd.shared_resources.helpers.WearableHelper
 import com.thewizrd.shared_resources.sleeptimer.SleepTimerHelper
+import com.thewizrd.shared_resources.sleeptimer.TimerDataModel
+import com.thewizrd.shared_resources.sleeptimer.TimerModel
+import com.thewizrd.shared_resources.utils.JSONParser
 import com.thewizrd.shared_resources.utils.bytesToInt
 import com.thewizrd.shared_resources.utils.bytesToString
 import com.thewizrd.simplesleeptimer.SleepTimerActivity
@@ -68,6 +71,14 @@ class WearableDataListenerService : WearableListenerService() {
             SleepTimerHelper.SleepTimerStatusPath -> {
                 WearableWorker.sendSleepTimerStatus(this)
             }
+            SleepTimerHelper.SleepTimerUpdateStatePath -> {
+                val jsonData = messageEvent.data.bytesToString()
+                val model = JSONParser.deserializer(jsonData, TimerModel::class.java)
+                if (model != null) {
+                    TimerDataModel.getDataModel().updateModel(model)
+                    updateSleepTimer()
+                }
+            }
         }
     }
 
@@ -82,5 +93,11 @@ class WearableDataListenerService : WearableListenerService() {
         val stopTimerIntent = Intent(this, TimerService::class.java)
             .setAction(SleepTimerHelper.ACTION_CANCEL_TIMER)
         ContextCompat.startForegroundService(this, stopTimerIntent)
+    }
+
+    private fun updateSleepTimer() {
+        val i = Intent(this, TimerService::class.java)
+            .setAction(TimerService.ACTION_UPDATE_TIMER)
+        ContextCompat.startForegroundService(this, i)
     }
 }

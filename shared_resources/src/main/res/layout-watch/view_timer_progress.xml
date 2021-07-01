@@ -4,8 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout"
-    android:transitionGroup="true">
+    tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout">
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/left_guide"
@@ -44,7 +43,6 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginTop="36dp"
-        android:layout_marginBottom="60dp"
         android:gravity="center"
         android:maxLines="1"
         android:textAlignment="center"
@@ -57,11 +55,59 @@
         app:autoSizeStepGranularity="2sp"
         app:layout_constraintVertical_chainStyle="spread"
         app:layout_constraintVertical_bias="0.0"
-        app:layout_constraintBottom_toBottomOf="@id/timerProgressBar"
+        app:layout_constraintBottom_toTopOf="@id/buttonflow"
         app:layout_constraintEnd_toEndOf="@id/right_guide"
         app:layout_constraintStart_toStartOf="@id/left_guide"
         app:layout_constraintTop_toTopOf="@id/timerProgressBar"
         tools:textColor="@color/colorPrimaryLight"
-        tools:text="01:50:59" />
+        tools:text="02:00:00" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/plus_1minbtn"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:minHeight="0dp"
+        android:paddingTop="0dp"
+        android:paddingBottom="0dp"
+        android:text="@string/label_btn_plus1min"
+        android:textColor="?attr/colorAccent"
+        android:textSize="12sp"
+        tools:textColor="@color/colorPrimaryLight"
+        tools:ignore="MissingConstraints" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/plus_5minbtn"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:minHeight="0dp"
+        android:paddingTop="0dp"
+        android:paddingBottom="0dp"
+        android:text="@string/label_btn_plus5min"
+        android:textColor="?attr/colorAccent"
+        android:textSize="12sp"
+        tools:textColor="@color/colorPrimaryLight"
+        tools:ignore="MissingConstraints" />
+
+    <androidx.constraintlayout.helper.widget.Flow
+        android:id="@+id/buttonflow"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/button_flow_bottom_margin"
+        app:flow_maxElementsWrap="2"
+        app:flow_wrapMode="chain"
+        app:layout_constraintVertical_chainStyle="packed"
+        app:flow_horizontalBias="0.5"
+        app:flow_horizontalStyle="packed"
+        app:flow_verticalStyle="packed"
+        android:orientation="horizontal"
+        app:constraint_referenced_ids="plus_1minbtn,plus_5minbtn"
+        app:layout_constraintStart_toStartOf="@id/left_guide"
+        app:layout_constraintEnd_toEndOf="@id/right_guide"
+        app:layout_constraintTop_toBottomOf="@id/progress_text"
+        app:layout_constraintBottom_toBottomOf="@id/timerProgressBar" />
 
 </merge>

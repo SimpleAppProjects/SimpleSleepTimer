@@ -31,7 +31,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginBottom="60dp"
-        android:transitionGroup="false"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"
         tools:background="@color/colorOnSurface">
 
@@ -39,14 +38,12 @@
             android:id="@+id/timerStartView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:transitionGroup="true"
             android:visibility="visible" />
 
-        <com.thewizrd.shared_resources.controls.TimeProgressView
+        <com.thewizrd.shared_resources.controls.TimerProgressView
             android:id="@+id/timerProgressView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:transitionGroup="true"
             android:visibility="gone" />
 
     </FrameLayout>

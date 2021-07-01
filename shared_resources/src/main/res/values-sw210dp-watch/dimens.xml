@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <integer name="timerstart_rows">2</integer>
-    <integer name="buttonflow_columns">4</integer>
-
     <dimen name="timerProgress_button_minSize">36dp</dimen>
-    <dimen name="timerStart_button_minSize">36dp</dimen>
+    <dimen name="timerStart_button_minSize">32dp</dimen>
     <dimen name="button_flow_bottom_margin">60dp</dimen>
     <dimen name="timer_fab_size">36dp</dimen>
 </resources>

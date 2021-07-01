@@ -1,6 +1,7 @@
 package com.thewizrd.shared_resources.sleeptimer
 
 import android.text.format.DateUtils
+import androidx.annotation.RestrictTo
 
 class TimerDataModel private constructor() {
     companion object {
@@ -28,11 +29,41 @@ class TimerDataModel private constructor() {
         this.endTimeInMs = this.startTimeInMs + this.timerLengthInMs
     }
 
+    fun extend1Min() {
+        val currentTimeMs = System.currentTimeMillis()
+        val extendTimeMs = (1 * DateUtils.MINUTE_IN_MILLIS)
+        val newTimerLengthInMs = this.timerLengthInMs + extendTimeMs
+        val newEndTimeMs = this.endTimeInMs + extendTimeMs
+        if ((newEndTimeMs - currentTimeMs) <= TimerModel.MAX_TIME_IN_MINS * DateUtils.MINUTE_IN_MILLIS) {
+            this.timerLengthInMs = newTimerLengthInMs
+            this.endTimeInMs += extendTimeMs
+        }
+    }
+
+    fun extend5Min() {
+        val currentTimeMs = System.currentTimeMillis()
+        val extendTimeMs = (5 * DateUtils.MINUTE_IN_MILLIS)
+        val newTimerLengthInMs = this.timerLengthInMs + extendTimeMs
+        val newEndTimeMs = this.endTimeInMs + extendTimeMs
+        if ((newEndTimeMs - currentTimeMs) <= TimerModel.MAX_TIME_IN_MINS * DateUtils.MINUTE_IN_MILLIS) {
+            this.timerLengthInMs = newTimerLengthInMs
+            this.endTimeInMs += extendTimeMs
+        }
+    }
+
     fun stopTimer() {
         isRunning = false
         startTimeInMs = 0
         endTimeInMs = 0
         timerLengthInMs = 0
+    }
+
+    @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
+    fun updateModel(model: TimerModel) {
+        this.isRunning = model.isRunning
+        this.startTimeInMs = model.startTimeInMs
+        this.endTimeInMs = model.endTimeInMs
+        this.timerLengthInMs = model.timerLengthInMs
     }
 
     fun toModel(): TimerModel {

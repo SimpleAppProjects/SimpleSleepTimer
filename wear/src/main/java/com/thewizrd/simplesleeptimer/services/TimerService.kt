@@ -16,6 +16,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.thewizrd.shared_resources.sleeptimer.TimerDataModel
+import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.shared_resources.utils.TimerStringFormatter
 import com.thewizrd.simplesleeptimer.*
 import com.thewizrd.simplesleeptimer.preferences.Settings
@@ -30,6 +31,8 @@ class TimerService : Service() {
         const val ACTION_UPDATE_TIMER = "SimpleSleepTimer.action.UPDATE_TIMER"
         const val ACTION_CANCEL_TIMER = "SimpleSleepTimer.action.CANCEL_TIMER"
         private const val ACTION_EXPIRE_TIMER = "SimpleSleepTimer.action.EXPIRE_TIMER"
+        private const val ACTION_EXTEND1_TIMER = "SimpleSleepTimer.action.EXTEND1_TIMER"
+        private const val ACTION_EXTEND5_TIMER = "SimpleSleepTimer.action.EXTEND5_TIMER"
 
         const val EXTRA_TIME_IN_MINS = "SimpleSleepTimer.extra.TIME_IN_MINUTES"
     }
@@ -146,6 +149,27 @@ class TimerService : Service() {
                             )
                         )
                     }
+
+                    val remainingMinsMs =
+                        model.remainingTimeInMs - (model.remainingTimeInMs % DateUtils.MINUTE_IN_MILLIS)
+                    if (remainingMinsMs < (TimerModel.MAX_TIME_IN_MINS - 1).times(DateUtils.MINUTE_IN_MILLIS)) {
+                        addAction(
+                            0,
+                            "+" + TimerStringFormatter.getNumberFormattedQuantityString(
+                                this@TimerService, R.plurals.minutes_short, 1
+                            ),
+                            getPendingIntent(ACTION_EXTEND1_TIMER)
+                        )
+                    }
+                    if (remainingMinsMs < (TimerModel.MAX_TIME_IN_MINS - 5).times(DateUtils.MINUTE_IN_MILLIS)) {
+                        addAction(
+                            0,
+                            "+" + TimerStringFormatter.getNumberFormattedQuantityString(
+                                this@TimerService, R.plurals.minutes_short, 5
+                            ),
+                            getPendingIntent(ACTION_EXTEND5_TIMER)
+                        )
+                    }
                 }
                 //.setStyle(NotificationCompat.DecoratedCustomViewStyle())
                 .build()
@@ -188,6 +212,16 @@ class TimerService : Service() {
             }
             ACTION_EXPIRE_TIMER -> {
                 expireTimer()
+            }
+            ACTION_EXTEND1_TIMER -> {
+                model.extend1Min()
+                updateExpireIntent()
+                updateTimer()
+            }
+            ACTION_EXTEND5_TIMER -> {
+                model.extend5Min()
+                updateExpireIntent()
+                updateTimer()
             }
         }
 
@@ -317,6 +351,7 @@ class TimerService : Service() {
     }
 
     private fun updateExpireIntent() {
+        cancelExpireIntent()
         scheduleExpirePendingIntent(getExpireIntent())
     }
 
@@ -337,6 +372,19 @@ class TimerService : Service() {
             mAlarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, rtcExpireTimeInMs, pi)
         } else {
             mAlarmManager.setExact(AlarmManager.RTC_WAKEUP, rtcExpireTimeInMs, pi)
+        }
+    }
+
+    private fun getPendingIntent(action: String): PendingIntent {
+        val flags = PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_UPDATE_CURRENT
+
+        val i = Intent(this, TimerService::class.java)
+            .setAction(action)
+
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            PendingIntent.getForegroundService(this, 0, i, flags)
+        } else {
+            PendingIntent.getService(this, 0, i, flags)
         }
     }
 
@@ -419,6 +467,22 @@ class TimerService : Service() {
 
         fun startTimer(timeInMin: Int) {
             this@TimerService.startTimer(timeInMin)
+        }
+
+        fun updateTimer() {
+            this@TimerService.updateTimer()
+        }
+
+        fun extend1MinTimer() {
+            model.extend1Min()
+            this@TimerService.updateExpireIntent()
+            this@TimerService.updateTimer()
+        }
+
+        fun extend5MinTimer() {
+            model.extend5Min()
+            this@TimerService.updateExpireIntent()
+            this@TimerService.updateTimer()
         }
     }
 

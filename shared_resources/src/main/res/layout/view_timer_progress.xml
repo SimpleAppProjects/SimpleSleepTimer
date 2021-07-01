@@ -4,8 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout"
-    android:transitionGroup="true">
+    tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout">
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/left_guide"
@@ -21,41 +20,103 @@
         android:orientation="vertical"
         app:layout_constraintGuide_percent="0.8" />
 
-    <com.devadvance.circularseekbar.CircularSeekBar
-        android:id="@+id/timerProgressBar"
+    <FrameLayout
+        android:id="@+id/timer_container"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:circle_color="?attr/colorOnBackground"
-        app:circle_progress_color="?attr/colorAccent"
-        app:circle_stroke_width="4dp"
+        android:transitionGroup="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintEnd_toEndOf="@id/right_guide"
         app:layout_constraintHeight_max="360dp"
         app:layout_constraintStart_toStartOf="@id/left_guide"
-        app:layout_constraintTop_toTopOf="parent"
-        app:pointer_color="?attr/colorAccent"
-        app:pointer_halo_color="@android:color/transparent"
-        app:pointer_halo_color_ontouch="@android:color/transparent"
-        app:pointer_halo_width="0dp"
-        tools:max="100"
-        tools:progress="50" />
+        app:layout_constraintTop_toTopOf="parent">
 
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/progress_text"
+        <com.devadvance.circularseekbar.CircularSeekBar
+            android:id="@+id/timerProgressBar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:circle_color="?attr/colorOnBackground"
+            app:circle_progress_color="?attr/colorAccent"
+            app:circle_stroke_width="4dp"
+            app:pointer_color="?attr/colorAccent"
+            app:pointer_halo_color="@android:color/transparent"
+            app:pointer_halo_color_ontouch="@android:color/transparent"
+            app:pointer_halo_width="0dp"
+            tools:max="100"
+            tools:progress="50" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/progress_text"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginHorizontal="36dp"
+            android:layout_marginVertical="36dp"
+            android:gravity="center"
+            android:maxLines="1"
+            android:textAlignment="center"
+            android:textColor="?attr/colorAccent"
+            app:autoSizeTextType="uniform"
+            tools:textColor="@color/colorPrimaryLight"
+            tools:text="59" />
+
+    </FrameLayout>
+
+    <Button
+        android:id="@+id/plus_1minbtn"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:minWidth="60dp"
+        android:text="@string/label_btn_plus1min"
+        android:textColor="?attr/colorAccent"
+        tools:textSize="12sp"
+        tools:textColor="@color/colorPrimaryLight" />
+
+    <Button
+        android:id="@+id/plus_5minbtn"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:minWidth="60dp"
+        android:text="@string/label_btn_plus5min"
+        android:textColor="?attr/colorAccent"
+        tools:textSize="12sp"
+        tools:textColor="@color/colorPrimaryLight" />
+
+    <androidx.constraintlayout.helper.widget.Flow
+        android:id="@+id/flow"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginHorizontal="36dp"
-        android:layout_marginVertical="36dp"
-        android:gravity="center"
-        android:maxLines="1"
-        android:textAlignment="center"
-        android:textColor="?attr/colorAccent"
-        app:autoSizeTextType="uniform"
-        app:layout_constraintBottom_toBottomOf="@id/timerProgressBar"
-        app:layout_constraintEnd_toEndOf="@id/timerProgressBar"
-        app:layout_constraintStart_toStartOf="@id/timerProgressBar"
-        app:layout_constraintTop_toTopOf="@id/timerProgressBar"
-        tools:text="01:50:59" />
+        app:flow_wrapMode="aligned"
+        app:layout_constraintVertical_chainStyle="packed"
+        app:flow_maxElementsWrap="@integer/timerstart_rows"
+        app:flow_horizontalBias="0.5"
+        app:flow_verticalBias="0.5"
+        app:flow_verticalStyle="packed"
+        android:orientation="vertical"
+        app:constraint_referenced_ids="timer_container,buttonflow"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toEndOf="@id/left_guide"
+        app:layout_constraintEnd_toStartOf="@id/right_guide" />
+
+    <androidx.constraintlayout.helper.widget.Flow
+        android:id="@+id/buttonflow"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:flow_maxElementsWrap="@integer/timerstart_rows"
+        app:flow_wrapMode="chain"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        app:layout_constraintVertical_chainStyle="packed"
+        app:flow_horizontalBias="0.5"
+        app:flow_horizontalStyle="packed"
+        app:flow_verticalStyle="packed"
+        android:orientation="horizontal"
+        app:constraint_referenced_ids="plus_1minbtn,plus_5minbtn"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="@id/timer_container"
+        app:layout_constraintEnd_toEndOf="@id/timer_container"
+        app:layout_constraintTop_toBottomOf="@id/timer_container" />
 
 </merge>

@@ -1,18 +1,21 @@
 package com.thewizrd.simplesleeptimer
 
+import android.animation.*
+import android.annotation.SuppressLint
 import android.content.*
 import android.os.Bundle
 import android.os.IBinder
 import android.os.SystemClock
 import android.view.View
+import android.view.ViewTreeObserver
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import androidx.transition.TransitionManager
+import com.google.android.material.animation.AnimationUtils
 import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.transition.MaterialFadeThrough
 import com.thewizrd.shared_resources.controls.TimerStartView
 import com.thewizrd.shared_resources.sleeptimer.TimerDataModel
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
@@ -120,6 +123,17 @@ class SleepTimerActivity : AppCompatActivity() {
 
         binding.timerStartView.setTimerMax(TimerModel.MAX_TIME_IN_MINS)
         binding.timerStartView.setTimerProgress(timerModel.timerLengthInMins)
+
+        binding.timerProgressView.setOnClickExtend1MinButtonListener {
+            if (mBound) {
+                mTimerBinder.extend1MinTimer()
+            }
+        }
+        binding.timerProgressView.setOnClickExtend5MinButtonListener {
+            if (mBound) {
+                mTimerBinder.extend5MinTimer()
+            }
+        }
     }
 
     override fun onStart() {
@@ -226,11 +240,6 @@ class SleepTimerActivity : AppCompatActivity() {
     }
 
     private fun animateToView(isRunning: Boolean) {
-        // Set up a new MaterialSharedAxis in the specified axis and direction.
-        val transform = MaterialFadeThrough().apply {
-            duration = resources.getInteger(android.R.integer.config_longAnimTime).toLong()
-        }
-
         // Set BottomSheet state before transitioning to avoid weird transition
         if (isRunning) {
             hideBottomSheet()
@@ -238,13 +247,131 @@ class SleepTimerActivity : AppCompatActivity() {
             collapseBottomSheet()
         }
 
-        // Begin watching for changes in the View hierarchy.
-        TransitionManager.beginDelayedTransition(binding.fragmentContainer, transform)
-        if (isRunning) {
-            showTimerProgressView()
-        } else {
-            showTimerStartView()
+        if (isRunning && binding.timerProgressView.visibility == View.VISIBLE ||
+            !isRunning && binding.timerStartView.visibility == View.VISIBLE
+        ) {
+            return
         }
+
+        val currentView = if (!isRunning) {
+            binding.timerProgressView
+        } else {
+            binding.timerStartView
+        }
+        val toView = if (isRunning) {
+            binding.timerProgressView
+        } else {
+            binding.timerStartView
+        }
+        toView.visibility = View.VISIBLE
+
+        val animDuration = resources.getInteger(android.R.integer.config_longAnimTime).toLong()
+
+        val viewTreeObserver = toView.viewTreeObserver
+        viewTreeObserver.addOnPreDrawListener(object : ViewTreeObserver.OnPreDrawListener {
+            override fun onPreDraw(): Boolean {
+                if (viewTreeObserver.isAlive) {
+                    viewTreeObserver.removeOnPreDrawListener(this)
+                }
+
+                val distanceY =
+                    toView.context.resources.getDimensionPixelSize(R.dimen.mtrl_transition_shared_axis_slide_distance)
+                        .toFloat()
+                val translationDistance = if (!isRunning) distanceY else -distanceY
+
+                toView.translationY = -translationDistance
+                currentView.translationY = 0f
+                toView.alpha = 0f
+                currentView.alpha = 1f
+
+                val translateCurrent = ObjectAnimator.ofFloat(
+                    currentView,
+                    View.TRANSLATION_Y, translationDistance
+                )
+                val translateNew = ObjectAnimator.ofFloat(toView, View.TRANSLATION_Y, 0f)
+                val translationAnimatorSet = AnimatorSet().apply {
+                    playTogether(translateCurrent, translateNew)
+                    duration = animDuration
+                    interpolator = FastOutSlowInInterpolator()
+                }
+
+                val fadeOutAnimator = ObjectAnimator.ofFloat(currentView, View.ALPHA, 0f)
+                fadeOutAnimator.duration = animDuration / 2
+                fadeOutAnimator.addUpdateListener(object : ValueAnimator.AnimatorUpdateListener {
+                    val view = currentView
+                    val startValue = 1f
+                    val endValue = 0f
+                    val startFraction = 0f
+                    val endFraction = 0.35f
+
+                    @SuppressLint("RestrictedApi")
+                    override fun onAnimationUpdate(animation: ValueAnimator) {
+                        val progress = animation.animatedValue as Float
+                        view.alpha = AnimationUtils.lerp(
+                            startValue,
+                            endValue,
+                            startFraction,
+                            endFraction,
+                            progress
+                        )
+                    }
+                })
+                fadeOutAnimator.addListener(object : AnimatorListenerAdapter() {
+                    override fun onAnimationStart(animation: Animator?) {
+                        super.onAnimationStart(animation)
+                    }
+
+                    override fun onAnimationEnd(animation: Animator?) {
+                        super.onAnimationEnd(animation)
+                        if (isRunning) {
+                            showTimerProgressView()
+                        } else {
+                            showTimerStartView()
+                        }
+                    }
+                })
+
+                val fadeInAnimator = ObjectAnimator.ofFloat(toView, View.ALPHA, 1f).apply {
+                    duration = animDuration / 2
+                    //startDelay = animDuration / 2
+                }
+                fadeInAnimator.addUpdateListener(object : ValueAnimator.AnimatorUpdateListener {
+                    val view = toView
+                    val startValue = 0f
+                    val endValue = 1f
+                    val startFraction = 0f
+                    val endFraction = 0.35f
+
+                    @SuppressLint("RestrictedApi")
+                    override fun onAnimationUpdate(animation: ValueAnimator) {
+                        val progress = animation.animatedValue as Float
+                        view.alpha = AnimationUtils.lerp(
+                            startValue,
+                            endValue,
+                            startFraction,
+                            endFraction,
+                            progress
+                        )
+                    }
+                })
+
+                val animatorSet = AnimatorSet().apply {
+                    playTogether(fadeOutAnimator, fadeInAnimator, translationAnimatorSet)
+                }
+                animatorSet.addListener(object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: Animator?) {
+                        super.onAnimationEnd(animation)
+                        currentView.translationY = 0f
+                        toView.translationY = 0f
+                        currentView.alpha = 1f
+                        toView.alpha = 1f
+                    }
+                })
+                animatorSet.start()
+
+                return true
+            }
+        })
     }
 
     private fun startUpdatingTime() {

@@ -4,8 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout"
-    android:transitionGroup="true">
+    tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout">
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/left_guide"
@@ -57,6 +56,7 @@
         app:layout_constraintEnd_toEndOf="@id/timerProgressScroller"
         app:layout_constraintStart_toStartOf="@id/timerProgressScroller"
         app:layout_constraintTop_toTopOf="@id/timerProgressScroller"
+        tools:textColor="@color/colorPrimaryLight"
         tools:text="02h:30m" />
 
     <Button
@@ -67,6 +67,8 @@
         android:minWidth="60dp"
         android:text="@string/label_btn_minus5min"
         android:textColor="?attr/colorAccent"
+        tools:textSize="12sp"
+        tools:textColor="@color/colorPrimaryLight"
         tools:ignore="MissingConstraints" />
 
     <Button
@@ -77,6 +79,8 @@
         android:minWidth="60dp"
         android:text="@string/label_btn_minus1min"
         android:textColor="?attr/colorAccent"
+        tools:textSize="12sp"
+        tools:textColor="@color/colorPrimaryLight"
         tools:ignore="MissingConstraints" />
 
     <Button
@@ -87,6 +91,8 @@
         android:minWidth="60dp"
         android:text="@string/label_btn_plus1min"
         android:textColor="?attr/colorAccent"
+        tools:textSize="12sp"
+        tools:textColor="@color/colorPrimaryLight"
         tools:ignore="MissingConstraints" />
 
     <Button
@@ -97,6 +103,8 @@
         android:minWidth="60dp"
         android:text="@string/label_btn_plus5min"
         android:textColor="?attr/colorAccent"
+        tools:textSize="12sp"
+        tools:textColor="@color/colorPrimaryLight"
         tools:ignore="MissingConstraints" />
 
     <androidx.constraintlayout.helper.widget.Flow
