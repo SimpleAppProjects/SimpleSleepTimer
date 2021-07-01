@@ -78,6 +78,7 @@ class SleepTimerActivity : WearableListenerActivity() {
 
                                         binding.messageView.setText(R.string.status_disconnected)
                                         binding.messageView.setOnClickListener(null)
+                                        timerModel.stopTimer()
                                     }
                                     WearConnectionStatus.APPNOTINSTALLED -> {
                                         showProgressBar(false)
@@ -97,6 +98,7 @@ class SleepTimerActivity : WearableListenerActivity() {
                                                 ConfirmationResultReceiver(this@SleepTimerActivity)
                                             )
                                         }
+                                        timerModel.stopTimer()
                                     }
                                     WearConnectionStatus.CONNECTED -> {
                                         showProgressBar(false)
@@ -200,12 +202,12 @@ class SleepTimerActivity : WearableListenerActivity() {
         binding.fab.setOnClickListener {
             var toRun = false
             if (timerModel.isRunning) {
-                requestSleepTimerStop()
                 timerModel.stopTimer()
+                requestSleepTimerStop()
                 toRun = false
             } else {
-                requestSleepTimerStart()
                 timerModel.startTimer()
+                requestSleepTimerStart()
                 toRun = true
             }
 
@@ -598,7 +600,6 @@ class SleepTimerActivity : WearableListenerActivity() {
             if (!show && !binding.bottomActionDrawer.isOpened && !binding.fragmentContainer.hasFocus()) {
                 binding.fragmentContainer.requestFocus()
             }
-            binding.fragmentContainer.requestFocus()
         }
     }
 
