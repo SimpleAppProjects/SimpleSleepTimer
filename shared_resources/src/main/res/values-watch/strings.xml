@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="select_player_pause_prompt">Select an audio source to pause</string>
+    <string name="select_player_pause_prompt">Select an audio player to pause</string>
 </resources>
