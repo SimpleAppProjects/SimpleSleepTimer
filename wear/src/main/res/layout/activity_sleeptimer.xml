@@ -85,15 +85,17 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:orientation="horizontal"
-            android:background="@color/buttonDisabled">
+            android:background="@color/buttonDisabled"
+            android:paddingTop="@dimen/ws_peek_view_top_padding"
+            android:paddingBottom="@dimen/ws_peek_view_bottom_padding">
 
             <ImageView
                 android:id="@+id/audioplayer_icon"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
+                android:layout_width="@dimen/ws_peek_view_icon_size"
+                android:layout_height="@dimen/ws_peek_view_icon_size"
                 android:layout_gravity="center_horizontal"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
                 android:src="@drawable/ic_music_note" />
 
         </FrameLayout>

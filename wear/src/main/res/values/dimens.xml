@@ -18,4 +18,8 @@
 
     <dimen name="progress_slider_padding">0dp</dimen>
 
+    <dimen name="ws_peek_view_bottom_padding">4dp</dimen>
+    <dimen name="ws_peek_view_icon_size">22dp</dimen>
+    <dimen name="ws_peek_view_top_padding">4dp</dimen>
+
 </resources>

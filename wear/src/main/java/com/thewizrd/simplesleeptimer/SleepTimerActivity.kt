@@ -173,27 +173,27 @@ class SleepTimerActivity : WearableListenerActivity() {
         binding.bottomActionDrawer.setIsLocked(false)
         binding.bottomActionDrawer.controller.peekDrawer()
 
-        val peekContainer = binding.root.findViewById<ViewGroup>(R.id.ws_drawer_view_peek_container)
+        val peekContainer = binding.peekView
         peekContainer.viewTreeObserver.addOnPreDrawListener(object :
             ViewTreeObserver.OnPreDrawListener {
             override fun onPreDraw(): Boolean {
                 peekContainer.viewTreeObserver.removeOnPreDrawListener(this)
 
-                val peekContainerHeight = peekContainer.measuredHeight
                 val iconSize =
                     peekContainer.context.resources.getDimensionPixelSize(R.dimen.ws_peek_view_icon_size)
                 val topPadd =
                     peekContainer.context.resources.getDimensionPixelSize(R.dimen.ws_peek_view_top_padding)
                 val botPadd =
                     peekContainer.context.resources.getDimensionPixelSize(R.dimen.ws_peek_view_bottom_padding)
+                val peekContainerHeight = peekContainer.measuredHeight + topPadd + botPadd
                 val totalSize = iconSize + topPadd + botPadd
 
                 binding.fab.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                     bottomMargin = max(peekContainerHeight, totalSize)
                 }
 
-                binding.timerStartView.setButtonFlowBottomMargin(binding.fab.marginBottom + binding.fab.customSize + botPadd)
-                binding.timerProgressView.setButtonFlowBottomMargin(binding.fab.marginBottom + binding.fab.customSize + botPadd)
+                binding.timerStartView.setButtonFlowBottomMargin(binding.fab.marginBottom + binding.fab.customSize + botPadd + topPadd)
+                binding.timerProgressView.setButtonFlowBottomMargin(binding.fab.marginBottom + binding.fab.customSize + botPadd + topPadd)
 
                 return true
             }
