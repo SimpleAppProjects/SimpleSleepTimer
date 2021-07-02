@@ -64,6 +64,7 @@
         <activity
             android:name=".SleepTimerActivity"
             android:label="@string/title_sleeptimer_remote"
+            android:exported="true"
             android:theme="@style/WearAppTheme" />
 
         <service
