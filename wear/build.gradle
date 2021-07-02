@@ -7,11 +7,20 @@ android {
 
     defaultConfig {
         applicationId "com.thewizrd.simplesleeptimer"
+
+        testApplicationId "com.thewizrd.simplesleeptimer.test"
+        // Specifies the fully-qualified class name of the test instrumentation runner.
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        // The following argument makes the Android Test Orchestrator run its
+        // "pm clear" command after each test invocation. This command ensures
+        // that the app's state is completely cleared between tests.
+        testInstrumentationRunnerArguments clearPackageData: 'true'
+
         minSdkVersion 23
         targetSdkVersion 30
         // NOTE: Version Code Format (TargetSDK, Version Name, Build Number, Variant Code (Android: 00, WearOS: 01)
-        versionCode 301010201
-        versionName "1.0.1"
+        versionCode 301100001
+        versionName "1.1.0"
 
         vectorDrawables.useSupportLibrary = true
     }
