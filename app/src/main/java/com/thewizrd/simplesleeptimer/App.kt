@@ -6,6 +6,7 @@ import android.app.Application.ActivityLifecycleCallbacks
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
+import android.os.StrictMode
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.work.Configuration
@@ -38,6 +39,23 @@ class App : Application(), ApplicationLib, ActivityLifecycleCallbacks, Configura
 
         // Init shared library
         SimpleLibrary.initialize(this)
+
+        // Debugging
+        if (BuildConfig.DEBUG) {
+            StrictMode.setThreadPolicy(
+                StrictMode.ThreadPolicy.Builder()
+                    .detectCustomSlowCalls()
+                    .penaltyLog()
+                    .build()
+            )
+            StrictMode.setVmPolicy(
+                StrictMode.VmPolicy.Builder()
+                    .detectActivityLeaks()
+                    .detectLeakedRegistrationObjects()
+                    .penaltyLog()
+                    .build()
+            )
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)

@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.os.Bundle
+import android.os.StrictMode
 import com.thewizrd.shared_resources.ApplicationLib
 import com.thewizrd.shared_resources.SimpleLibrary
 import com.thewizrd.shared_resources.helpers.AppState
@@ -33,6 +34,23 @@ class App : Application(), ApplicationLib, Application.ActivityLifecycleCallback
 
         // Init shared library
         SimpleLibrary.initialize(this)
+
+        // Debugging
+        if (BuildConfig.DEBUG) {
+            StrictMode.setThreadPolicy(
+                StrictMode.ThreadPolicy.Builder()
+                    .detectCustomSlowCalls()
+                    .penaltyLog()
+                    .build()
+            )
+            StrictMode.setVmPolicy(
+                StrictMode.VmPolicy.Builder()
+                    .detectActivityLeaks()
+                    .detectLeakedRegistrationObjects()
+                    .penaltyLog()
+                    .build()
+            )
+        }
     }
 
     override fun onTerminate() {
