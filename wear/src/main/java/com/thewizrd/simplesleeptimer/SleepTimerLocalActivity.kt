@@ -16,6 +16,7 @@ import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.material.animation.AnimationUtils
 import com.thewizrd.shared_resources.controls.TimerStartView
+import com.thewizrd.shared_resources.services.BaseTimerService
 import com.thewizrd.shared_resources.sleeptimer.TimerDataModel
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.simplesleeptimer.databinding.ActivitySleeptimerLocalBinding
@@ -29,14 +30,14 @@ class SleepTimerLocalActivity : AppCompatActivity() {
 
     private val timerModel: TimerModel by viewModels()
 
-    private lateinit var mTimerBinder: TimerService.LocalBinder
+    private lateinit var mTimerBinder: BaseTimerService.LocalBinder
     private var mBound: Boolean = false
     private lateinit var mBroadcastReceiver: BroadcastReceiver
 
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
             // We've bound to LocalService, cast the IBinder and get LocalService instance
-            mTimerBinder = service as TimerService.LocalBinder
+            mTimerBinder = service as BaseTimerService.LocalBinder
             mBound = true
 
             if (mTimerBinder.isRunning()) {
@@ -66,8 +67,11 @@ class SleepTimerLocalActivity : AppCompatActivity() {
                 } else {
                     applicationContext.startService(
                         Intent(applicationContext, TimerService::class.java)
-                            .setAction(TimerService.ACTION_START_TIMER)
-                            .putExtra(TimerService.EXTRA_TIME_IN_MINS, timerModel.timerLengthInMins)
+                            .setAction(BaseTimerService.ACTION_START_TIMER)
+                            .putExtra(
+                                BaseTimerService.EXTRA_TIME_IN_MINS,
+                                timerModel.timerLengthInMins
+                            )
                     )
                     toRun = true
                 }
@@ -127,18 +131,18 @@ class SleepTimerLocalActivity : AppCompatActivity() {
         mBroadcastReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent?) {
                 when (intent?.action) {
-                    TimerService.ACTION_START_TIMER -> {
+                    BaseTimerService.ACTION_START_TIMER -> {
                         showTimerProgressView()
                     }
-                    TimerService.ACTION_CANCEL_TIMER -> {
+                    BaseTimerService.ACTION_CANCEL_TIMER -> {
                         showTimerStartView()
                     }
                 }
             }
         }
         val filter = IntentFilter().apply {
-            addAction(TimerService.ACTION_START_TIMER)
-            addAction(TimerService.ACTION_CANCEL_TIMER)
+            addAction(BaseTimerService.ACTION_START_TIMER)
+            addAction(BaseTimerService.ACTION_CANCEL_TIMER)
         }
         LocalBroadcastManager.getInstance(this)
             .registerReceiver(mBroadcastReceiver, filter)

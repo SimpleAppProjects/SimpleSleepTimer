@@ -10,6 +10,7 @@ import androidx.annotation.RequiresApi
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.devadvance.circularseekbar.CircularSeekBar
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.thewizrd.shared_resources.services.BaseTimerService
 import com.thewizrd.shared_resources.sleeptimer.SleepTimerHelper
 import com.thewizrd.shared_resources.sleeptimer.TimerDataModel
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
@@ -37,13 +38,13 @@ class QSTileService : TileService() {
         super.onCreate()
         mLocalBroadcastMgr = LocalBroadcastManager.getInstance(this)
         mIntentFilter = IntentFilter().apply {
-            addAction(TimerService.ACTION_START_TIMER)
-            addAction(TimerService.ACTION_CANCEL_TIMER)
+            addAction(BaseTimerService.ACTION_START_TIMER)
+            addAction(BaseTimerService.ACTION_CANCEL_TIMER)
         }
         mBroadcastReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent?) {
                 when (intent?.action) {
-                    TimerService.ACTION_START_TIMER, TimerService.ACTION_CANCEL_TIMER -> {
+                    BaseTimerService.ACTION_START_TIMER, BaseTimerService.ACTION_CANCEL_TIMER -> {
                         updateState()
                     }
                 }
@@ -75,7 +76,7 @@ class QSTileService : TileService() {
         } else {
             val stopTimerIntent = Intent(this, TimerService::class.java)
                 .setAction(SleepTimerHelper.ACTION_CANCEL_TIMER)
-            TimerService.enqueueWork(this, stopTimerIntent)
+            BaseTimerService.enqueueWork(this, stopTimerIntent)
         }
         updateState()
     }
@@ -109,7 +110,7 @@ class QSTileService : TileService() {
                 val startTimerIntent = Intent(this@QSTileService, TimerService::class.java)
                     .setAction(SleepTimerHelper.ACTION_START_TIMER)
                     .putExtra(SleepTimerHelper.EXTRA_TIME_IN_MINS, model.timerLengthInMins)
-                TimerService.enqueueWork(this@QSTileService, startTimerIntent)
+                BaseTimerService.enqueueWork(this@QSTileService, startTimerIntent)
                 updateState()
             }
             setNegativeButton(android.R.string.cancel, null)
