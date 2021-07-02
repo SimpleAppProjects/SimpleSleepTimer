@@ -7,6 +7,12 @@
 
     <uses-feature android:name="android.hardware.type.watch" />
 
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MEDIA_BUTTON" />
+        </intent>
+    </queries>
+
     <application
         android:name=".App"
         android:allowBackup="true"

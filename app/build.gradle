@@ -4,8 +4,7 @@ apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
 
 android {
-    compileSdkVersion 29
-    buildToolsVersion "29.0.3"
+    compileSdkVersion 30
 
     defaultConfig {
         applicationId "com.thewizrd.simplesleeptimer"
@@ -19,9 +18,9 @@ android {
         testInstrumentationRunnerArguments clearPackageData: 'true'
 
         minSdkVersion 21
-        targetSdkVersion 29
+        targetSdkVersion 30
         // NOTE: Version Code Format (TargetSDK, Version Name, Build Number, Variant Code (Android: 00, WearOS: 01)
-        versionCode 291010200
+        versionCode 301010200
         versionName "1.0.1"
 
         vectorDrawables.useSupportLibrary = true
