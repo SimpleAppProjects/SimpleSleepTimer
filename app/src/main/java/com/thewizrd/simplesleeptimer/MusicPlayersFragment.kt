@@ -25,7 +25,6 @@ import com.thewizrd.simplesleeptimer.databinding.FragmentMusicPlayersBinding
 import com.thewizrd.simplesleeptimer.preferences.Settings
 import com.thewizrd.simplesleeptimer.utils.ActivityUtils
 import com.thewizrd.simplesleeptimer.wearable.WearableWorker
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.*
 import kotlin.collections.ArrayList
@@ -218,7 +217,7 @@ class MusicPlayersFragment : Fragment(), BottomSheetCallbackInterface {
         val playerPref = Settings.getMusicPlayer()
         val model = playerModels.find { i -> i.key != null && i.key == playerPref }
 
-        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Main) {
+        viewLifecycleOwner.lifecycleScope.launch {
             playerAdapter.updateItems(playerModels)
 
             if (playerPref != null && model is MusicPlayerViewModel && model.bitmapIcon != null) {

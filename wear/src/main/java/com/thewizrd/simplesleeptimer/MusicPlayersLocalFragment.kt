@@ -19,7 +19,6 @@ import androidx.wear.widget.WearableLinearLayoutManager
 import com.thewizrd.shared_resources.viewmodels.MusicPlayerViewModel
 import com.thewizrd.simplesleeptimer.adapters.PlayerListAdapter
 import com.thewizrd.simplesleeptimer.databinding.FragmentMusicPlayersBinding
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.*
 import kotlin.math.roundToInt
@@ -164,7 +163,7 @@ class MusicPlayersLocalFragment : Fragment() {
             }
         }
 
-        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Main) {
+        viewLifecycleOwner.lifecycleScope.launch {
             playerAdapter.updateItems(playerModels)
             showProgressBar(false)
             if (playerModels.isNullOrEmpty()) {

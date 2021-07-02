@@ -120,7 +120,7 @@ class WearableManager(private val mContext: Context) : OnCapabilityChangedListen
                     launchIntent,
                     PackageManager.MATCH_DEFAULT_ONLY
                 )
-                    ?: return
+                    ?: continue
                 val activityCmpName =
                     ComponentName(appInfo.packageName, activityInfo.activityInfo.name)
                 val key =
@@ -192,7 +192,7 @@ class WearableManager(private val mContext: Context) : OnCapabilityChangedListen
     suspend fun sendSelectedAudioPlayer() {
         val mapRequest = PutDataMapRequest.create(SleepTimerHelper.SleepTimerAudioPlayerPath)
         mapRequest.dataMap.putString(SleepTimerHelper.KEY_SELECTEDPLAYER, Settings.getMusicPlayer())
-        //mapRequest.setUrgent()
+        mapRequest.setUrgent()
         try {
             Wearable.getDataClient(mContext)
                 .putDataItem(mapRequest.asPutDataRequest())
