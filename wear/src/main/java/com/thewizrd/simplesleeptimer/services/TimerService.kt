@@ -20,7 +20,9 @@ import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.shared_resources.utils.TimerStringFormatter
 import com.thewizrd.simplesleeptimer.*
 import com.thewizrd.simplesleeptimer.preferences.Settings
+import kotlinx.coroutines.*
 import java.util.*
+import java.util.concurrent.Executors
 
 class TimerService : Service() {
     companion object {
@@ -48,6 +50,10 @@ class TimerService : Service() {
 
     // Timer
     private val model = TimerDataModel.getDataModel()
+
+    private val scope = CoroutineScope(
+        SupervisorJob() + Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    )
 
     override fun onCreate() {
         super.onCreate()
@@ -462,32 +468,43 @@ class TimerService : Service() {
         fun isRunning(): Boolean = model.isRunning
 
         fun cancelTimer() {
-            this@TimerService.cancelTimer()
+            scope.launch {
+                this@TimerService.cancelTimer()
+            }
         }
 
         fun startTimer(timeInMin: Int) {
-            this@TimerService.startTimer(timeInMin)
+            scope.launch {
+                this@TimerService.startTimer(timeInMin)
+            }
         }
 
         fun updateTimer() {
-            this@TimerService.updateTimer()
+            scope.launch {
+                this@TimerService.updateTimer()
+            }
         }
 
         fun extend1MinTimer() {
-            model.extend1Min()
-            this@TimerService.updateExpireIntent()
-            this@TimerService.updateTimer()
+            scope.launch {
+                model.extend1Min()
+                this@TimerService.updateExpireIntent()
+                this@TimerService.updateTimer()
+            }
         }
 
         fun extend5MinTimer() {
-            model.extend5Min()
-            this@TimerService.updateExpireIntent()
-            this@TimerService.updateTimer()
+            scope.launch {
+                model.extend5Min()
+                this@TimerService.updateExpireIntent()
+                this@TimerService.updateTimer()
+            }
         }
     }
 
     override fun onDestroy() {
         cancelTimer()
+        scope.cancel()
         super.onDestroy()
         stopForeground(true)
     }
