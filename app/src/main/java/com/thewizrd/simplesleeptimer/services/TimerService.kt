@@ -287,6 +287,9 @@ class TimerService : Service() {
 
     private fun sendPublicTimerUpdate() {
         mWearManager.sendSleepTimerUpdate(model.toModel())
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            QSTileService.requestListeningState(this)
+        }
     }
 
     private fun sendTimerStarted() {
@@ -294,6 +297,9 @@ class TimerService : Service() {
             Intent(ACTION_START_TIMER)
         )
         mWearManager.sendSleepTimerStart(model.toModel())
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            QSTileService.requestListeningState(this)
+        }
     }
 
     private fun sendTimerCancelled() {
@@ -301,6 +307,9 @@ class TimerService : Service() {
             Intent(ACTION_CANCEL_TIMER)
         )
         mWearManager.sendSleepCancelled()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            QSTileService.requestListeningState(this)
+        }
     }
 
     private fun getCancelIntent(context: Context): PendingIntent {

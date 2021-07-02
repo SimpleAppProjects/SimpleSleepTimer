@@ -8,4 +8,7 @@
     <string name="message_watchbtdiscover">Please enable Bluetooth discovery on your WearOS device</string>
 
     <string name="message_watchbttimeout">Please ensure Bluetooth is enabled on your WearOS device</string>
+
+    <string name="label_stop">Stop</string>
+    <string name="label_start">Start</string>
 </resources>
