@@ -80,8 +80,10 @@ class TimerService : Service() {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             initChannel()
+            if (App.instance.applicationState != AppState.FOREGROUND) {
+                startForegroundIfNeeded()
+            }
         }
-        startForegroundIfNeeded()
     }
 
     private fun startForegroundIfNeeded(forceForeground: Boolean = false) {
