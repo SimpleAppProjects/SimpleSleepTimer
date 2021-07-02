@@ -15,6 +15,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.thewizrd.shared_resources.helpers.AppState
 import com.thewizrd.shared_resources.sleeptimer.TimerDataModel
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.shared_resources.utils.TimerStringFormatter
@@ -30,13 +31,23 @@ class TimerService : Service() {
         const val NOTIFICATION_ID = 1000
 
         const val ACTION_START_TIMER = "SimpleSleepTimer.action.START_TIMER"
-        const val ACTION_UPDATE_TIMER = "SimpleSleepTimer.action.UPDATE_TIMER"
+        internal const val ACTION_UPDATE_TIMER = "SimpleSleepTimer.action.UPDATE_TIMER"
+        private const val ACTION_UPDATE_NOTIFICATION = "SimpleSleepTimer.action.UPDATE_NOTIFICATION"
         const val ACTION_CANCEL_TIMER = "SimpleSleepTimer.action.CANCEL_TIMER"
         private const val ACTION_EXPIRE_TIMER = "SimpleSleepTimer.action.EXPIRE_TIMER"
         private const val ACTION_EXTEND1_TIMER = "SimpleSleepTimer.action.EXTEND1_TIMER"
         private const val ACTION_EXTEND5_TIMER = "SimpleSleepTimer.action.EXTEND5_TIMER"
 
         const val EXTRA_TIME_IN_MINS = "SimpleSleepTimer.extra.TIME_IN_MINUTES"
+        private const val EXTRA_FORCEFOREGROUND = "SimpleSleepTimer.extra.FORCE_FOREGROUND"
+
+        fun enqueueWork(context: Context, work: Intent) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && App.instance.applicationState != AppState.FOREGROUND) {
+                context.startForegroundService(work.putExtra(EXTRA_FORCEFOREGROUND, true))
+            } else {
+                context.startService(work)
+            }
+        }
     }
 
     private lateinit var mLocalBroadcastMgr: LocalBroadcastManager
@@ -58,13 +69,13 @@ class TimerService : Service() {
     override fun onCreate() {
         super.onCreate()
 
+        mLocalBroadcastMgr = LocalBroadcastManager.getInstance(this)
+        mAlarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             initChannel()
         }
         startForegroundIfNeeded()
-
-        mLocalBroadcastMgr = LocalBroadcastManager.getInstance(this)
-        mAlarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
     }
 
     private fun startForegroundIfNeeded(forceForeground: Boolean = false) {
@@ -199,7 +210,9 @@ class TimerService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        startForegroundIfNeeded()
+        startForegroundIfNeeded(
+            intent?.getBooleanExtra(EXTRA_FORCEFOREGROUND, false) ?: false
+        )
 
         when (intent?.action) {
             ACTION_START_TIMER -> {
@@ -210,7 +223,7 @@ class TimerService : Service() {
                     }
                 }
             }
-            ACTION_UPDATE_TIMER -> {
+            ACTION_UPDATE_NOTIFICATION -> {
                 updateTimer()
             }
             ACTION_CANCEL_TIMER -> {
@@ -218,6 +231,10 @@ class TimerService : Service() {
             }
             ACTION_EXPIRE_TIMER -> {
                 expireTimer()
+            }
+            ACTION_UPDATE_TIMER -> {
+                updateExpireIntent()
+                updateTimer()
             }
             ACTION_EXTEND1_TIMER -> {
                 model.extend1Min()
@@ -262,8 +279,8 @@ class TimerService : Service() {
         cancelUpdateIntent()
         cancelExpireIntent()
         if (model.isRunning) {
-            sendTimerCancelled()
             model.stopTimer()
+            sendTimerCancelled()
         }
         stopForeground(true)
         NotificationManagerCompat.from(this).cancel(NOTIFICATION_ID)
@@ -318,13 +335,9 @@ class TimerService : Service() {
         }
 
         val i = Intent(this, TimerService::class.java)
-            .setAction(ACTION_UPDATE_TIMER)
+            .setAction(ACTION_UPDATE_NOTIFICATION)
 
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            PendingIntent.getForegroundService(this, 0, i, flags)
-        } else {
-            PendingIntent.getService(this, 0, i, flags)
-        }
+        return PendingIntent.getService(this, 0, i, flags)
     }
 
     private fun cancelUpdateIntent() {
@@ -349,11 +362,7 @@ class TimerService : Service() {
         val i = Intent(this, TimerService::class.java)
             .setAction(ACTION_EXPIRE_TIMER)
 
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            PendingIntent.getForegroundService(this, 0, i, flags)
-        } else {
-            PendingIntent.getService(this, 0, i, flags)
-        }
+        return PendingIntent.getService(this, 0, i, flags)
     }
 
     private fun updateExpireIntent() {
@@ -387,11 +396,7 @@ class TimerService : Service() {
         val i = Intent(this, TimerService::class.java)
             .setAction(action)
 
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            PendingIntent.getForegroundService(this, 0, i, flags)
-        } else {
-            PendingIntent.getService(this, 0, i, flags)
-        }
+        return PendingIntent.getService(this, 0, i, flags)
     }
 
     private fun pauseMusicAction() {
@@ -431,9 +436,8 @@ class TimerService : Service() {
             }
         }
 
-        val audioMan = this.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-
         // Send pause event to which ever player has audio focus
+        val audioMan = this.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         val event = KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE)
         audioMan.dispatchMediaKeyEvent(event)
 

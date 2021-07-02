@@ -69,8 +69,8 @@ class App : Application(), ApplicationLib, ActivityLifecycleCallbacks, Configura
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-        if (activity.localClassName.contains("LaunchActivity") ||
-            activity.localClassName.contains("MainActivity")
+        if (activity.localClassName.contains(LaunchActivity::class.java.simpleName) ||
+            activity.localClassName.contains(SleepTimerActivity::class.java.simpleName)
         ) {
             applicationState = AppState.FOREGROUND
         }
@@ -82,13 +82,13 @@ class App : Application(), ApplicationLib, ActivityLifecycleCallbacks, Configura
     }
 
     override fun onActivityResumed(activity: Activity) {
-        if (activity.localClassName.contains("MainActivity")) {
+        if (activity.localClassName.contains(SleepTimerActivity::class.java.simpleName)) {
             applicationState = AppState.FOREGROUND
         }
     }
 
     override fun onActivityPaused(activity: Activity) {
-        if (activity.localClassName.contains("MainActivity")) {
+        if (activity.localClassName.contains(SleepTimerActivity::class.java.simpleName)) {
             applicationState = AppState.BACKGROUND
         }
     }
@@ -100,7 +100,7 @@ class App : Application(), ApplicationLib, ActivityLifecycleCallbacks, Configura
 
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
     override fun onActivityDestroyed(activity: Activity) {
-        if (activity.localClassName.contains("MainActivity")) {
+        if (activity.localClassName.contains(SleepTimerActivity::class.java.simpleName)) {
             applicationState = AppState.CLOSED
         }
     }

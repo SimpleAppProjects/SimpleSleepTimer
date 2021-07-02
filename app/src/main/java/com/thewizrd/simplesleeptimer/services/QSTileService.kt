@@ -1,6 +1,5 @@
 package com.thewizrd.simplesleeptimer.services
 
-import android.annotation.SuppressLint
 import android.content.*
 import android.os.Build
 import android.service.quicksettings.Tile
@@ -8,7 +7,6 @@ import android.service.quicksettings.TileService
 import android.view.LayoutInflater
 import android.view.View
 import androidx.annotation.RequiresApi
-import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.devadvance.circularseekbar.CircularSeekBar
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -70,7 +68,6 @@ class QSTileService : TileService() {
         super.onStopListening()
     }
 
-    @SuppressLint("InflateParams")
     override fun onClick() {
         super.onClick()
         if (!TimerDataModel.getDataModel().isRunning) {
@@ -78,7 +75,7 @@ class QSTileService : TileService() {
         } else {
             val stopTimerIntent = Intent(this, TimerService::class.java)
                 .setAction(SleepTimerHelper.ACTION_CANCEL_TIMER)
-            ContextCompat.startForegroundService(this, stopTimerIntent)
+            TimerService.enqueueWork(this, stopTimerIntent)
         }
         updateState()
     }
@@ -112,7 +109,7 @@ class QSTileService : TileService() {
                 val startTimerIntent = Intent(this@QSTileService, TimerService::class.java)
                     .setAction(SleepTimerHelper.ACTION_START_TIMER)
                     .putExtra(SleepTimerHelper.EXTRA_TIME_IN_MINS, model.timerLengthInMins)
-                ContextCompat.startForegroundService(this@QSTileService, startTimerIntent)
+                TimerService.enqueueWork(this@QSTileService, startTimerIntent)
                 updateState()
             }
             setNegativeButton(android.R.string.cancel, null)

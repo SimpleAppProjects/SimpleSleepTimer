@@ -1,7 +1,6 @@
 package com.thewizrd.simplesleeptimer.wearable
 
 import android.content.Intent
-import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
@@ -86,18 +85,18 @@ class WearableDataListenerService : WearableListenerService() {
         val startTimerIntent = Intent(this, TimerService::class.java)
             .setAction(SleepTimerHelper.ACTION_START_TIMER)
             .putExtra(SleepTimerHelper.EXTRA_TIME_IN_MINS, timeInMins)
-        ContextCompat.startForegroundService(this, startTimerIntent)
+        TimerService.enqueueWork(this, startTimerIntent)
     }
 
     private fun stopSleepTimer() {
         val stopTimerIntent = Intent(this, TimerService::class.java)
             .setAction(SleepTimerHelper.ACTION_CANCEL_TIMER)
-        ContextCompat.startForegroundService(this, stopTimerIntent)
+        TimerService.enqueueWork(this, stopTimerIntent)
     }
 
     private fun updateSleepTimer() {
         val i = Intent(this, TimerService::class.java)
             .setAction(TimerService.ACTION_UPDATE_TIMER)
-        ContextCompat.startForegroundService(this, i)
+        TimerService.enqueueWork(this, i)
     }
 }
