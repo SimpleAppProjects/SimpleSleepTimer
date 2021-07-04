@@ -65,11 +65,15 @@ class TimerModel : ViewModel() {
         this.timerLengthInMs = model.timerLengthInMs
     }
 
-    override fun onCleared() {
-        super.onCleared()
+    fun clearModel() {
         isRunning = false
         startTimeInMs = 0
         endTimeInMs = 0
         timerLengthInMs = DEFAULT_TIME_MS
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        clearModel()
     }
 }

@@ -316,6 +316,7 @@ class SleepTimerActivity : WearableListenerActivity() {
     override fun onStop() {
         super.onStop()
         stopUpdatingTime()
+        timerModel.clearModel()
     }
 
     private suspend fun requestTimerStatus() {
