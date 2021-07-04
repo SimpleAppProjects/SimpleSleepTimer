@@ -4,10 +4,11 @@ import android.companion.CompanionDeviceManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import android.content.pm.ResolveInfo
 import android.graphics.Bitmap
 import android.os.Build
+import android.service.media.MediaBrowserService
 import android.util.Log
 import android.util.TypedValue
 import androidx.annotation.RestrictTo
@@ -101,18 +102,10 @@ class WearableManager(private val mContext: Context) : OnCapabilityChangedListen
     }
 
     suspend fun sendSupportedMusicPlayers() {
-        val infos = mContext.packageManager.queryBroadcastReceivers(
-            Intent(Intent.ACTION_MEDIA_BUTTON), PackageManager.GET_RESOLVED_FILTER
-        )
         val mapRequest = PutDataMapRequest.create(WearableHelper.MusicPlayersPath)
+        val supportedPlayers = ArrayList<String>()
 
-        // Sort result
-        Collections.sort(infos, ResolveInfo.DisplayNameComparator(mContext.packageManager))
-
-        val supportedPlayers = ArrayList<String>(infos.size)
-
-        for (info in infos) {
-            val appInfo = info.activityInfo.applicationInfo
+        fun addPlayerInfo(appInfo: ApplicationInfo) {
             val launchIntent =
                 mContext.packageManager.getLaunchIntentForPackage(appInfo.packageName)
             if (launchIntent != null) {
@@ -120,7 +113,7 @@ class WearableManager(private val mContext: Context) : OnCapabilityChangedListen
                     launchIntent,
                     PackageManager.MATCH_DEFAULT_ONLY
                 )
-                    ?: continue
+                    ?: return
                 val activityCmpName =
                     ComponentName(appInfo.packageName, activityInfo.activityInfo.name)
                 val key =
@@ -150,6 +143,33 @@ class WearableManager(private val mContext: Context) : OnCapabilityChangedListen
                 }
             }
         }
+
+        /* Media Button Receivers */
+        val infos = mContext.packageManager.queryBroadcastReceivers(
+            Intent(Intent.ACTION_MEDIA_BUTTON), PackageManager.GET_RESOLVED_FILTER
+        )
+
+        for (info in infos) {
+            val appInfo = info.activityInfo.applicationInfo
+            addPlayerInfo(appInfo)
+        }
+
+        /* MediaBrowser services */
+        val mediaBrowserInfos = mContext.packageManager.queryIntentServices(
+            Intent(MediaBrowserService.SERVICE_INTERFACE),
+            PackageManager.GET_RESOLVED_FILTER
+        )
+
+        for (info in mediaBrowserInfos) {
+            val appInfo = info.serviceInfo.applicationInfo
+            addPlayerInfo(appInfo)
+        }
+
+        // Sort result...
+        supportedPlayers.sortBy {
+            mapRequest.dataMap.getDataMap(it)?.getString(WearableHelper.KEY_LABEL)?.lowercase()
+        }
+
         mapRequest.dataMap.putStringArrayList(WearableHelper.KEY_SUPPORTEDPLAYERS, supportedPlayers)
         mapRequest.setUrgent()
         try {

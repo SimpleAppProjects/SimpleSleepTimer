@@ -23,7 +23,6 @@ class MusicPlayerViewModel : ViewModel() {
 
         other as MusicPlayerViewModel
 
-        if (bitmapIcon != other.bitmapIcon) return false
         if (appLabel != other.appLabel) return false
         if (packageName != other.packageName) return false
         if (activityName != other.activityName) return false
@@ -32,8 +31,7 @@ class MusicPlayerViewModel : ViewModel() {
     }
 
     override fun hashCode(): Int {
-        var result = bitmapIcon?.hashCode() ?: 0
-        result = 31 * result + (appLabel?.hashCode() ?: 0)
+        var result = appLabel?.hashCode() ?: 0
         result = 31 * result + (packageName?.hashCode() ?: 0)
         result = 31 * result + (activityName?.hashCode() ?: 0)
         return result

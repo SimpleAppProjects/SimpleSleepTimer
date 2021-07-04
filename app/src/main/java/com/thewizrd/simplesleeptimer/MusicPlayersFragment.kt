@@ -2,11 +2,12 @@ package com.thewizrd.simplesleeptimer
 
 import android.content.ComponentName
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import android.content.pm.ResolveInfo
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.os.Bundle
+import android.service.media.MediaBrowserService
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -26,8 +27,6 @@ import com.thewizrd.simplesleeptimer.preferences.Settings
 import com.thewizrd.simplesleeptimer.utils.ActivityUtils
 import com.thewizrd.simplesleeptimer.wearable.WearableWorker
 import kotlinx.coroutines.launch
-import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.math.roundToInt
 
 class MusicPlayersFragment : Fragment(), BottomSheetCallbackInterface {
@@ -168,18 +167,10 @@ class MusicPlayersFragment : Fragment(), BottomSheetCallbackInterface {
     }
 
     private fun updateSupportedMusicPlayers() {
-        val infos = requireContext().packageManager.queryBroadcastReceivers(
-            Intent(Intent.ACTION_MEDIA_BUTTON), PackageManager.GET_RESOLVED_FILTER
-        )
+        val supportedPlayers = ArrayList<String>()
+        val playerModels = ArrayList<MusicPlayerViewModel>()
 
-        // Sort result
-        Collections.sort(infos, ResolveInfo.DisplayNameComparator(requireContext().packageManager))
-
-        val supportedPlayers = ArrayList<String>(infos.size)
-        val playerModels = ArrayList<MusicPlayerViewModel>(infos.size)
-
-        for (info in infos) {
-            val appInfo = info.activityInfo.applicationInfo
+        fun addPlayerInfo(appInfo: ApplicationInfo) {
             val launchIntent =
                 requireContext().packageManager.getLaunchIntentForPackage(appInfo.packageName)
             if (launchIntent != null) {
@@ -187,7 +178,7 @@ class MusicPlayersFragment : Fragment(), BottomSheetCallbackInterface {
                     launchIntent,
                     PackageManager.MATCH_DEFAULT_ONLY
                 )
-                    ?: continue
+                    ?: return
                 val activityCmpName =
                     ComponentName(appInfo.packageName, activityInfo.activityInfo.name)
                 val key =
@@ -213,6 +204,30 @@ class MusicPlayersFragment : Fragment(), BottomSheetCallbackInterface {
                 }
             }
         }
+
+        /* Media Button Receivers */
+        val infos = requireContext().packageManager.queryBroadcastReceivers(
+            Intent(Intent.ACTION_MEDIA_BUTTON), PackageManager.GET_RESOLVED_FILTER
+        )
+
+        for (info in infos) {
+            val appInfo = info.activityInfo.applicationInfo
+            addPlayerInfo(appInfo)
+        }
+
+        /* MediaBrowser services */
+        val mediaBrowserInfos = requireContext().packageManager.queryIntentServices(
+            Intent(MediaBrowserService.SERVICE_INTERFACE),
+            PackageManager.GET_RESOLVED_FILTER
+        )
+
+        for (info in mediaBrowserInfos) {
+            val appInfo = info.serviceInfo.applicationInfo
+            addPlayerInfo(appInfo)
+        }
+
+        // Sort result
+        playerModels.sortBy { it.appLabel?.lowercase() }
 
         val playerPref = Settings.getMusicPlayer()
         val model = playerModels.find { i -> i.key != null && i.key == playerPref }

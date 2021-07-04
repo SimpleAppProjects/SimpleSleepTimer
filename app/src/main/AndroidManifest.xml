@@ -15,6 +15,9 @@
         <intent>
             <action android:name="android.intent.action.MEDIA_BUTTON" />
         </intent>
+        <intent>
+            <action android:name="android.media.browse.MediaBrowserService" />
+        </intent>
     </queries>
 
     <application
