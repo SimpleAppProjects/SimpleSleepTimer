@@ -59,11 +59,15 @@
         <activity
             android:name=".SleepTimerLocalActivity"
             android:label="@string/title_sleeptimer"
+            android:clearTaskOnLaunch="true"
+            android:launchMode="singleTask"
             android:theme="@style/WearAppTheme" />
 
         <activity
             android:name=".SleepTimerActivity"
             android:label="@string/title_sleeptimer_remote"
+            android:clearTaskOnLaunch="true"
+            android:launchMode="singleTask"
             android:exported="true"
             android:theme="@style/WearAppTheme" />
 
