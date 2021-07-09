@@ -34,7 +34,7 @@ import com.thewizrd.shared_resources.utils.*
 import com.thewizrd.simplesleeptimer.controls.CustomConfirmationOverlay
 import com.thewizrd.simplesleeptimer.databinding.ActivitySleeptimerBinding
 import com.thewizrd.simplesleeptimer.helpers.ConfirmationResultReceiver
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import kotlin.math.max
 
 /**
@@ -70,46 +70,59 @@ class SleepTimerActivity : WearableListenerActivity() {
                                     )
                                 )) {
                                     WearConnectionStatus.DISCONNECTED -> {
-                                        showProgressBar(false)
-                                        showErrorMessage(true)
-                                        binding.bottomActionDrawer.visibility = View.GONE
-                                        closeBottomDrawer()
-                                        binding.fab.visibility = View.GONE
+                                        launch {
+                                            delay(1000)
+                                            showProgressBar(false)
+                                            showErrorMessage(true)
+                                            binding.bottomActionDrawer.visibility = View.GONE
+                                            closeBottomDrawer()
+                                            binding.fab.visibility = View.GONE
 
-                                        binding.messageView.setText(R.string.status_disconnected)
-                                        binding.messageView.setOnClickListener(null)
-                                        timerModel.stopTimer()
+                                            binding.messageView.setText(R.string.status_disconnected)
+                                            binding.messageView.setOnClickListener(null)
+                                            timerModel.stopTimer()
+                                        }
                                     }
                                     WearConnectionStatus.APPNOTINSTALLED -> {
-                                        showProgressBar(false)
-                                        showErrorMessage(true)
-                                        binding.bottomActionDrawer.visibility = View.GONE
-                                        closeBottomDrawer()
-                                        binding.fab.visibility = View.GONE
+                                        launch {
+                                            delay(1000)
+                                            showProgressBar(false)
+                                            showErrorMessage(true)
+                                            binding.bottomActionDrawer.visibility = View.GONE
+                                            closeBottomDrawer()
+                                            binding.fab.visibility = View.GONE
 
-                                        binding.messageView.setText(R.string.error_sleeptimer_notinstalled)
-                                        binding.messageView.setOnClickListener {
-                                            val intentapp = Intent(Intent.ACTION_VIEW)
-                                                .addCategory(Intent.CATEGORY_BROWSABLE)
-                                                .setData(SleepTimerHelper.getPlayStoreURI())
+                                            binding.messageView.setText(R.string.error_sleeptimer_notinstalled)
+                                            binding.messageView.setOnClickListener {
+                                                val intentapp = Intent(Intent.ACTION_VIEW)
+                                                    .addCategory(Intent.CATEGORY_BROWSABLE)
+                                                    .setData(SleepTimerHelper.getPlayStoreURI())
 
-                                            RemoteIntent.startRemoteActivity(
-                                                this@SleepTimerActivity, intentapp,
-                                                ConfirmationResultReceiver(this@SleepTimerActivity)
-                                            )
+                                                RemoteIntent.startRemoteActivity(
+                                                    this@SleepTimerActivity, intentapp,
+                                                    ConfirmationResultReceiver(this@SleepTimerActivity)
+                                                )
+                                            }
+                                            timerModel.stopTimer()
                                         }
-                                        timerModel.stopTimer()
                                     }
                                     WearConnectionStatus.CONNECTED -> {
-                                        showProgressBar(false)
-                                        showErrorMessage(false)
-                                        binding.bottomActionDrawer.visibility = View.VISIBLE
-                                        binding.bottomActionDrawer.controller.peekDrawer()
-                                        binding.bottomActionDrawer.clearAnimation()
-                                        if (timerModel.isRunning || binding.timerStartView.getTimerProgress() >= 1) {
-                                            binding.fab.post { binding.fab.show() }
-                                        } else {
-                                            binding.fab.post { binding.fab.hide() }
+                                        launch {
+                                            delay(1000)
+                                            showProgressBar(false)
+                                            showErrorMessage(false)
+                                            binding.bottomActionDrawer.visibility = View.VISIBLE
+                                            if (timerModel.isRunning) {
+                                                closeBottomDrawer()
+                                            } else {
+                                                peekBottomDrawer()
+                                            }
+                                            binding.bottomActionDrawer.clearAnimation()
+                                            if (timerModel.isRunning || binding.timerStartView.getTimerProgress() >= 1) {
+                                                binding.fab.post { binding.fab.show() }
+                                            } else {
+                                                binding.fab.post { binding.fab.hide() }
+                                            }
                                         }
                                     }
                                 }
