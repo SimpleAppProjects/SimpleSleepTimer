@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".wearable.WearPermissionsActivity">
+    tools:context=".wearable.WearPermissionsActivity"
+    tools:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
@@ -12,16 +13,14 @@
         style="@style/Widget.MaterialComponents.AppBarLayout.Surface"
         android:fitsSystemWindows="true"
         app:elevation="0dp"
-        app:liftOnScroll="false"
-        app:statusBarForeground="@color/colorSurface">
+        app:liftOnScroll="false">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/topAppBar"
             style="@style/Widget.MaterialComponents.Toolbar.Surface"
             android:layout_width="match_parent"
             android:layout_height="?android:actionBarSize"
-            app:title="@string/title_sleeptimer"
-            app:titleTextColor="@color/colorPrimaryOnSurface" />
+            app:title="@string/title_sleeptimer" />
 
     </com.google.android.material.appbar.AppBarLayout>
 

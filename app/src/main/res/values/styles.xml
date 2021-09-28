@@ -5,8 +5,8 @@
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorPrimaryLight</item>
-        <item name="colorSecondary">@color/colorPrimaryLight</item>
+        <item name="colorAccent">?attr/colorSecondary</item>
+        <item name="colorSecondary">@color/colorPrimary</item>
         <item name="android:colorBackground">@color/colorBackground</item>
         <item name="colorSurface">@color/colorSurface</item>
         <item name="colorError">@color/colorError</item>
@@ -18,31 +18,41 @@
         <item name="colorOnError">@color/colorOnError</item>
     </style>
 
-    <style name="AppTheme.Base" parent="Base.AppTheme">
-        <!-- Customize your theme here. -->
+    <style name="Base.MaterialAlertDialogStyle" parent="Theme.MaterialComponents.DayNight.Dialog.Alert">
+        <!-- Copy colors from base theme -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorPrimaryLight</item>
+        <item name="colorAccent">?attr/colorSecondary</item>
+        <item name="colorSecondary">@color/colorPrimary</item>
+        <item name="android:colorBackground">@color/colorBackground</item>
+        <item name="colorSurface">@color/colorSurface</item>
+        <item name="colorError">@color/colorError</item>
+
+        <item name="colorOnPrimary">@color/colorOnPrimary</item>
+        <item name="colorOnSecondary">@color/colorOnSecondary</item>
+        <item name="colorOnBackground">@color/colorOnBackground</item>
+        <item name="colorOnSurface">@color/colorOnSurface</item>
+        <item name="colorOnError">@color/colorOnError</item>
     </style>
 
+    <style name="AppTheme.Base" parent="Base.AppTheme" />
+
     <style name="AppTheme" parent="AppTheme.Base">
+        <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
 
     <style name="AppTheme.Launcher">
-        <item name="android:windowBackground">@drawable/ic_splash_screen</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_round</item>
+        <item name="windowSplashScreenAnimationDuration">1000</item>
+        <item name="postSplashScreenTheme">@style/AppTheme</item>
     </style>
 
-    <style name="MaterialAlertDialogStyle" parent="Theme.MaterialComponents.DayNight.Dialog.Alert">
+    <style name="MaterialAlertDialogStyle.Base" parent="Base.MaterialAlertDialogStyle" />
+
+    <style name="MaterialAlertDialogStyle" parent="MaterialAlertDialogStyle.Base">
         <item name="android:dialogCornerRadius" tools:ignore="NewApi">16dp</item>
         <item name="dialogCornerRadius">16dp</item>
-        <item name="buttonBarButtonStyle">@style/MaterialAlertDialogButtonStyle</item>
-    </style>
-
-    <style name="MaterialAlertDialogButtonStyle" parent="@style/Widget.MaterialComponents.Button.TextButton.Dialog">
-        <item name="android:textColor">@color/colorPrimaryLight</item>
     </style>
 
 </resources>

@@ -3,10 +3,18 @@
 
     <style name="AppTheme.Base" parent="Base.AppTheme">
         <!-- Customize your theme here. -->
-        <item name="colorPrimary">@color/colorPrimaryLight</item>
+        <item name="colorPrimary">@color/colorSecondary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorPrimaryLight</item>
-        <item name="colorSecondary">@color/colorPrimaryLight</item>
+        <item name="colorAccent">?attr/colorSecondary</item>
+        <item name="colorSecondary">@color/colorSecondary</item>
+    </style>
+
+    <style name="Base.MaterialAlertDialogStyle" parent="Theme.MaterialComponents.DayNight.Dialog.Alert">
+        <!-- Copy colors from base theme -->
+        <item name="colorPrimary">@color/colorSecondary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">?attr/colorSecondary</item>
+        <item name="colorSecondary">@color/colorSecondary</item>
     </style>
 
 </resources>

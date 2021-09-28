@@ -16,15 +16,15 @@ import androidx.core.view.ViewCompat
 import androidx.core.widget.ImageViewCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.thewizrd.shared_resources.helpers.RecyclerOnClickListenerInterface
+import com.thewizrd.shared_resources.utils.ContextUtils.getAttrDimension
+import com.thewizrd.shared_resources.utils.ContextUtils.getAttrValue
 import com.thewizrd.shared_resources.viewmodels.MusicPlayerViewModel
 import com.thewizrd.simplesleeptimer.adapters.PlayerListAdapter
 import com.thewizrd.simplesleeptimer.databinding.FragmentMusicPlayersBinding
 import com.thewizrd.simplesleeptimer.preferences.Settings
-import com.thewizrd.simplesleeptimer.utils.ActivityUtils
 import com.thewizrd.simplesleeptimer.wearable.WearableWorker
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -37,10 +37,7 @@ class MusicPlayersFragment : Fragment(), BottomSheetCallbackInterface {
 
     companion object {
         private val _toolbarHeight =
-            ActivityUtils.getAttrDimension(
-                App.instance.appContext,
-                android.R.attr.actionBarSize
-            )
+            App.instance.appContext.getAttrDimension(android.R.attr.actionBarSize)
     }
 
     private val toolbarHeight: Int
@@ -66,12 +63,6 @@ class MusicPlayersFragment : Fragment(), BottomSheetCallbackInterface {
         binding.playersList.layoutManager = LinearLayoutManager(context)
         binding.playersList.adapter = playerAdapter
         binding.playersList.setHasFixedSize(false)
-        binding.playersList.addItemDecoration(
-            DividerItemDecoration(
-                context,
-                DividerItemDecoration.VERTICAL
-            )
-        )
 
         playerAdapter.setOnClickListener(object : RecyclerOnClickListenerInterface {
             override fun onClick(view: View, position: Int) {
@@ -85,12 +76,7 @@ class MusicPlayersFragment : Fragment(), BottomSheetCallbackInterface {
                     binding.musicplayerText.setText(R.string.title_audioplayer)
                     ImageViewCompat.setImageTintList(
                         binding.musicplayerIcon,
-                        ColorStateList.valueOf(
-                            ActivityUtils.getAttrValue(
-                                requireContext(),
-                                R.attr.colorAccent
-                            )
-                        )
+                        ColorStateList.valueOf(requireContext().getAttrValue(R.attr.colorAccent))
                     )
                 }
 
@@ -245,12 +231,7 @@ class MusicPlayersFragment : Fragment(), BottomSheetCallbackInterface {
                 binding.musicplayerText.setText(R.string.title_audioplayer)
                 ImageViewCompat.setImageTintList(
                     binding.musicplayerIcon,
-                    ColorStateList.valueOf(
-                        ActivityUtils.getAttrValue(
-                            requireContext(),
-                            R.attr.colorAccent
-                        )
-                    )
+                    ColorStateList.valueOf(requireContext().getAttrValue(R.attr.colorAccent))
                 )
             }
         }

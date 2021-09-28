@@ -37,9 +37,9 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:circle_color="?attr/colorOnBackground"
-            app:circle_progress_color="?attr/colorAccent"
+            app:circle_progress_color="?attr/colorPrimary"
             app:circle_stroke_width="4dp"
-            app:pointer_color="?attr/colorAccent"
+            app:pointer_color="?attr/colorPrimary"
             app:pointer_halo_color="@android:color/transparent"
             app:pointer_halo_color_ontouch="@android:color/transparent"
             app:pointer_halo_width="0dp"
@@ -55,7 +55,7 @@
             android:gravity="center"
             android:maxLines="1"
             android:textAlignment="center"
-            android:textColor="?attr/colorAccent"
+            android:textColor="?attr/colorPrimary"
             app:autoSizeTextType="uniform"
             tools:textColor="@color/colorPrimaryLight"
             tools:text="59" />
@@ -69,7 +69,6 @@
         android:layout_height="wrap_content"
         android:minWidth="60dp"
         android:text="@string/label_btn_plus1min"
-        android:textColor="?attr/colorAccent"
         tools:textSize="12sp"
         tools:textColor="@color/colorPrimaryLight" />
 
@@ -80,7 +79,6 @@
         android:layout_height="wrap_content"
         android:minWidth="60dp"
         android:text="@string/label_btn_plus5min"
-        android:textColor="?attr/colorAccent"
         tools:textSize="12sp"
         tools:textColor="@color/colorPrimaryLight" />
 

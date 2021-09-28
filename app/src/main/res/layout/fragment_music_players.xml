@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:ignore="UnusedAttribute">
+    tools:ignore="UnusedAttribute"
+    tools:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/bottom_sheet_appbar"
@@ -14,7 +15,6 @@
         android:fitsSystemWindows="true"
         android:visibility="gone"
         app:elevation="0dp"
-        app:statusBarForeground="@color/colorSurface"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -32,7 +32,7 @@
                 android:layout_height="match_parent"
                 style="@style/Widget.AppCompat.Toolbar.Button.Navigation"
                 app:srcCompat="@drawable/ic_close"
-                android:tint="@color/colorPrimaryOnSurface"
+                android:tint="?attr/colorOnSurface"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent" />
@@ -54,7 +54,7 @@
                 android:maxLines="1"
                 android:ellipsize="end"
                 android:text="@string/title_audioplayer"
-                android:textColor="@color/colorPrimaryOnSurface"
+                android:textColor="?attr/colorOnSurface"
                 android:textAppearance="?attr/textAppearanceHeadline6"
                 android:layout_marginStart="4dp"
                 android:layout_marginLeft="4dp"

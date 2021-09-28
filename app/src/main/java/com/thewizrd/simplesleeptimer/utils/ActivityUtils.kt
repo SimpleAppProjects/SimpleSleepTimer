@@ -1,120 +1,151 @@
-package com.thewizrd.simplesleeptimer.utils;
+package com.thewizrd.simplesleeptimer.utils
 
-import android.content.Context;
-import android.content.res.Configuration;
-import android.content.res.TypedArray;
-import android.graphics.Color;
-import android.os.Build;
-import android.util.DisplayMetrics;
-import android.util.TypedValue;
-import android.view.View;
-import android.view.Window;
+import android.graphics.Color
+import android.os.Build
+import android.view.View
+import android.view.Window
+import androidx.annotation.ColorInt
+import androidx.annotation.RequiresApi
+import androidx.core.graphics.ColorUtils
+import androidx.core.view.WindowCompat
 
-import androidx.annotation.AnyRes;
-import androidx.annotation.AttrRes;
-import androidx.annotation.ColorInt;
-import androidx.annotation.NonNull;
-import androidx.core.graphics.ColorUtils;
-
-public class ActivityUtils {
-    public static float dpToPx(@NonNull Context context, float valueInDp) {
-        DisplayMetrics metrics = context.getResources().getDisplayMetrics();
-        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, valueInDp, metrics);
+object ActivityUtils {
+    fun Window.setTransparentWindow(@ColorInt color: Int) {
+        setTransparentWindow(color, color, color, true)
     }
 
-    public static boolean isLargeTablet(@NonNull Context context) {
-        return (context.getResources().getConfiguration().screenLayout
-                & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE;
+    fun Window.setTransparentWindow(
+        @ColorInt backgroundColor: Int,
+        @ColorInt statusBarColor: Int,
+        @ColorInt navBarColor: Int
+    ) {
+        setTransparentWindow(backgroundColor, statusBarColor, navBarColor, true)
     }
 
-    public static boolean isXLargeTablet(@NonNull Context context) {
-        return (context.getResources().getConfiguration().screenLayout
-                & Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_XLARGE;
-    }
+    fun Window.setTransparentWindow(
+        @ColorInt backgroundColor: Int,
+        @ColorInt statusBarColor: Int,
+        @ColorInt navBarColor: Int,
+        setColors: Boolean
+    ) {
+        // Make full transparent statusBar
+        val isLightNavBar =
+            navBarColor != Color.TRANSPARENT && ColorUtils.calculateContrast(
+                Color.WHITE,
+                ColorUtils.setAlphaComponent(navBarColor, 0xFF)
+            ) < 4.5f ||
+                    navBarColor == Color.TRANSPARENT && ColorUtils.calculateContrast(
+                Color.WHITE,
+                backgroundColor
+            ) < 4.5f
+        val navBarProtected = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O || !isLightNavBar
 
-    public static boolean isSmallestWidth(@NonNull Context context, int swdp) {
-        return (context.getResources().getConfiguration().smallestScreenWidthDp) >= swdp;
-    }
+        val isLightStatusBar = statusBarColor != Color.TRANSPARENT && ColorUtils.calculateContrast(
+            Color.WHITE,
+            ColorUtils.setAlphaComponent(statusBarColor, 0xFF)
+        ) < 4.5f ||
+                statusBarColor == Color.TRANSPARENT && ColorUtils.calculateContrast(
+            Color.WHITE,
+            backgroundColor
+        ) < 4.5f
+        val statBarProtected = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M || !isLightStatusBar
 
-    public static int getOrientation(@NonNull Context context) {
-        return (context.getResources().getConfiguration().orientation);
-    }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            setLightStatusBar(setColors && isLightStatusBar)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            setLightNavBar(setColors && isLightNavBar)
+        }
 
-    public static void setStatusBarColor(@NonNull Window window, @ColorInt int color, boolean setColors) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            boolean isLightStatusBar = color != Color.TRANSPARENT && ColorsUtils.isSuperLight(color);
-            boolean statBarProtected = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) || !isLightStatusBar;
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (isLightStatusBar) {
-                    window.getDecorView().setSystemUiVisibility(
-                            window.getDecorView().getSystemUiVisibility()
-                                    | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
-                } else {
-                    window.getDecorView().setSystemUiVisibility(
-                            window.getDecorView().getSystemUiVisibility()
-                                    & ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
-                }
-            }
-
-            window.setStatusBarColor((setColors ?
-                    (statBarProtected ? color : ColorUtils.blendARGB(color, Color.BLACK, 0.25f))
-                    : Color.TRANSPARENT));
+        this.statusBarColor = if (setColors) {
+            if (statBarProtected) statusBarColor else ColorUtils.blendARGB(
+                statusBarColor,
+                Color.BLACK,
+                0.25f
+            )
+        } else {
+            Color.TRANSPARENT
+        }
+        this.navigationBarColor = if (setColors) {
+            if (navBarProtected) navBarColor else ColorUtils.blendARGB(
+                navBarColor,
+                Color.BLACK,
+                0.25f
+            )
+        } else {
+            Color.TRANSPARENT
         }
     }
 
-    public static void setNavBarColor(@NonNull Window window, @ColorInt int color, boolean setColors) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            boolean isLightNavBar = color != Color.TRANSPARENT && ColorsUtils.isSuperLight(color);
-            boolean navBarProtected = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) || !isLightNavBar;
+    fun Window.setFullScreen(fullScreen: Boolean) {
+        WindowCompat.setDecorFitsSystemWindows(this, !fullScreen)
+    }
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                if (isLightNavBar) {
-                    window.getDecorView().setSystemUiVisibility(
-                            window.getDecorView().getSystemUiVisibility()
-                                    | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
-                } else {
-                    window.getDecorView().setSystemUiVisibility(
-                            window.getDecorView().getSystemUiVisibility()
-                                    & ~View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
-                }
+    fun Window.setStatusBarColor(
+        @ColorInt backgroundColor: Int,
+        @ColorInt statusBarColor: Int
+    ) {
+        setStatusBarColor(backgroundColor, statusBarColor, true)
+    }
+
+    private fun Window.setStatusBarColor(
+        @ColorInt backgroundColor: Int,
+        @ColorInt statusBarColor: Int,
+        setColors: Boolean
+    ) {
+        val isLightStatusBar = statusBarColor != Color.TRANSPARENT && ColorUtils.calculateContrast(
+            Color.WHITE, ColorUtils.setAlphaComponent(statusBarColor, 0xFF)
+        ) < 4.5f ||
+                statusBarColor == Color.TRANSPARENT && ColorUtils.calculateContrast(
+            Color.WHITE,
+            backgroundColor
+        ) < 4.5f
+        val statBarProtected = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M || !isLightStatusBar
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (setColors && isLightStatusBar) {
+                decorView.systemUiVisibility = (
+                        decorView.systemUiVisibility
+                                or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR)
+            } else {
+                decorView.systemUiVisibility = (
+                        decorView.systemUiVisibility
+                                and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv())
             }
-
-            window.setNavigationBarColor((setColors ?
-                    (navBarProtected ? color : ColorUtils.blendARGB(color, Color.BLACK, 0.25f))
-                    : Color.TRANSPARENT));
+        }
+        this.statusBarColor = if (setColors) {
+            if (statBarProtected) statusBarColor else ColorUtils.blendARGB(
+                statusBarColor,
+                Color.BLACK,
+                0.25f
+            )
+        } else {
+            Color.TRANSPARENT
         }
     }
 
-    public static int getAttrDimension(@NonNull Context activityContext, @AttrRes int resId) {
-        final TypedValue value = new TypedValue();
-        activityContext.getTheme().resolveAttribute(resId, value, true);
-
-        return TypedValue.complexToDimensionPixelSize(value.data, activityContext.getResources().getDisplayMetrics());
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    fun Window.setLightStatusBar(setLight: Boolean) {
+        if (setLight) {
+            decorView.systemUiVisibility = (
+                    decorView.systemUiVisibility
+                            or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR)
+        } else {
+            decorView.systemUiVisibility = (
+                    decorView.systemUiVisibility
+                            and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv())
+        }
     }
 
-    public static int getAttrValue(@NonNull Context activityContext, @AttrRes int resId) {
-        final TypedValue value = new TypedValue();
-        activityContext.getTheme().resolveAttribute(resId, value, true);
-
-        return value.data;
-    }
-
-    @ColorInt
-    public static int getColor(@NonNull Context activityContext, @AttrRes int resId) {
-        final TypedArray array = activityContext.getTheme().obtainStyledAttributes(new int[]{resId});
-        @ColorInt int color = array.getColor(0, 0);
-        array.recycle();
-
-        return color;
-    }
-
-    @AnyRes
-    public static int getResourceId(@NonNull Context activityContext, @AttrRes int resId) {
-        final TypedArray array = activityContext.getTheme().obtainStyledAttributes(new int[]{resId});
-        int resourceId = array.getResourceId(0, 0);
-        array.recycle();
-
-        return resourceId;
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    fun Window.setLightNavBar(setLight: Boolean) {
+        if (setLight) {
+            decorView.systemUiVisibility = (
+                    decorView.systemUiVisibility
+                            or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR)
+        } else {
+            decorView.systemUiVisibility = (
+                    decorView.systemUiVisibility
+                            and View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR.inv())
+        }
     }
 }

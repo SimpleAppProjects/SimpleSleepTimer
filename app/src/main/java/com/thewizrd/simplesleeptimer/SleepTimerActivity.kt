@@ -10,7 +10,6 @@ import android.view.View
 import android.view.ViewTreeObserver
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -20,9 +19,10 @@ import com.thewizrd.shared_resources.controls.TimerStartView
 import com.thewizrd.shared_resources.services.BaseTimerService
 import com.thewizrd.shared_resources.sleeptimer.TimerDataModel
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
+import com.thewizrd.shared_resources.utils.ContextUtils.getAttrColor
 import com.thewizrd.simplesleeptimer.databinding.ActivityMainBinding
 import com.thewizrd.simplesleeptimer.services.TimerService
-import com.thewizrd.simplesleeptimer.utils.ActivityUtils
+import com.thewizrd.simplesleeptimer.utils.ActivityUtils.setTransparentWindow
 
 class SleepTimerActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -59,12 +59,9 @@ class SleepTimerActivity : AppCompatActivity() {
         setContentView(binding.root)
         setSupportActionBar(binding.topAppBar)
 
-        // Fix statusbar
-        ActivityUtils.setStatusBarColor(
-            window,
-            ContextCompat.getColor(this, R.color.colorSurface),
-            true
-        )
+        val backgroundColor = getAttrColor(android.R.attr.colorBackground)
+        val surfaceColor = getAttrColor(R.attr.colorSurface)
+        window.setTransparentWindow(backgroundColor, surfaceColor, surfaceColor)
 
         val musicPlayersFragment =
             supportFragmentManager.findFragmentById(R.id.musicplayer_fragment) as? MusicPlayersFragment
