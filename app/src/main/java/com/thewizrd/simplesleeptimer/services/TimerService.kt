@@ -43,63 +43,63 @@ class TimerService : BaseTimerService() {
 
         return NotificationCompat.Builder(this, NOT_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_hourglass_empty)
-            .setContentTitle(getString(R.string.title_sleeptimer))
-            .setColor(ContextCompat.getColor(this, R.color.colorPrimary))
+            .setContentTitle(getString(R.string.title_sleeptimer)).apply {
+                // Don't set color for Android S+ devices (Material You)
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                    color = ContextCompat.getColor(this@TimerService, R.color.colorPrimary)
+                }
+            }
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setShowWhen(false)
             .setSound(null)
-            .addAction(
-                0,
-                getString(android.R.string.cancel),
-                    getCancelIntent(this)
-                )
-                .setContentIntent(getClickIntent(this))
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setCategory(NotificationCompat.CATEGORY_ALARM)
-                .apply {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                        val chronoBase = SystemClock.elapsedRealtime() + remainingTime
+            .addAction(0, getString(android.R.string.cancel), getCancelIntent(this))
+            .setContentIntent(getClickIntent(this))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .apply {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    val chronoBase = SystemClock.elapsedRealtime() + remainingTime
 
-                        val remoteViews =
-                            RemoteViews(packageName, R.layout.chronometer_notif_content)
-                        remoteViews.setChronometerCountDown(R.id.chronometer, true)
-                        remoteViews.setChronometer(
-                            R.id.chronometer,
-                            chronoBase,
-                            null,
-                            model.isRunning
+                    val remoteViews =
+                        RemoteViews(packageName, R.layout.chronometer_notif_content)
+                    remoteViews.setChronometerCountDown(R.id.chronometer, true)
+                    remoteViews.setChronometer(
+                        R.id.chronometer,
+                        chronoBase,
+                        null,
+                        model.isRunning
+                    )
+                    setCustomContentView(remoteViews)
+                } else {
+                    setContentText(
+                        TimerStringFormatter.formatTimeRemaining(
+                            this@TimerService, remainingTime
                         )
-                        setCustomContentView(remoteViews)
-                    } else {
-                        setContentText(
-                            TimerStringFormatter.formatTimeRemaining(
-                                this@TimerService, remainingTime
-                            )
-                        )
-                    }
-
-                    val remainingMinsMs =
-                        model.remainingTimeInMs - (model.remainingTimeInMs % DateUtils.MINUTE_IN_MILLIS)
-                    if (remainingMinsMs < (TimerModel.MAX_TIME_IN_MINS - 1).times(DateUtils.MINUTE_IN_MILLIS)) {
-                        addAction(
-                            0,
-                            "+" + TimerStringFormatter.getNumberFormattedQuantityString(
-                                this@TimerService, R.plurals.minutes_short, 1
-                            ),
-                            getExtend1MinPendingIntent()
-                        )
-                    }
-                    if (remainingMinsMs < (TimerModel.MAX_TIME_IN_MINS - 5).times(DateUtils.MINUTE_IN_MILLIS)) {
-                        addAction(
-                            0,
-                            "+" + TimerStringFormatter.getNumberFormattedQuantityString(
-                                this@TimerService, R.plurals.minutes_short, 5
-                            ),
-                            getExtend5MinPendingIntent()
-                        )
-                    }
+                    )
                 }
+
+                val remainingMinsMs =
+                    model.remainingTimeInMs - (model.remainingTimeInMs % DateUtils.MINUTE_IN_MILLIS)
+                if (remainingMinsMs < (TimerModel.MAX_TIME_IN_MINS - 1).times(DateUtils.MINUTE_IN_MILLIS)) {
+                    addAction(
+                        0,
+                        "+" + TimerStringFormatter.getNumberFormattedQuantityString(
+                            this@TimerService, R.plurals.minutes_short, 1
+                        ),
+                        getExtend1MinPendingIntent()
+                    )
+                }
+                if (remainingMinsMs < (TimerModel.MAX_TIME_IN_MINS - 5).times(DateUtils.MINUTE_IN_MILLIS)) {
+                    addAction(
+                        0,
+                        "+" + TimerStringFormatter.getNumberFormattedQuantityString(
+                            this@TimerService, R.plurals.minutes_short, 5
+                        ),
+                        getExtend5MinPendingIntent()
+                    )
+                }
+            }
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
             .build()
     }
