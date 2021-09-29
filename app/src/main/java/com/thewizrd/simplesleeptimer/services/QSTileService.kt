@@ -107,11 +107,13 @@ class QSTileService : TileService() {
             setCancelable(true)
             setTitle(R.string.title_sleeptimer)
             setPositiveButton(R.string.label_start) { _, _ ->
-                val startTimerIntent = Intent(this@QSTileService, TimerService::class.java)
-                    .setAction(SleepTimerHelper.ACTION_START_TIMER)
-                    .putExtra(SleepTimerHelper.EXTRA_TIME_IN_MINS, model.timerLengthInMins)
-                BaseTimerService.enqueueWork(this@QSTileService, startTimerIntent)
-                updateState()
+                if (model.timerLengthInMins > 0) {
+                    val startTimerIntent = Intent(this@QSTileService, TimerService::class.java)
+                        .setAction(SleepTimerHelper.ACTION_START_TIMER)
+                        .putExtra(SleepTimerHelper.EXTRA_TIME_IN_MINS, model.timerLengthInMins)
+                    BaseTimerService.enqueueWork(this@QSTileService, startTimerIntent)
+                    updateState()
+                }
             }
             setNegativeButton(android.R.string.cancel, null)
         }.create()
