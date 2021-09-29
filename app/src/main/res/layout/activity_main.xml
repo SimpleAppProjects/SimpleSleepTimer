@@ -9,6 +9,7 @@
     tools:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar">
 
     <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/main_appbar_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         style="@style/Widget.MaterialComponents.AppBarLayout.Surface"
@@ -18,7 +19,6 @@
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/topAppBar"
-            style="@style/Widget.MaterialComponents.Toolbar.Surface"
             android:layout_width="match_parent"
             android:layout_height="?android:actionBarSize"
             app:title="@string/title_sleeptimer" />
@@ -46,46 +46,27 @@
 
     </FrameLayout>
 
+    <com.google.android.material.bottomappbar.BottomAppBar
+        android:id="@+id/bottomAppBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:fitsSystemWindows="true"
+        style="@style/Widget.MaterialComponents.BottomAppBar"
+        app:backgroundTint="?colorSurface"
+        app:navigationIcon="@drawable/ic_music_note"
+        app:navigationContentDescription="@string/title_audioplayer"
+        app:navigationIconTint="?colorOnSurface"
+        app:menu="@menu/bottom_nav_menu" />
+
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab"
         style="@style/Widget.MaterialComponents.FloatingActionButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_anchor="@id/bottom_sheet"
+        app:layout_anchor="@id/bottomAppBar"
         app:layout_anchorGravity="top|center_horizontal"
         android:layout_margin="12dp"
-        app:srcCompat="@drawable/ic_play_arrow"
-        app:tint="@android:color/white" />
-
-    <View
-        android:id="@+id/shadow"
-        android:layout_width="match_parent"
-        android:layout_height="8dp"
-        android:background="@drawable/drop_shadow"
-        android:rotation="180"
-        app:layout_anchor="@id/bottom_sheet"
-        app:layout_anchorGravity="top" />
-
-    <FrameLayout
-        android:id="@+id/bottom_sheet"
-        style="@style/Widget.MaterialComponents.BottomSheet"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:elevation="0dp"
-        android:orientation="vertical"
-        app:behavior_fitToContents="true"
-        app:behavior_hideable="false"
-        app:behavior_peekHeight="48dp"
-        app:gestureInsetBottomIgnored="true"
-        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
-        tools:ignore="UnusedAttribute">
-
-        <fragment
-            android:id="@+id/musicplayer_fragment"
-            android:name="com.thewizrd.simplesleeptimer.MusicPlayersFragment"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-
-    </FrameLayout>
+        app:srcCompat="@drawable/ic_play_arrow" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

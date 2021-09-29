@@ -11,4 +11,6 @@
 
     <string name="label_stop">Stop</string>
     <string name="label_start">Start</string>
+
+    <string name="cat_title_wear_permissions">Wearable Permissions</string>
 </resources>

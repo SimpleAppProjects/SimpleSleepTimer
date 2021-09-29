@@ -3,6 +3,8 @@ package com.thewizrd.simplesleeptimer
 import android.animation.*
 import android.annotation.SuppressLint
 import android.content.*
+import android.content.res.Configuration
+import android.graphics.Color
 import android.os.Bundle
 import android.os.IBinder
 import android.os.SystemClock
@@ -10,23 +12,24 @@ import android.view.View
 import android.view.ViewTreeObserver
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
+import androidx.core.graphics.drawable.DrawableCompat
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.material.animation.AnimationUtils
-import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.thewizrd.shared_resources.controls.TimerStartView
 import com.thewizrd.shared_resources.services.BaseTimerService
 import com.thewizrd.shared_resources.sleeptimer.TimerDataModel
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.shared_resources.utils.ContextUtils.getAttrColor
+import com.thewizrd.shared_resources.utils.ContextUtils.getOrientation
 import com.thewizrd.simplesleeptimer.databinding.ActivityMainBinding
 import com.thewizrd.simplesleeptimer.services.TimerService
+import com.thewizrd.simplesleeptimer.utils.ActivityUtils.setFullScreen
 import com.thewizrd.simplesleeptimer.utils.ActivityUtils.setTransparentWindow
+import com.thewizrd.simplesleeptimer.wearable.WearPermissionsActivity
 
 class SleepTimerActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
-    private lateinit var mBottomSheetBehavior: BottomSheetBehavior<View>
 
     private val timerModel: TimerModel by viewModels()
 
@@ -42,8 +45,10 @@ class SleepTimerActivity : AppCompatActivity() {
 
             if (mTimerBinder.isRunning()) {
                 showTimerProgressView()
+                showBottomAppBar(false)
             } else {
                 showTimerStartView()
+                showBottomAppBar(true)
             }
         }
 
@@ -61,31 +66,37 @@ class SleepTimerActivity : AppCompatActivity() {
 
         val backgroundColor = getAttrColor(android.R.attr.colorBackground)
         val surfaceColor = getAttrColor(R.attr.colorSurface)
-        window.setTransparentWindow(backgroundColor, surfaceColor, surfaceColor)
-
-        val musicPlayersFragment =
-            supportFragmentManager.findFragmentById(R.id.musicplayer_fragment) as? MusicPlayersFragment
-        mBottomSheetBehavior = BottomSheetBehavior.from(binding.bottomSheet)
-        mBottomSheetBehavior.addBottomSheetCallback(object :
-            BottomSheetBehavior.BottomSheetCallback() {
-            override fun onSlide(bottomSheet: View, slideOffset: Float) {
-                musicPlayersFragment?.onSlide(bottomSheet, slideOffset)
+        window.setTransparentWindow(
+            backgroundColor, Color.TRANSPARENT,
+            if (getOrientation() == Configuration.ORIENTATION_PORTRAIT) {
+                Color.TRANSPARENT
+            } else {
+                surfaceColor
             }
+        )
+        window.setFullScreen(getOrientation() == Configuration.ORIENTATION_PORTRAIT)
 
-            override fun onStateChanged(bottomSheet: View, newState: Int) {
-                musicPlayersFragment?.onStateChanged(bottomSheet, newState)
-            }
-        })
-        musicPlayersFragment?.onBottomSheetBehaviorInitialized(binding.bottomSheet)
-        mBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
-
-        binding.bottomSheet.setOnClickListener {
-            mBottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+        binding.bottomAppBar.navigationIcon = binding.bottomAppBar.navigationIcon?.let {
+            val tintable = DrawableCompat.wrap(it).mutate()
+            DrawableCompat.setTint(tintable, getAttrColor(R.attr.colorOnSurface))
+            tintable
         }
 
-        ViewCompat.setOnApplyWindowInsetsListener(binding.bottomSheet) { v, insets ->
-            mBottomSheetBehavior.expandedOffset = insets.systemWindowInsetTop
-            insets
+        binding.bottomAppBar.setNavigationOnClickListener {
+            supportFragmentManager.beginTransaction()
+                .replace(android.R.id.content, MusicPlayersFragment())
+                .addToBackStack(null)
+                .commit()
+        }
+
+        binding.bottomAppBar.setOnMenuItemClickListener {
+            when (it.itemId) {
+                R.id.nav_wearpermissions -> {
+                    startActivity(Intent(this, WearPermissionsActivity::class.java))
+                    true
+                }
+                else -> false
+            }
         }
 
         binding.fab.setOnClickListener {
@@ -107,6 +118,7 @@ class SleepTimerActivity : AppCompatActivity() {
                 }
 
                 animateToView(toRun)
+                animateBottomAppBar(toRun)
             }
         }
 
@@ -145,8 +157,10 @@ class SleepTimerActivity : AppCompatActivity() {
 
         if (TimerDataModel.getDataModel().isRunning) {
             showTimerProgressView()
+            showBottomAppBar(false)
         } else {
             showTimerStartView()
+            showBottomAppBar(true)
         }
     }
 
@@ -157,9 +171,11 @@ class SleepTimerActivity : AppCompatActivity() {
                 when (intent?.action) {
                     BaseTimerService.ACTION_START_TIMER -> {
                         showTimerProgressView()
+                        showBottomAppBar(false)
                     }
                     BaseTimerService.ACTION_CANCEL_TIMER -> {
                         showTimerStartView()
+                        showBottomAppBar(true)
                     }
                 }
             }
@@ -186,13 +202,11 @@ class SleepTimerActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        if (mBottomSheetBehavior.state != BottomSheetBehavior.STATE_HIDDEN &&
-            mBottomSheetBehavior.state != BottomSheetBehavior.STATE_COLLAPSED
-        ) {
-            mBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
-            return
+        if (supportFragmentManager.backStackEntryCount > 0) {
+            supportFragmentManager.popBackStack()
+        } else {
+            super.onBackPressed()
         }
-        super.onBackPressed()
     }
 
     /* Views */
@@ -201,7 +215,7 @@ class SleepTimerActivity : AppCompatActivity() {
 
         binding.timerProgressView.visibility = View.GONE
         binding.timerStartView.visibility = View.VISIBLE
-        collapseBottomSheet()
+        dismissPlayersFragment()
 
         updateFab()
     }
@@ -209,11 +223,15 @@ class SleepTimerActivity : AppCompatActivity() {
     private fun showTimerProgressView() {
         binding.timerProgressView.visibility = View.VISIBLE
         binding.timerStartView.visibility = View.GONE
-        hideBottomSheet()
+        dismissPlayersFragment()
 
         updateFab()
 
         startUpdatingTime()
+    }
+
+    private fun showBottomAppBar(show: Boolean) {
+        animateBottomAppBar(!show)
     }
 
     private fun updateFab() {
@@ -224,29 +242,14 @@ class SleepTimerActivity : AppCompatActivity() {
         }
     }
 
-    private fun collapseBottomSheet() {
-        if (mBottomSheetBehavior.state != BottomSheetBehavior.STATE_COLLAPSED) {
-            mBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
-            mBottomSheetBehavior.isHideable = false
-            binding.shadow.visibility = View.VISIBLE
-        }
-    }
-
-    private fun hideBottomSheet() {
-        if (mBottomSheetBehavior.state != BottomSheetBehavior.STATE_HIDDEN) {
-            mBottomSheetBehavior.isHideable = true
-            mBottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
-            binding.shadow.visibility = View.INVISIBLE
+    private fun dismissPlayersFragment() {
+        if (supportFragmentManager.backStackEntryCount > 0) {
+            supportFragmentManager.popBackStack()
         }
     }
 
     private fun animateToView(isRunning: Boolean) {
-        // Set BottomSheet state before transitioning to avoid weird transition
-        if (isRunning) {
-            hideBottomSheet()
-        } else {
-            collapseBottomSheet()
-        }
+        dismissPlayersFragment()
 
         if (isRunning && binding.timerProgressView.visibility == View.VISIBLE ||
             !isRunning && binding.timerStartView.visibility == View.VISIBLE
@@ -373,6 +376,29 @@ class SleepTimerActivity : AppCompatActivity() {
                 return true
             }
         })
+    }
+
+    private fun animateBottomAppBar(isRunning: Boolean) {
+        val view = binding.bottomAppBar
+        view.clearAnimation()
+
+        val startAlpha = if (isRunning) 1f else 0f
+        val endAlpha = if (isRunning) 0f else 1f
+        val animDuration = resources.getInteger(android.R.integer.config_longAnimTime).toLong()
+
+        view.alpha = startAlpha
+        view.visibility = View.VISIBLE
+
+        view.animate()
+            .alpha(endAlpha)
+            .setDuration(animDuration / 2)
+            .withEndAction {
+                if (isRunning) {
+                    view.visibility = View.INVISIBLE
+                } else {
+                    view.visibility = View.VISIBLE
+                }
+            }
     }
 
     private fun startUpdatingTime() {
