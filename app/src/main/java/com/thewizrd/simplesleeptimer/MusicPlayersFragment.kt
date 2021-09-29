@@ -16,7 +16,9 @@ import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.transition.platform.MaterialSharedAxis
 import com.thewizrd.shared_resources.helpers.RecyclerOnClickListenerInterface
+import com.thewizrd.shared_resources.helpers.SimpleRecyclerViewAdapterObserver
 import com.thewizrd.shared_resources.viewmodels.MusicPlayerViewModel
 import com.thewizrd.simplesleeptimer.adapters.PlayerListAdapter
 import com.thewizrd.simplesleeptimer.databinding.FragmentMusicPlayersBinding
@@ -27,6 +29,13 @@ import kotlinx.coroutines.launch
 class MusicPlayersFragment : Fragment() {
     private lateinit var binding: FragmentMusicPlayersBinding
     private lateinit var playerAdapter: PlayerListAdapter
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        enterTransition = MaterialSharedAxis(MaterialSharedAxis.Z, true)
+        returnTransition = MaterialSharedAxis(MaterialSharedAxis.Z, false)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -58,6 +67,17 @@ class MusicPlayersFragment : Fragment() {
         })
 
         return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        playerAdapter.registerAdapterDataObserver(object : SimpleRecyclerViewAdapterObserver() {
+            override fun onChanged() {
+                playerAdapter.unregisterAdapterDataObserver(this)
+                binding.progressBar.hide()
+            }
+        })
     }
 
     override fun onResume() {

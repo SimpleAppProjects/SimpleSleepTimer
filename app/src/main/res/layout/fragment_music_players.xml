@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?colorSurface"
+    android:transitionName="shared_element_container"
     tools:ignore="UnusedAttribute"
     tools:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar">
 
@@ -43,5 +44,13 @@
         android:layout_height="match_parent"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"
         tools:listitem="@layout/musicplayer_item" />
+
+    <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:indeterminate="true"
+        android:indeterminateBehavior="repeat" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

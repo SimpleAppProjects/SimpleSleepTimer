@@ -2,6 +2,7 @@ package com.thewizrd.simplesleeptimer
 
 import android.animation.*
 import android.annotation.SuppressLint
+import android.app.ActivityOptions
 import android.content.*
 import android.content.res.Configuration
 import android.graphics.Color
@@ -10,12 +11,13 @@ import android.os.IBinder
 import android.os.SystemClock
 import android.view.View
 import android.view.ViewTreeObserver
+import android.view.Window
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.graphics.drawable.DrawableCompat
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.material.animation.AnimationUtils
+import com.google.android.material.transition.platform.MaterialSharedAxis
 import com.thewizrd.shared_resources.controls.TimerStartView
 import com.thewizrd.shared_resources.services.BaseTimerService
 import com.thewizrd.shared_resources.sleeptimer.TimerDataModel
@@ -45,10 +47,8 @@ class SleepTimerActivity : AppCompatActivity() {
 
             if (mTimerBinder.isRunning()) {
                 showTimerProgressView()
-                showBottomAppBar(false)
             } else {
                 showTimerStartView()
-                showBottomAppBar(true)
             }
         }
 
@@ -58,41 +58,34 @@ class SleepTimerActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        window.requestFeature(Window.FEATURE_ACTIVITY_TRANSITIONS)
+        window.exitTransition = MaterialSharedAxis(MaterialSharedAxis.Z, true)
+
         super.onCreate(savedInstanceState)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        setSupportActionBar(binding.topAppBar)
 
         val backgroundColor = getAttrColor(android.R.attr.colorBackground)
         val surfaceColor = getAttrColor(R.attr.colorSurface)
-        window.setTransparentWindow(
-            backgroundColor, Color.TRANSPARENT,
-            if (getOrientation() == Configuration.ORIENTATION_PORTRAIT) {
-                Color.TRANSPARENT
-            } else {
-                surfaceColor
-            }
-        )
+        window.setTransparentWindow(backgroundColor, Color.TRANSPARENT, surfaceColor)
         window.setFullScreen(getOrientation() == Configuration.ORIENTATION_PORTRAIT)
 
-        binding.bottomAppBar.navigationIcon = binding.bottomAppBar.navigationIcon?.let {
-            val tintable = DrawableCompat.wrap(it).mutate()
-            DrawableCompat.setTint(tintable, getAttrColor(R.attr.colorOnSurface))
-            tintable
-        }
-
-        binding.bottomAppBar.setNavigationOnClickListener {
-            supportFragmentManager.beginTransaction()
-                .replace(android.R.id.content, MusicPlayersFragment())
-                .addToBackStack(null)
-                .commit()
-        }
-
-        binding.bottomAppBar.setOnMenuItemClickListener {
+        binding.topAppBar.setOnMenuItemClickListener {
             when (it.itemId) {
                 R.id.nav_wearpermissions -> {
-                    startActivity(Intent(this, WearPermissionsActivity::class.java))
+                    startActivity(
+                        Intent(this, WearPermissionsActivity::class.java),
+                        ActivityOptions.makeSceneTransitionAnimation(this).toBundle()
+                    )
+                    true
+                }
+                R.id.nav_audioplayer -> {
+                    supportFragmentManager.beginTransaction()
+                        .replace(android.R.id.content, MusicPlayersFragment())
+                        .addToBackStack(null)
+                        .setReorderingAllowed(true)
+                        .commit()
                     true
                 }
                 else -> false
@@ -118,7 +111,6 @@ class SleepTimerActivity : AppCompatActivity() {
                 }
 
                 animateToView(toRun)
-                animateBottomAppBar(toRun)
             }
         }
 
@@ -157,10 +149,8 @@ class SleepTimerActivity : AppCompatActivity() {
 
         if (TimerDataModel.getDataModel().isRunning) {
             showTimerProgressView()
-            showBottomAppBar(false)
         } else {
             showTimerStartView()
-            showBottomAppBar(true)
         }
     }
 
@@ -171,11 +161,9 @@ class SleepTimerActivity : AppCompatActivity() {
                 when (intent?.action) {
                     BaseTimerService.ACTION_START_TIMER -> {
                         showTimerProgressView()
-                        showBottomAppBar(false)
                     }
                     BaseTimerService.ACTION_CANCEL_TIMER -> {
                         showTimerStartView()
-                        showBottomAppBar(true)
                     }
                 }
             }
@@ -216,6 +204,7 @@ class SleepTimerActivity : AppCompatActivity() {
         binding.timerProgressView.visibility = View.GONE
         binding.timerStartView.visibility = View.VISIBLE
         dismissPlayersFragment()
+        binding.topAppBar.menu.setGroupVisible(R.id.timer_start_group, true)
 
         updateFab()
     }
@@ -224,14 +213,11 @@ class SleepTimerActivity : AppCompatActivity() {
         binding.timerProgressView.visibility = View.VISIBLE
         binding.timerStartView.visibility = View.GONE
         dismissPlayersFragment()
+        binding.topAppBar.menu.setGroupVisible(R.id.timer_start_group, false)
 
         updateFab()
 
         startUpdatingTime()
-    }
-
-    private fun showBottomAppBar(show: Boolean) {
-        animateBottomAppBar(!show)
     }
 
     private fun updateFab() {
@@ -376,29 +362,6 @@ class SleepTimerActivity : AppCompatActivity() {
                 return true
             }
         })
-    }
-
-    private fun animateBottomAppBar(isRunning: Boolean) {
-        val view = binding.bottomAppBar
-        view.clearAnimation()
-
-        val startAlpha = if (isRunning) 1f else 0f
-        val endAlpha = if (isRunning) 0f else 1f
-        val animDuration = resources.getInteger(android.R.integer.config_longAnimTime).toLong()
-
-        view.alpha = startAlpha
-        view.visibility = View.VISIBLE
-
-        view.animate()
-            .alpha(endAlpha)
-            .setDuration(animDuration / 2)
-            .withEndAction {
-                if (isRunning) {
-                    view.visibility = View.INVISIBLE
-                } else {
-                    view.visibility = View.VISIBLE
-                }
-            }
     }
 
     private fun startUpdatingTime() {

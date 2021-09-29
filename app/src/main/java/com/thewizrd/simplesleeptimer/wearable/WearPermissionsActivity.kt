@@ -11,10 +11,12 @@ import android.os.CountDownTimer
 import android.os.Parcelable
 import android.util.Log
 import android.view.View
+import android.view.Window
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.google.android.material.transition.platform.MaterialSharedAxis
 import com.thewizrd.shared_resources.helpers.WearableHelper
 import com.thewizrd.shared_resources.utils.ContextUtils.getAttrColor
 import com.thewizrd.simplesleeptimer.BuildConfig
@@ -38,6 +40,10 @@ class WearPermissionsActivity : AppCompatActivity() {
     private lateinit var mWearManager: WearableManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        window.requestFeature(Window.FEATURE_ACTIVITY_TRANSITIONS)
+        window.enterTransition = MaterialSharedAxis(MaterialSharedAxis.Z, true)
+        window.allowEnterTransitionOverlap = true
+
         super.onCreate(savedInstanceState)
         binding = ActivityWearpermissionsBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -46,6 +52,7 @@ class WearPermissionsActivity : AppCompatActivity() {
         val backgroundColor = getAttrColor(android.R.attr.colorBackground)
         val surfaceColor = getAttrColor(R.attr.colorSurface)
         window.setTransparentWindow(backgroundColor, surfaceColor, surfaceColor)
+        //window.setFullScreen(getOrientation() == Configuration.ORIENTATION_PORTRAIT)
 
         binding.companionPairPref.setOnClickListener {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
