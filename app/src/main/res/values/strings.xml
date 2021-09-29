@@ -9,8 +9,10 @@
 
     <string name="message_watchbttimeout">Please ensure Bluetooth is enabled on your WearOS device</string>
 
+    <string name="cat_title_wear_permissions">Wearable Permissions</string>
+    <string name="message_nodevices_found">No devices found</string>
+
     <string name="label_stop">Stop</string>
     <string name="label_start">Start</string>
 
-    <string name="cat_title_wear_permissions">Wearable Permissions</string>
 </resources>
