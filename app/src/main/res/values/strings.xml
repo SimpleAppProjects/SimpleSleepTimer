@@ -1,6 +1,7 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- WearOS -->
     <string name="cat_title_permissions">Permissions</string>
+    <string name="cat_title_settings">Settings</string>
 
     <string name="permission_title_pairdevice">Pair with WearOS device</string>
     <string name="permission_pairdevice_enabled">App is paired with WearOS device</string>
@@ -11,6 +12,9 @@
 
     <string name="cat_title_wear_permissions">Wearable Permissions</string>
     <string name="message_nodevices_found">No devices found</string>
+
+    <string name="preference_title_timerbridge">Bridge timer notification</string>
+    <string name="preference_summary_timerbridge">Show timer notification on watch when the sleep timer is active</string>
 
     <string name="label_stop">Stop</string>
     <string name="label_start">Start</string>

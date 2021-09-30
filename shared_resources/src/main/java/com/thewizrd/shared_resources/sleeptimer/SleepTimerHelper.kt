@@ -15,6 +15,9 @@ object SleepTimerHelper {
     const val SleepTimerStatusPath = "/status/sleeptimer/status"
     const val SleepTimerAudioPlayerPath = "/sleeptimer/audioplayer"
     const val SleepTimerUpdateStatePath = "/status/sleeptimer/update"
+    const val SleepTimerBridgePath = "/status/sleeptimer/bridge"
+
+    const val KEY_TIMERDATA = "key_timer_data"
 
     // For Music Player DataMap
     const val KEY_SELECTEDPLAYER = "key_selected_player"

@@ -24,6 +24,7 @@ import com.thewizrd.shared_resources.utils.ContextUtils.getAttrColor
 import com.thewizrd.simplesleeptimer.BuildConfig
 import com.thewizrd.simplesleeptimer.R
 import com.thewizrd.simplesleeptimer.databinding.ActivityWearpermissionsBinding
+import com.thewizrd.simplesleeptimer.preferences.Settings
 import com.thewizrd.simplesleeptimer.utils.ActivityUtils.setTransparentWindow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -92,6 +93,15 @@ class WearPermissionsActivity : AppCompatActivity() {
                 }
                 Log.i(TAG, "ACTION_REQUESTBTDISCOVERABLE")
             }
+        }
+
+        binding.bridgeTimerToggle.isChecked = Settings.isBridgeTimerEnabled()
+        binding.bridgeTimerToggle.setOnCheckedChangeListener { _, isChecked ->
+            Settings.setBridgeTimerEnabled(isChecked)
+        }
+
+        binding.bridgeTimerPref.setOnClickListener {
+            binding.bridgeTimerToggle.toggle()
         }
     }
 

@@ -100,6 +100,8 @@
             android:enabled="true">
             <intent-filter>
                 <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
+                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
+                <action android:name="com.google.android.gms.wearable.CAPABILITY_CHANGED" />
 
                 <data
                     android:host="*"
@@ -109,6 +111,23 @@
                     android:host="*"
                     android:scheme="wear"
                     android:path="/start-activity" />
+
+                <data
+                    android:host="*"
+                    android:scheme="wear"
+                    android:path="/status/sleeptimer/start" />
+                <data
+                    android:host="*"
+                    android:scheme="wear"
+                    android:path="/status/sleeptimer/status" />
+                <data
+                    android:host="*"
+                    android:scheme="wear"
+                    android:path="/status/sleeptimer/stop" />
+                <data
+                    android:host="*"
+                    android:scheme="wear"
+                    android:path="/status/sleeptimer/bridge" />
             </intent-filter>
         </service>
 

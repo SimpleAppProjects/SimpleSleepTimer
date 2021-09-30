@@ -40,11 +40,8 @@ class TimerService : BaseTimerService() {
     }
 
     override fun updateTimerNotification(model: TimerModel): Notification {
-        val remainingTime = model.remainingTimeInMs
-
         val notifBuilder = NotificationCompat.Builder(this, NOT_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_hourglass_empty)
-            //.setContentTitle(getString(R.string.title_sleeptimer))
             .setColor(ContextCompat.getColor(this, R.color.colorPrimary))
             .setColorized(true)
             .setOngoing(true)
@@ -58,19 +55,10 @@ class TimerService : BaseTimerService() {
             .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setLocusId(LocusIdCompat(LOCAL_TIMER_LOCUS_ID))
+            .setUsesChronometer(true)
+            .setChronometerCountDown(true)
+            .setWhen(model.endTimeInMs)
             .apply {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    setUsesChronometer(true)
-                    setChronometerCountDown(true)
-                    setWhen(model.endTimeInMs)
-                } else {
-                    setContentText(
-                        TimerStringFormatter.formatTimeRemaining(
-                            this@TimerService, remainingTime
-                        )
-                    )
-                }
-
                 val remainingMinsMs =
                     model.remainingTimeInMs - (model.remainingTimeInMs % DateUtils.MINUTE_IN_MILLIS)
                 if (remainingMinsMs < (TimerModel.MAX_TIME_IN_MINS - 1).times(DateUtils.MINUTE_IN_MILLIS)) {
@@ -115,7 +103,7 @@ class TimerService : BaseTimerService() {
     private fun createTimerShortcut() {
         val shortcut = ShortcutInfoCompat.Builder(this, LOCAL_TIMER_LOCUS_ID)
             .setShortLabel(getString(R.string.title_sleeptimer))
-            .setIcon(IconCompat.createWithResource(this, R.drawable.ic_hourglass_empty))
+            .setIcon(IconCompat.createWithResource(this, R.drawable.ic_hourglass_simpleblue))
             .setIntent(
                 Intent(this, getOnClickActivityClass())
                     .setAction(Intent.ACTION_VIEW)

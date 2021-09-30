@@ -187,18 +187,51 @@ class WearableManager(private val mContext: Context) : OnCapabilityChangedListen
                 null, SleepTimerHelper.SleepTimerStartPath,
                 JSONParser.serializer(model, TimerModel::class.java).stringToBytes()
             )
+            sendSleepTimerStatusBridge(model)
         }
     }
 
     fun sendSleepTimerUpdate(model: TimerModel) {
         scope.launch {
             sendSleepTimerUpdate(null, model)
+            sendSleepTimerStatusBridge(model)
+        }
+    }
+
+    suspend fun sendSleepTimerStatusBridge(model: TimerModel) {
+        if (Settings.isBridgeTimerEnabled()) {
+            val mapRequest = PutDataMapRequest.create(SleepTimerHelper.SleepTimerBridgePath)
+            mapRequest.dataMap.putString(
+                SleepTimerHelper.KEY_TIMERDATA,
+                JSONParser.serializer(model, TimerModel::class.java)
+            )
+            mapRequest.setUrgent()
+            try {
+                Wearable.getDataClient(mContext)
+                    .putDataItem(mapRequest.asPutDataRequest())
+                    .await()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error", e)
+            }
+        }
+    }
+
+    suspend fun removeSleepTimerStatusBridge() {
+        try {
+            Wearable.getDataClient(mContext)
+                .deleteDataItems(
+                    WearableHelper.getWearDataUri(SleepTimerHelper.SleepTimerBridgePath)
+                )
+                .await()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error", e)
         }
     }
 
     fun sendSleepCancelled() {
         scope.launch {
             sendMessage(null, SleepTimerHelper.SleepTimerStopPath, null)
+            removeSleepTimerStatusBridge()
         }
     }
 
