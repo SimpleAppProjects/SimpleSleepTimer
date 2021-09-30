@@ -1,25 +1,18 @@
 package com.thewizrd.simplesleeptimer.adapters
 
-import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
+import androidx.core.graphics.drawable.toDrawable
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.thewizrd.shared_resources.adapters.MusicPlayerItemDiffer
 import com.thewizrd.shared_resources.helpers.RecyclerOnClickListenerInterface
 import com.thewizrd.shared_resources.viewmodels.MusicPlayerViewModel
 import com.thewizrd.simplesleeptimer.R
-import com.thewizrd.simplesleeptimer.databinding.ItemHeaderBinding
-import com.thewizrd.simplesleeptimer.databinding.MusicplayerItemBinding
+import com.thewizrd.simplesleeptimer.controls.WearChipButton
 import com.thewizrd.simplesleeptimer.preferences.Settings
 
 open class PlayerListAdapter :
-    ListAdapter<MusicPlayerViewModel, RecyclerView.ViewHolder>(MusicPlayerItemDiffer()) {
-    companion object {
-        private const val HEADER_TYPE = 0
-        private const val ITEM_TYPE = 1
-    }
-
+    ListAdapter<MusicPlayerViewModel, PlayerListAdapter.ViewHolder>(MusicPlayerItemDiffer()) {
     protected var mCheckedPosition = RecyclerView.NO_POSITION
     private var onClickListener: RecyclerOnClickListenerInterface? = null
 
@@ -33,110 +26,72 @@ open class PlayerListAdapter :
         onClickListener = listener
     }
 
-    inner class HeaderViewHolder(binding: ItemHeaderBinding) :
-        RecyclerView.ViewHolder(binding.root)
-
-    inner class ViewHolder(private val binding: MusicplayerItemBinding) :
-        RecyclerView.ViewHolder(binding.root) {
-        fun bindModel(viewModel: MusicPlayerViewModel) {
-            if (viewModel.bitmapIcon == null) {
-                binding.appIcon.setImageResource(R.drawable.ic_play_circle_filled)
-            } else {
-                binding.appIcon.setImageBitmap(viewModel.bitmapIcon)
-            }
-            binding.appName.text = viewModel.appLabel
-        }
-
-        fun updateRadioButtom() {
-            if (mCheckedPosition == RecyclerView.NO_POSITION) {
-                binding.radioButton.isChecked = false
-            } else {
-                binding.radioButton.isChecked = mCheckedPosition == adapterPosition
-            }
-
-            val clickListener = View.OnClickListener {
-                val oldPosition = mCheckedPosition
-                if (mCheckedPosition != adapterPosition) {
-                    mCheckedPosition = adapterPosition
-                    notifyItemChanged(oldPosition, Payload.RADIOBUTTON_UPDATE)
-                    notifyItemChanged(mCheckedPosition, Payload.RADIOBUTTON_UPDATE)
-                } else {
-                    // uncheck
-                    mCheckedPosition = RecyclerView.NO_POSITION
-                    notifyItemChanged(oldPosition, Payload.RADIOBUTTON_UPDATE)
-                }
-
-                onMusicPlayerSelected(selectedItem?.key)
-                onClickListener?.onClick(itemView, adapterPosition)
-            }
-            itemView.setOnClickListener(clickListener)
-            binding.radioButton.setOnClickListener(clickListener)
-        }
-    }
+    inner class ViewHolder(val item: WearChipButton) : RecyclerView.ViewHolder(item)
 
     protected open fun onMusicPlayerSelected(key: String?) {
         Settings.setMusicPlayer(key)
     }
 
-    override fun getItemCount(): Int {
-        return super.getItemCount() + 1
-    }
-
-    override fun getItem(position: Int): MusicPlayerViewModel {
-        return super.getItem(position - 1)
-    }
-
-    override fun getItemViewType(position: Int): Int {
-        return if (position == 0) {
-            HEADER_TYPE
-        } else {
-            ITEM_TYPE
-        }
-    }
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        return if (viewType == HEADER_TYPE) {
-            HeaderViewHolder(
-                ItemHeaderBinding.inflate(
-                    LayoutInflater.from(parent.context),
-                    parent,
-                    false
-                )
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val v = WearChipButton(
+            parent.context,
+            defStyleAttr = 0,
+            defStyleRes = R.style.Widget_Wear_WearChipButton_Surface_Checkable
+        ).apply {
+            layoutParams = RecyclerView.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
             )
-        } else {
-            ViewHolder(
-                MusicplayerItemBinding.inflate(
-                    LayoutInflater.from(parent.context),
-                    parent,
-                    false
-                )
-            )
+            updateControlType(WearChipButton.CONTROLTYPE_RADIO)
         }
+
+        return ViewHolder(v)
     }
 
-    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        if (holder is ViewHolder) {
-            holder.bindModel(getItem(position))
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        val viewModel = getItem(position)
+        if (viewModel.bitmapIcon != null) {
+            holder.item.setIconDrawable(viewModel.bitmapIcon?.toDrawable(holder.itemView.context.resources))
+        } else {
+            holder.item.setIconResource(R.drawable.ic_play_circle_filled)
+        }
+        holder.item.setPrimaryText(viewModel.appLabel)
+        holder.item.setOnClickListener {
+            val oldPosition = mCheckedPosition
+            if (mCheckedPosition != position) {
+                mCheckedPosition = position
+                notifyItemChanged(oldPosition, Payload.RADIOBUTTON_UPDATE)
+                notifyItemChanged(mCheckedPosition, Payload.RADIOBUTTON_UPDATE)
+            } else {
+                // uncheck
+                mCheckedPosition = RecyclerView.NO_POSITION
+                notifyItemChanged(oldPosition, Payload.RADIOBUTTON_UPDATE)
+            }
+
+            onMusicPlayerSelected(selectedItem?.key)
+            onClickListener?.onClick(holder.itemView, position)
         }
     }
 
     override fun onBindViewHolder(
-        holder: RecyclerView.ViewHolder,
+        holder: ViewHolder,
         position: Int,
         payloads: List<Any>
     ) {
-        if (holder is ViewHolder) {
-            val radioBtnUpdateOnly = if (payloads.isNotEmpty()) {
-                payloads[0] == Payload.RADIOBUTTON_UPDATE
-            } else {
-                false
-            }
+        val radioBtnUpdateOnly = if (payloads.isNotEmpty()) {
+            payloads[0] == Payload.RADIOBUTTON_UPDATE
+        } else {
+            false
+        }
 
-            if (!radioBtnUpdateOnly) {
-                super.onBindViewHolder(holder, position, payloads)
-            }
+        if (!radioBtnUpdateOnly) {
+            super.onBindViewHolder(holder, position, payloads)
+        }
 
-            holder.updateRadioButtom()
+        if (mCheckedPosition == RecyclerView.NO_POSITION) {
+            holder.item.isChecked = false
+        } else {
+            holder.item.isChecked = mCheckedPosition == position
         }
     }
 

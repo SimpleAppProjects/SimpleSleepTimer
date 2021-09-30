@@ -1,30 +1,34 @@
 package com.thewizrd.simplesleeptimer
 
 import android.content.Intent
-import android.content.res.Resources
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.util.Log
 import android.view.*
 import androidx.core.view.InputDeviceCompat
 import androidx.core.view.MotionEventCompat
-import androidx.core.view.ViewCompat
 import androidx.core.view.ViewConfigurationCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.recyclerview.widget.ConcatAdapter
 import androidx.wear.widget.WearableLinearLayoutManager
 import com.google.android.gms.wearable.*
 import com.google.android.gms.wearable.DataClient.OnDataChangedListener
 import com.thewizrd.shared_resources.helpers.RecyclerOnClickListenerInterface
 import com.thewizrd.shared_resources.helpers.WearableHelper
 import com.thewizrd.shared_resources.sleeptimer.SleepTimerHelper
+import com.thewizrd.shared_resources.utils.ContextUtils.dpToPx
 import com.thewizrd.shared_resources.utils.ImageUtils
 import com.thewizrd.shared_resources.viewmodels.MusicPlayerViewModel
+import com.thewizrd.simplesleeptimer.adapters.ListHeaderAdapter
 import com.thewizrd.simplesleeptimer.adapters.PlayerListAdapter
 import com.thewizrd.simplesleeptimer.adapters.PlayerListRemoteAdapter
+import com.thewizrd.simplesleeptimer.adapters.SpacerAdapter
 import com.thewizrd.simplesleeptimer.databinding.FragmentMusicPlayersBinding
+import com.thewizrd.simplesleeptimer.helpers.CustomScrollingLayoutCallback
+import com.thewizrd.simplesleeptimer.helpers.SpacerItemDecoration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -49,36 +53,8 @@ class MusicPlayersFragment : Fragment(), OnDataChangedListener {
         // Set timer for retrieving music player data
         timer = object : CountDownTimer(3000, 1000) {
             override fun onTick(millisUntilFinished: Long) {}
-
             override fun onFinish() {
-                viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-                    try {
-                        val buff = Wearable.getDataClient(requireActivity())
-                            .getDataItems(
-                                WearableHelper.getWearDataUri(
-                                    "*",
-                                    WearableHelper.MusicPlayersPath
-                                )
-                            )
-                            .await()
-
-                        for (i in 0 until buff.count) {
-                            val item = buff[i]
-                            if (WearableHelper.MusicPlayersPath == item.uri.path) {
-                                try {
-                                    val dataMap = DataMapItem.fromDataItem(item).dataMap
-                                    updateMusicPlayers(dataMap)
-                                } catch (e: Exception) {
-                                    Log.e(TAG, "Error", e)
-                                }
-                                showProgressBar(false)
-                            }
-                        }
-                        buff.release()
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Error", e)
-                    }
-                }
+                refreshMusicPlayers()
             }
         }
 
@@ -99,8 +75,15 @@ class MusicPlayersFragment : Fragment(), OnDataChangedListener {
         binding = FragmentMusicPlayersBinding.inflate(inflater, container, false)
 
         binding.playerList.setHasFixedSize(true)
-        binding.playerList.isEdgeItemsCenteringEnabled = false
-        binding.playerList.layoutManager = WearableLinearLayoutManager(requireActivity(), null)
+        //binding.playerList.isEdgeItemsCenteringEnabled = false
+        binding.playerList.addItemDecoration(
+            SpacerItemDecoration(
+                requireContext().dpToPx(16f).toInt(),
+                requireContext().dpToPx(4f).toInt()
+            )
+        )
+        binding.playerList.layoutManager =
+            WearableLinearLayoutManager(requireActivity(), CustomScrollingLayoutCallback())
         binding.playerList.setOnGenericMotionListener { v, ev ->
             if (ev.action == MotionEvent.ACTION_SCROLL &&
                 ev.isFromSource(InputDeviceCompat.SOURCE_ROTARY_ENCODER)
@@ -125,47 +108,25 @@ class MusicPlayersFragment : Fragment(), OnDataChangedListener {
                 onClickListener?.onClick(view, position)
             }
         })
-        binding.playerList.adapter = mAdapter
+        binding.playerList.adapter = ConcatAdapter(
+            ListHeaderAdapter(getString(R.string.select_player_pause_prompt)),
+            mAdapter,
+            SpacerAdapter(requireContext().dpToPx(48f).toInt())
+        )
         binding.playerList.visibility = View.GONE
+
+        binding.retryFab.setOnClickListener {
+            viewLifecycleOwner.lifecycleScope.launch {
+                LocalBroadcastManager.getInstance(requireActivity())
+                    .sendBroadcast(Intent(WearableHelper.MusicPlayersPath))
+            }
+        }
 
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        binding.playerList.viewTreeObserver.addOnPreDrawListener(object :
-            ViewTreeObserver.OnPreDrawListener {
-            /* BoxInsetLayout impl */
-            private val FACTOR = 0.146447f //(1 - sqrt(2)/2)/2
-            private val mIsRound = resources.configuration.isScreenRound
-            private val paddingTop = binding.playerList.paddingTop
-            private val paddingBottom = binding.playerList.paddingBottom
-            private val paddingStart = ViewCompat.getPaddingStart(binding.playerList)
-            private val paddingEnd = ViewCompat.getPaddingEnd(binding.playerList)
-
-            override fun onPreDraw(): Boolean {
-                if (binding.playerList.visibility != View.VISIBLE || binding.playerList.measuredWidth <= 0) return true
-                binding.playerList.viewTreeObserver.removeOnPreDrawListener(this)
-
-                val verticalPadding =
-                    resources.getDimensionPixelSize(R.dimen.inner_frame_layout_padding)
-                val mScreenHeight = Resources.getSystem().displayMetrics.heightPixels
-                val mScreenWidth = Resources.getSystem().displayMetrics.widthPixels
-                val rightEdge = Math.min(binding.playerList.measuredWidth, mScreenWidth)
-                val bottomEdge = Math.min(binding.playerList.measuredHeight, mScreenHeight)
-                val verticalInset = (FACTOR * Math.max(rightEdge, bottomEdge)).toInt()
-
-                binding.playerList.setPaddingRelative(
-                    paddingStart,
-                    paddingTop,
-                    paddingEnd,
-                    paddingBottom + if (mIsRound) verticalInset else verticalPadding
-                )
-
-                return true
-            }
-        })
     }
 
     fun setOnClickListener(listener: RecyclerOnClickListenerInterface?) {
@@ -174,7 +135,11 @@ class MusicPlayersFragment : Fragment(), OnDataChangedListener {
 
     private fun showProgressBar(show: Boolean) {
         viewLifecycleOwner.lifecycleScope.launch {
-            binding.progressBar.visibility = if (show) View.VISIBLE else View.GONE
+            if (show) {
+                binding.progressBar.show()
+            } else {
+                binding.progressBar.hide()
+            }
         }
     }
 
@@ -257,6 +222,37 @@ class MusicPlayersFragment : Fragment(), OnDataChangedListener {
         }
     }
 
+    private fun refreshMusicPlayers() {
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val buff = Wearable.getDataClient(requireActivity())
+                    .getDataItems(
+                        WearableHelper.getWearDataUri(
+                            "*",
+                            WearableHelper.MusicPlayersPath
+                        )
+                    )
+                    .await()
+
+                for (i in 0 until buff.count) {
+                    val item = buff[i]
+                    if (WearableHelper.MusicPlayersPath == item.uri.path) {
+                        try {
+                            val dataMap = DataMapItem.fromDataItem(item).dataMap
+                            updateMusicPlayers(dataMap)
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error", e)
+                        }
+                        showProgressBar(false)
+                    }
+                }
+                buff.release()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error", e)
+            }
+        }
+    }
+
     private suspend fun updateMusicPlayers(dataMap: DataMap) {
         val supported_players =
             dataMap.getStringArrayList(WearableHelper.KEY_SUPPORTEDPLAYERS) ?: return
@@ -293,7 +289,7 @@ class MusicPlayersFragment : Fragment(), OnDataChangedListener {
         viewLifecycleOwner.lifecycleScope.launch {
             mAdapter.updateItems(viewModels)
 
-            binding.noplayersMessageview.visibility =
+            binding.noplayersView.visibility =
                 if (viewModels.size > 0) View.GONE else View.VISIBLE
             binding.playerList.visibility = if (viewModels.size > 0) View.VISIBLE else View.GONE
             viewLifecycleOwner.lifecycleScope.launch {

@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
 import android.os.SystemClock
+import android.provider.Settings
 import android.text.format.DateUtils
 import android.util.Log
 import android.view.View
@@ -15,6 +16,7 @@ import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.util.Pair
 import androidx.core.view.marginBottom
 import androidx.core.view.updateLayoutParams
@@ -24,7 +26,6 @@ import androidx.wear.widget.drawer.WearableDrawerLayout
 import androidx.wear.widget.drawer.WearableDrawerView
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.material.animation.AnimationUtils
-import com.google.android.wearable.intent.RemoteIntent
 import com.thewizrd.shared_resources.controls.TimerStartView
 import com.thewizrd.shared_resources.helpers.WearConnectionStatus
 import com.thewizrd.shared_resources.helpers.WearableHelper
@@ -33,8 +34,9 @@ import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.shared_resources.utils.*
 import com.thewizrd.simplesleeptimer.controls.CustomConfirmationOverlay
 import com.thewizrd.simplesleeptimer.databinding.ActivitySleeptimerBinding
-import com.thewizrd.simplesleeptimer.helpers.ConfirmationResultReceiver
+import com.thewizrd.simplesleeptimer.helpers.showConfirmationOverlay
 import kotlinx.coroutines.*
+import kotlinx.coroutines.guava.await
 import kotlin.math.max
 
 /**
@@ -53,6 +55,8 @@ class SleepTimerActivity : WearableListenerActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        installSplashScreen()
 
         binding = ActivitySleeptimerBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -79,7 +83,11 @@ class SleepTimerActivity : WearableListenerActivity() {
                                             binding.fab.visibility = View.GONE
 
                                             binding.messageView.setText(R.string.status_disconnected)
-                                            binding.messageView.setOnClickListener(null)
+                                            binding.messageView.setOnClickListener {
+                                                runCatching {
+                                                    startActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS))
+                                                }
+                                            }
                                             timerModel.stopTimer()
                                         }
                                     }
@@ -98,10 +106,20 @@ class SleepTimerActivity : WearableListenerActivity() {
                                                     .addCategory(Intent.CATEGORY_BROWSABLE)
                                                     .setData(SleepTimerHelper.getPlayStoreURI())
 
-                                                RemoteIntent.startRemoteActivity(
-                                                    this@SleepTimerActivity, intentapp,
-                                                    ConfirmationResultReceiver(this@SleepTimerActivity)
-                                                )
+                                                lifecycleScope.launch {
+                                                    runCatching {
+                                                        remoteActivityHelper.startRemoteActivity(
+                                                            intentapp
+                                                        )
+                                                            .await()
+
+                                                        showConfirmationOverlay(true)
+                                                    }.onFailure {
+                                                        if (it !is CancellationException) {
+                                                            showConfirmationOverlay(false)
+                                                        }
+                                                    }
+                                                }
                                             }
                                             timerModel.stopTimer()
                                         }
@@ -296,7 +314,7 @@ class SleepTimerActivity : WearableListenerActivity() {
                             .setCustomDrawable(
                                 ContextCompat.getDrawable(
                                     this@SleepTimerActivity,
-                                    R.drawable.ic_full_sad
+                                    R.drawable.ws_full_sad
                                 )
                             )
                             .setMessage(this@SleepTimerActivity.getString(R.string.error_permissiondenied))
@@ -315,10 +333,18 @@ class SleepTimerActivity : WearableListenerActivity() {
         }
     }
 
-    override fun onStart() {
-        super.onStart()
+    override fun onResume() {
+        super.onResume()
+
         // Update statuses
         showProgressBar(true)
+        if (binding.bottomActionDrawer.isOpened) {
+            closeBottomDrawer()
+        }
+        binding.bottomActionDrawer.visibility = View.INVISIBLE
+        binding.fragmentContainer.visibility = View.GONE
+        binding.messageView.visibility = View.GONE
+        binding.fab.visibility = View.GONE
 
         lifecycleScope.launch {
             updateConnectionStatus()

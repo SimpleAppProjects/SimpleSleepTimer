@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout">
+    tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout"
+    tools:deviceIds="wear">
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/left_guide"
@@ -25,16 +26,17 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:circle_color="?attr/colorOnBackground"
-        app:circle_progress_color="?attr/colorAccent"
+        app:circle_progress_color="?attr/colorPrimary"
         app:circle_stroke_width="4dp"
+        app:pointer_halo_width="0dp"
+        app:pointer_halo_border_width="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:pointer_color="?attr/colorAccent"
+        app:pointer_color="?attr/colorPrimary"
         app:pointer_halo_color="@android:color/transparent"
         app:pointer_halo_color_ontouch="@android:color/transparent"
-        app:pointer_halo_width="0dp"
         tools:max="100"
         tools:progress="50" />
 
@@ -46,9 +48,9 @@
         android:gravity="center"
         android:maxLines="1"
         android:textAlignment="center"
-        android:textColor="?attr/colorAccent"
+        android:textColor="?attr/colorPrimary"
         android:textSize="16sp"
-        android:textStyle="bold"
+        android:textAppearance="?android:textAppearanceMedium"
         app:autoSizeMinTextSize="16sp"
         app:autoSizeMaxTextSize="36sp"
         app:autoSizeTextType="uniform"
@@ -72,7 +74,6 @@
         android:paddingTop="0dp"
         android:paddingBottom="0dp"
         android:text="@string/label_btn_plus1min"
-        android:textColor="?attr/colorAccent"
         android:textSize="12sp"
         tools:textColor="@color/colorPrimaryLight"
         tools:ignore="MissingConstraints" />
@@ -87,7 +88,6 @@
         android:paddingTop="0dp"
         android:paddingBottom="0dp"
         android:text="@string/label_btn_plus5min"
-        android:textColor="?attr/colorAccent"
         android:textSize="12sp"
         tools:textColor="@color/colorPrimaryLight"
         tools:ignore="MissingConstraints" />

@@ -4,21 +4,26 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
-import android.content.res.Resources
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.view.*
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.view.InputDeviceCompat
 import androidx.core.view.MotionEventCompat
-import androidx.core.view.ViewCompat
 import androidx.core.view.ViewConfigurationCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.ConcatAdapter
 import androidx.wear.widget.WearableLinearLayoutManager
+import com.thewizrd.shared_resources.utils.ContextUtils.dpToPx
 import com.thewizrd.shared_resources.viewmodels.MusicPlayerViewModel
+import com.thewizrd.simplesleeptimer.adapters.ListHeaderAdapter
 import com.thewizrd.simplesleeptimer.adapters.PlayerListAdapter
+import com.thewizrd.simplesleeptimer.adapters.SpacerAdapter
 import com.thewizrd.simplesleeptimer.databinding.FragmentMusicPlayersBinding
+import com.thewizrd.simplesleeptimer.helpers.CustomScrollingLayoutCallback
+import com.thewizrd.simplesleeptimer.helpers.SpacerItemDecoration
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.*
 import kotlin.math.roundToInt
@@ -38,10 +43,16 @@ class MusicPlayersLocalFragment : Fragment() {
     ): View {
         binding = FragmentMusicPlayersBinding.inflate(inflater, container, false)
 
-        playerAdapter = PlayerListAdapter()
         binding.playerList.setHasFixedSize(true)
-        binding.playerList.isEdgeItemsCenteringEnabled = false
-        binding.playerList.layoutManager = WearableLinearLayoutManager(requireActivity(), null)
+        //binding.playerList.isEdgeItemsCenteringEnabled = false
+        binding.playerList.addItemDecoration(
+            SpacerItemDecoration(
+                requireContext().dpToPx(16f).toInt(),
+                requireContext().dpToPx(4f).toInt()
+            )
+        )
+        binding.playerList.layoutManager =
+            WearableLinearLayoutManager(requireActivity(), CustomScrollingLayoutCallback())
         binding.playerList.setOnGenericMotionListener { v, ev ->
             if (ev.action == MotionEvent.ACTION_SCROLL &&
                 ev.isFromSource(InputDeviceCompat.SOURCE_ROTARY_ENCODER)
@@ -60,52 +71,35 @@ class MusicPlayersLocalFragment : Fragment() {
         }
         binding.playerList.requestFocus()
 
+        playerAdapter = PlayerListAdapter()
+        binding.playerList.adapter = ConcatAdapter(
+            ListHeaderAdapter(getString(R.string.select_player_pause_prompt)),
+            playerAdapter,
+            SpacerAdapter(requireContext().dpToPx(48f).toInt())
+        )
+        binding.playerList.visibility = View.GONE
+
+        binding.retryFab.setOnClickListener {
+            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Default) {
+                updateSupportedMusicPlayers()
+            }
+        }
+
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        binding.playerList.viewTreeObserver.addOnPreDrawListener(object :
-            ViewTreeObserver.OnPreDrawListener {
-            /* BoxInsetLayout impl */
-            private val FACTOR = 0.146447f //(1 - sqrt(2)/2)/2
-            private val mIsRound = resources.configuration.isScreenRound
-            private val paddingTop = binding.playerList.paddingTop
-            private val paddingBottom = binding.playerList.paddingBottom
-            private val paddingStart = ViewCompat.getPaddingStart(binding.playerList)
-            private val paddingEnd = ViewCompat.getPaddingEnd(binding.playerList)
-
-            override fun onPreDraw(): Boolean {
-                if (binding.playerList.visibility != View.VISIBLE || binding.playerList.measuredWidth <= 0) return true
-                binding.playerList.viewTreeObserver.removeOnPreDrawListener(this)
-
-                val verticalPadding =
-                    resources.getDimensionPixelSize(R.dimen.inner_frame_layout_padding)
-                val mScreenHeight = Resources.getSystem().displayMetrics.heightPixels
-                val mScreenWidth = Resources.getSystem().displayMetrics.widthPixels
-                val rightEdge = Math.min(binding.playerList.measuredWidth, mScreenWidth)
-                val bottomEdge = Math.min(binding.playerList.measuredHeight, mScreenHeight)
-                val verticalInset = (FACTOR * Math.max(rightEdge, bottomEdge)).toInt()
-
-                binding.playerList.setPaddingRelative(
-                    paddingStart,
-                    paddingTop,
-                    paddingEnd,
-                    paddingBottom + if (mIsRound) verticalInset else verticalPadding
-                )
-
-                return true
-            }
-        })
     }
 
     private fun showProgressBar(show: Boolean) {
         viewLifecycleOwner.lifecycleScope.launch {
-            binding.progressBar.visibility = if (show) View.VISIBLE else View.GONE
             if (show) {
-                binding.noplayersMessageview.visibility = View.GONE
+                binding.progressBar.show()
+                binding.noplayersView.visibility = View.GONE
                 binding.playerList.visibility = View.GONE
+            } else {
+                binding.progressBar.hide()
             }
         }
     }
@@ -167,10 +161,10 @@ class MusicPlayersLocalFragment : Fragment() {
             playerAdapter.updateItems(playerModels)
             showProgressBar(false)
             if (playerModels.isNullOrEmpty()) {
-                binding.noplayersMessageview.visibility = View.VISIBLE
+                binding.noplayersView.visibility = View.VISIBLE
                 binding.playerList.visibility = View.GONE
             } else {
-                binding.noplayersMessageview.visibility = View.GONE
+                binding.noplayersView.visibility = View.GONE
                 binding.playerList.visibility = View.VISIBLE
                 binding.playerList.requestFocus()
             }

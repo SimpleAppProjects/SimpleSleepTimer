@@ -34,42 +34,41 @@
             android:name="com.google.android.wearable.standalone"
             android:value="true" />
 
-        <activity
+        <activity-alias
             android:name=".LaunchLocalActivity"
             android:label="@string/title_sleeptimer"
+            android:targetActivity=".SleepTimerLocalActivity"
             android:theme="@style/WearAppTheme.Launcher">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
+        </activity-alias>
 
-        <activity
+        <activity-alias
             android:name=".LaunchActivity"
             android:icon="@mipmap/ic_launcher_remote"
             android:roundIcon="@mipmap/ic_launcher_remote_round"
             android:label="@string/title_sleeptimer_remote"
-            android:theme="@style/WearAppTheme.Launcher">
+            android:targetActivity=".SleepTimerActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
+        </activity-alias>
 
         <activity
             android:name=".SleepTimerLocalActivity"
             android:label="@string/title_sleeptimer"
-            android:clearTaskOnLaunch="true"
-            android:launchMode="singleTask"
-            android:theme="@style/WearAppTheme" />
+            android:launchMode="singleInstance"
+            android:theme="@style/WearAppTheme.Launcher" />
 
         <activity
             android:name=".SleepTimerActivity"
             android:label="@string/title_sleeptimer_remote"
-            android:clearTaskOnLaunch="true"
-            android:launchMode="singleTask"
+            android:launchMode="singleInstance"
             android:exported="true"
-            android:theme="@style/WearAppTheme" />
+            android:theme="@style/WearAppTheme.Launcher" />
 
         <service
             android:name=".services.TimerService"
@@ -100,6 +99,11 @@
                     android:path="/start-activity" />
             </intent-filter>
         </service>
+
+        <meta-data
+            android:name="preloaded_fonts"
+            android:resource="@array/preloaded_fonts" />
+
     </application>
 
 </manifest>

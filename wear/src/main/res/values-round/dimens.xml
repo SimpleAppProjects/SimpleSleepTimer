@@ -4,4 +4,8 @@
     <dimen name="conf_overlay_image_size">36dp</dimen>
 
     <dimen name="progress_slider_padding">4dp</dimen>
+
+    <dimen name="timer_top_margin">16dp</dimen>
+    <dimen name="clock_top_margin">8dp</dimen>
+
 </resources>

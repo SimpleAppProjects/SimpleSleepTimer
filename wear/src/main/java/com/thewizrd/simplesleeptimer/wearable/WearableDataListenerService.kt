@@ -9,7 +9,7 @@ import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableListenerService
 import com.thewizrd.shared_resources.helpers.WearableHelper
 import com.thewizrd.shared_resources.utils.stringToBytes
-import com.thewizrd.simplesleeptimer.LaunchActivity
+import com.thewizrd.simplesleeptimer.SleepTimerActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -22,7 +22,7 @@ class WearableDataListenerService : WearableListenerService() {
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
         if (messageEvent.path == WearableHelper.StartActivityPath) {
-            val startIntent = Intent(this, LaunchActivity::class.java)
+            val startIntent = Intent(this, SleepTimerActivity::class.java)
                 .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
             this.startActivity(startIntent)
         } else if (messageEvent.path == WearableHelper.BtDiscoverPath) {
