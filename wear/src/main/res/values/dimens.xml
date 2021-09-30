@@ -34,4 +34,9 @@
 
     <dimen name="splashscreen_icon_size" tools:override="true">48dp</dimen>
 
+    <dimen name="dashboard_item_horizontal_margin">0dp</dimen>
+    <dimen name="dashboard_top_margin">8dp</dimen>
+    <dimen name="dashboard_bottom_margin">8dp</dimen>
+    <dimen name="dashboard_horizontal_margin">8dp</dimen>
+
 </resources>

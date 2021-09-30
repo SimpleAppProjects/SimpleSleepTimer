@@ -3,9 +3,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.thewizrd.simplesleeptimer">
 
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <uses-feature android:name="android.hardware.type.watch" />
+    <uses-feature
+        android:name="android.hardware.wifi"
+        android:required="false" />
 
     <queries>
         <intent>
@@ -69,6 +76,11 @@
             android:launchMode="singleInstance"
             android:exported="true"
             android:theme="@style/WearAppTheme.Launcher" />
+
+        <activity
+            android:name=".PhoneSyncActivity"
+            android:launchMode="singleInstance"
+            android:theme="@style/WearAppTheme" />
 
         <service
             android:name=".services.TimerService"

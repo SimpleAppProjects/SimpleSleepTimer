@@ -4,7 +4,7 @@
     <string name="message_openedonphone">Opened on Phone…</string>
 
     <!-- Connection Status -->
-    <string name="status_disconnected">Device not connected. Please verify connection status</string>
+    <string name="status_disconnected">Device not connected</string>
     <string name="status_connecting">Connecting…</string>
     <string name="status_connected">Connected</string>
 

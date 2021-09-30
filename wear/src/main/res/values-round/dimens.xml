@@ -8,4 +8,9 @@
     <dimen name="timer_top_margin">16dp</dimen>
     <dimen name="clock_top_margin">8dp</dimen>
 
+    <dimen name="dashboard_item_horizontal_margin">12dp</dimen>
+    <dimen name="dashboard_top_margin">36dp</dimen>
+    <dimen name="dashboard_bottom_margin">48dp</dimen>
+    <dimen name="dashboard_horizontal_margin">14dp</dimen>
+
 </resources>

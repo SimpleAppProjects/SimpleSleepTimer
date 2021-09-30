@@ -8,7 +8,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
 import android.os.SystemClock
-import android.provider.Settings
 import android.text.format.DateUtils
 import android.util.Log
 import android.view.View
@@ -74,61 +73,38 @@ class SleepTimerActivity : WearableListenerActivity() {
                                     )
                                 )) {
                                     WearConnectionStatus.DISCONNECTED -> {
-                                        launch {
-                                            delay(1000)
-                                            showProgressBar(false)
-                                            showErrorMessage(true)
-                                            binding.bottomActionDrawer.visibility = View.GONE
-                                            closeBottomDrawer()
-                                            binding.fab.visibility = View.GONE
-
-                                            binding.messageView.setText(R.string.status_disconnected)
-                                            binding.messageView.setOnClickListener {
-                                                runCatching {
-                                                    startActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS))
-                                                }
-                                            }
-                                            timerModel.stopTimer()
-                                        }
+                                        // Navigate
+                                        startActivity(
+                                            Intent(
+                                                this@SleepTimerActivity,
+                                                PhoneSyncActivity::class.java
+                                            )
+                                        )
+                                        finishAffinity()
                                     }
                                     WearConnectionStatus.APPNOTINSTALLED -> {
-                                        launch {
-                                            delay(1000)
-                                            showProgressBar(false)
-                                            showErrorMessage(true)
-                                            binding.bottomActionDrawer.visibility = View.GONE
-                                            closeBottomDrawer()
-                                            binding.fab.visibility = View.GONE
+                                        val intentapp = Intent(Intent.ACTION_VIEW)
+                                            .addCategory(Intent.CATEGORY_BROWSABLE)
+                                            .setData(SleepTimerHelper.getPlayStoreURI())
 
-                                            binding.messageView.setText(R.string.error_sleeptimer_notinstalled)
-                                            binding.messageView.setOnClickListener {
-                                                val intentapp = Intent(Intent.ACTION_VIEW)
-                                                    .addCategory(Intent.CATEGORY_BROWSABLE)
-                                                    .setData(SleepTimerHelper.getPlayStoreURI())
+                                        lifecycleScope.launch {
+                                            runCatching {
+                                                remoteActivityHelper.startRemoteActivity(intentapp)
+                                                    .await()
 
-                                                lifecycleScope.launch {
-                                                    runCatching {
-                                                        remoteActivityHelper.startRemoteActivity(
-                                                            intentapp
-                                                        )
-                                                            .await()
-
-                                                        showConfirmationOverlay(true)
-                                                    }.onFailure {
-                                                        if (it !is CancellationException) {
-                                                            showConfirmationOverlay(false)
-                                                        }
-                                                    }
+                                                showConfirmationOverlay(true)
+                                            }.onFailure {
+                                                if (it !is CancellationException) {
+                                                    showConfirmationOverlay(false)
                                                 }
                                             }
-                                            timerModel.stopTimer()
                                         }
                                     }
                                     WearConnectionStatus.CONNECTED -> {
                                         launch {
                                             delay(1000)
                                             showProgressBar(false)
-                                            showErrorMessage(false)
+                                            binding.fragmentContainer.visibility = View.VISIBLE
                                             binding.bottomActionDrawer.visibility = View.VISIBLE
                                             if (timerModel.isRunning) {
                                                 closeBottomDrawer()
@@ -343,7 +319,6 @@ class SleepTimerActivity : WearableListenerActivity() {
         }
         binding.bottomActionDrawer.visibility = View.INVISIBLE
         binding.fragmentContainer.visibility = View.GONE
-        binding.messageView.visibility = View.GONE
         binding.fab.visibility = View.GONE
 
         lifecycleScope.launch {
@@ -630,16 +605,6 @@ class SleepTimerActivity : WearableListenerActivity() {
             drawer.requestFocus()
         } else {
             drawer.clearFocus()
-        }
-    }
-
-    private fun showErrorMessage(show: Boolean) {
-        lifecycleScope.launch {
-            binding.fragmentContainer.visibility = if (show) View.GONE else View.VISIBLE
-            binding.messageView.visibility = if (show) View.VISIBLE else View.GONE
-            if (!show && !binding.bottomActionDrawer.isOpened && !binding.fragmentContainer.hasFocus()) {
-                binding.fragmentContainer.requestFocus()
-            }
         }
     }
 
