@@ -48,6 +48,7 @@ class TimerService : BaseTimerService() {
             .setOnlyAlertOnce(true)
             .setShowWhen(false)
             .setSound(null)
+            .setSilent(true)
             .addAction(0, getString(android.R.string.cancel), getCancelIntent(this))
             .setContentIntent(getClickIntent(this))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
