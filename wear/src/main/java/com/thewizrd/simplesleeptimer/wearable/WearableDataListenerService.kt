@@ -112,7 +112,7 @@ class WearableDataListenerService : WearableListenerService() {
             .setSound(null)
             //.addAction(0, getString(android.R.string.cancel), getCancelIntent(this))
             .setContentIntent(getTimerIntent())
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
