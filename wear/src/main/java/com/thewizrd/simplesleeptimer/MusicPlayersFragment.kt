@@ -109,6 +109,7 @@ class MusicPlayersFragment : Fragment(), OnDataChangedListener {
             }
         })
         binding.playerList.adapter = ConcatAdapter(
+            SpacerAdapter(requireContext().dpToPx(20f).toInt()),
             ListHeaderAdapter(getString(R.string.select_player_pause_prompt)),
             mAdapter,
             SpacerAdapter(requireContext().dpToPx(48f).toInt())
