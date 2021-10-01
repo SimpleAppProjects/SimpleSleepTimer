@@ -6,8 +6,8 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
     android:transitionGroup="true"
-    tools:context=".SleepTimerActivity"
-    tools:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar">
+    tools:background="?android:colorBackground"
+    tools:context=".SleepTimerActivity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/main_appbar_layout"
@@ -55,6 +55,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|center_horizontal"
         android:layout_margin="12dp"
-        app:srcCompat="@drawable/ic_play_arrow" />
+        app:srcCompat="@drawable/ic_play_arrow"
+        app:tint="?colorOnPrimary" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
