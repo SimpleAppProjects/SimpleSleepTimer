@@ -20,7 +20,7 @@ android {
         minSdkVersion 25
         targetSdkVersion 30
         // NOTE: Version Code Format (TargetSDK, Version Name, Build Number, Variant Code (Android: 00, WearOS: 01)
-        versionCode 301200201
+        versionCode 301200301
         versionName "1.2.0"
 
         vectorDrawables.useSupportLibrary = true
@@ -79,6 +79,7 @@ dependencies {
     implementation 'com.google.android.material:material:1.4.0'
 
     implementation 'com.google.android.gms:play-services-wearable:17.1.0'
+    compileOnly 'com.google.android.wearable:wearable:2.8.1'
 
     implementation 'androidx.wear:wear:1.2.0'
     implementation 'androidx.wear:wear-ongoing:1.0.0'
