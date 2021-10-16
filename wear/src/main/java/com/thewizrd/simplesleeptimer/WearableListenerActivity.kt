@@ -8,7 +8,6 @@ import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RestrictTo
 import androidx.annotation.VisibleForTesting
-import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.wear.phone.interactions.PhoneTypeHelper
@@ -19,10 +18,11 @@ import com.google.android.gms.wearable.CapabilityClient.OnCapabilityChangedListe
 import com.google.android.gms.wearable.MessageClient.OnMessageReceivedListener
 import com.thewizrd.shared_resources.helpers.WearConnectionStatus
 import com.thewizrd.shared_resources.helpers.WearableHelper
+import com.thewizrd.simplesleeptimer.activities.AppCompatLiteActivity
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
-abstract class WearableListenerActivity : FragmentActivity(), OnMessageReceivedListener,
+abstract class WearableListenerActivity : AppCompatLiteActivity(), OnMessageReceivedListener,
     OnCapabilityChangedListener {
     companion object {
         private const val TAG = "WearListenerActivity"
