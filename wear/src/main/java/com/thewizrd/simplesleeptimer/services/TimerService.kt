@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.*
 import android.text.format.DateUtils
+import android.util.Log
 import android.view.KeyEvent
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
@@ -153,16 +154,23 @@ class TimerService : BaseTimerService() {
                             val event = KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE)
 
                             pauseKeyIntent = Intent().apply {
-                                putExtra(Intent.EXTRA_KEY_EVENT, event)
+                                component = ComponentName(
+                                    info.activityInfo.packageName,
+                                    info.activityInfo.name
+                                )
                                 action = Intent.ACTION_MEDIA_BUTTON
-                                component = ComponentName(pkgName, info.activityInfo.name)
+                                putExtra(Intent.EXTRA_KEY_EVENT, event)
                             }
                             break
                         }
                     }
 
                     if (pauseKeyIntent != null) {
-                        sendBroadcast(pauseKeyIntent)
+                        runCatching {
+                            applicationContext.sendBroadcast(pauseKeyIntent)
+                        }.onFailure {
+                            Log.e("TimerService", "error sending pause intent", it)
+                        }
                     }
                 }
             }
