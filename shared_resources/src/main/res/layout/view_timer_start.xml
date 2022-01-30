@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout">
+    tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout"
+    tools:theme="@style/Theme.Material3.DayNight.NoActionBar">
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/left_guide"
@@ -56,51 +57,46 @@
         app:layout_constraintEnd_toEndOf="@id/timerProgressScroller"
         app:layout_constraintStart_toStartOf="@id/timerProgressScroller"
         app:layout_constraintTop_toTopOf="@id/timerProgressScroller"
-        tools:textColor="@color/colorPrimaryLight"
         tools:text="02h:30m" />
 
     <Button
         android:id="@+id/minus_5minbtn"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
+        style="@style/Widget.Material3.Button.TextButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:minWidth="60dp"
         android:text="@string/label_btn_minus5min"
         tools:textSize="12sp"
-        tools:textColor="@color/colorPrimaryLight"
         tools:ignore="MissingConstraints" />
 
     <Button
         android:id="@+id/minus_1minbtn"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
+        style="@style/Widget.Material3.Button.TextButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:minWidth="60dp"
         android:text="@string/label_btn_minus1min"
         tools:textSize="12sp"
-        tools:textColor="@color/colorPrimaryLight"
         tools:ignore="MissingConstraints" />
 
     <Button
         android:id="@+id/plus_1minbtn"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
+        style="@style/Widget.Material3.Button.TextButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:minWidth="60dp"
         android:text="@string/label_btn_plus1min"
         tools:textSize="12sp"
-        tools:textColor="@color/colorPrimaryLight"
         tools:ignore="MissingConstraints" />
 
     <Button
         android:id="@+id/plus_5minbtn"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
+        style="@style/Widget.Material3.Button.TextButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:minWidth="60dp"
         android:text="@string/label_btn_plus5min"
         tools:textSize="12sp"
-        tools:textColor="@color/colorPrimaryLight"
         tools:ignore="MissingConstraints" />
 
     <androidx.constraintlayout.helper.widget.Flow

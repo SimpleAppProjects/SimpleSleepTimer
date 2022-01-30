@@ -21,6 +21,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.material.animation.AnimationUtils
+import com.google.android.material.color.DynamicColors
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.transition.platform.MaterialSharedAxis
 import com.thewizrd.shared_resources.controls.TimerStartView
@@ -69,6 +70,9 @@ class SleepTimerActivity : AppCompatActivity() {
         window.exitTransition = MaterialSharedAxis(MaterialSharedAxis.Z, true)
 
         super.onCreate(savedInstanceState)
+
+        // Note: needed due to splash screen theme
+        DynamicColors.applyIfAvailable(this)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -249,8 +253,10 @@ class SleepTimerActivity : AppCompatActivity() {
     private fun updateFab() {
         if (TimerDataModel.getDataModel().isRunning) {
             binding.fab.setImageResource(R.drawable.ic_stop)
+            binding.fab.contentDescription = binding.fab.context.getString(R.string.label_stop)
         } else {
             binding.fab.setImageResource(R.drawable.ic_play_arrow)
+            binding.fab.contentDescription = binding.fab.context.getString(R.string.label_start)
         }
     }
 

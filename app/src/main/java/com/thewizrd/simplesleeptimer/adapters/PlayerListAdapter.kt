@@ -4,12 +4,12 @@ import android.content.res.ColorStateList
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.content.ContextCompat
 import androidx.core.widget.ImageViewCompat
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.thewizrd.shared_resources.adapters.MusicPlayerItemDiffer
 import com.thewizrd.shared_resources.helpers.RecyclerOnClickListenerInterface
+import com.thewizrd.shared_resources.utils.ContextUtils.getAttrColor
 import com.thewizrd.shared_resources.viewmodels.MusicPlayerViewModel
 import com.thewizrd.simplesleeptimer.R
 import com.thewizrd.simplesleeptimer.databinding.MusicplayerItemBinding
@@ -40,10 +40,7 @@ class PlayerListAdapter : ListAdapter<MusicPlayerViewModel, PlayerListAdapter.Vi
                 ImageViewCompat.setImageTintList(
                     binding.playerIcon,
                     ColorStateList.valueOf(
-                        ContextCompat.getColor(
-                            itemView.context,
-                            R.color.colorOnBackground
-                        )
+                        itemView.context.getAttrColor(R.attr.colorOnBackground)
                     )
                 )
             } else {

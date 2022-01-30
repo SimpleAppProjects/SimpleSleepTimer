@@ -10,6 +10,7 @@ import android.os.StrictMode
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.work.Configuration
+import com.google.android.material.color.DynamicColors
 import com.thewizrd.shared_resources.ApplicationLib
 import com.thewizrd.shared_resources.SimpleLibrary
 import com.thewizrd.shared_resources.helpers.AppState
@@ -61,6 +62,8 @@ class App : Application(), ApplicationLib, ActivityLifecycleCallbacks, Configura
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
         else
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_AUTO_BATTERY)
+
+        DynamicColors.applyToActivitiesIfAvailable(this)
     }
 
     override fun onTerminate() {

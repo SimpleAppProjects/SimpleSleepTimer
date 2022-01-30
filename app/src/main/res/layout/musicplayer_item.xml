@@ -33,7 +33,7 @@
         android:maxLines="2"
         android:paddingTop="16dp"
         android:paddingBottom="16dp"
-        android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
+        android:textAppearance="?textAppearanceBodyMedium"
         app:layout_constrainedWidth="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/radioButton"
@@ -46,7 +46,7 @@
 
     <RadioButton
         android:id="@+id/radioButton"
-        style="@style/Widget.MaterialComponents.CompoundButton.RadioButton"
+        style="@style/Widget.Material3.CompoundButton.RadioButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:padding="4dp"

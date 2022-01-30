@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout">
+    tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout"
+    tools:theme="@style/Theme.Material3.DayNight.NoActionBar">
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/left_guide"
@@ -57,30 +58,27 @@
             android:textAlignment="center"
             android:textColor="?attr/colorPrimary"
             app:autoSizeTextType="uniform"
-            tools:textColor="@color/colorPrimaryLight"
             tools:text="59" />
 
     </FrameLayout>
 
     <Button
         android:id="@+id/plus_1minbtn"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
+        style="@style/Widget.Material3.Button.TextButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:minWidth="60dp"
         android:text="@string/label_btn_plus1min"
-        tools:textSize="12sp"
-        tools:textColor="@color/colorPrimaryLight" />
+        tools:textSize="12sp" />
 
     <Button
         android:id="@+id/plus_5minbtn"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
+        style="@style/Widget.Material3.Button.TextButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:minWidth="60dp"
         android:text="@string/label_btn_plus5min"
-        tools:textSize="12sp"
-        tools:textColor="@color/colorPrimaryLight" />
+        tools:textSize="12sp" />
 
     <androidx.constraintlayout.helper.widget.Flow
         android:id="@+id/flow"
