@@ -1,11 +1,12 @@
 package com.thewizrd.simplesleeptimer.wearable
 
+import android.Manifest
 import android.annotation.TargetApi
-import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
-import android.bluetooth.le.ScanFilter
+import android.bluetooth.BluetoothManager
 import android.companion.*
 import android.content.*
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
@@ -16,6 +17,7 @@ import android.view.View
 import android.view.Window
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.material.transition.platform.MaterialSharedAxis
@@ -34,12 +36,8 @@ import java.util.regex.Pattern
 class WearPermissionsActivity : AppCompatActivity() {
     companion object {
         private const val TAG = "WearPermissionsActivity"
+        private const val BTCONNECT_REQCODE = 0
         private const val SELECT_DEVICE_REQUEST_CODE = 42
-
-        // WearOS device filter
-        private val BLE_WEAR_MATCH_DATA = byteArrayOf(0, 20)
-        private val BLE_WEAR_MATCH_DATA_LEGACY = byteArrayOf(0, 19)
-        private val BLE_WEAR_MATCH_MASK = byteArrayOf(0, -1)
     }
 
     private lateinit var binding: ActivityWearpermissionsBinding
@@ -63,36 +61,7 @@ class WearPermissionsActivity : AppCompatActivity() {
         //window.setFullScreen(getOrientation() == Configuration.ORIENTATION_PORTRAIT)
 
         binding.companionPairPref.setOnClickListener {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                LocalBroadcastManager.getInstance(this)
-                    .registerReceiver(
-                        mReceiver,
-                        IntentFilter(WearableDataListenerService.ACTION_GETCONNECTEDNODE)
-                    )
-                if (timer == null) {
-                    timer = object : CountDownTimer(5000, 1000) {
-                        override fun onTick(millisUntilFinished: Long) {}
-                        override fun onFinish() {
-                            lifecycleScope.launch {
-                                Toast.makeText(
-                                    this@WearPermissionsActivity,
-                                    R.string.message_watchbttimeout,
-                                    Toast.LENGTH_LONG
-                                ).show()
-                                binding.companionPairProgress.visibility = View.GONE
-                                Log.i(TAG, "BT Request Timeout")
-                            }
-                        }
-                    }
-                }
-                timer?.start()
-                binding.companionPairProgress.visibility = View.VISIBLE
-                lifecycleScope.launch {
-                    mWearManager.sendMessage(null, WearableHelper.PingPath, null)
-                    mWearManager.sendMessage(null, WearableHelper.BtDiscoverPath, null)
-                }
-                Log.i(TAG, "ACTION_REQUESTBTDISCOVERABLE")
-            }
+            startDevicePairing()
         }
 
         binding.bridgeTimerToggle.isChecked = Settings.isBridgeTimerEnabled()
@@ -111,6 +80,62 @@ class WearPermissionsActivity : AppCompatActivity() {
         super.onPause()
     }
 
+    private fun isBluetoothConnectPermGranted(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.BLUETOOTH_CONNECT
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
+    }
+
+    private fun startDevicePairing() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (!isBluetoothConnectPermGranted()) {
+                    requestPermissions(
+                        arrayOf(Manifest.permission.BLUETOOTH_CONNECT),
+                        BTCONNECT_REQCODE
+                    )
+                    return
+                }
+            }
+
+            LocalBroadcastManager.getInstance(this)
+                .registerReceiver(
+                    mReceiver,
+                    IntentFilter(WearableDataListenerService.ACTION_GETCONNECTEDNODE)
+                )
+            if (timer == null) {
+                timer = object : CountDownTimer(5000, 1000) {
+                    override fun onTick(millisUntilFinished: Long) {}
+                    override fun onFinish() {
+                        lifecycleScope.launch {
+                            Toast.makeText(
+                                this@WearPermissionsActivity,
+                                R.string.message_watchbttimeout,
+                                Toast.LENGTH_LONG
+                            ).show()
+                            binding.companionPairProgress.visibility = View.GONE
+                            Log.i(TAG, "BT Request Timeout")
+                            // Device not found showing all
+                            pairDevice()
+                        }
+                    }
+                }
+            }
+            timer?.start()
+            binding.companionPairProgress.visibility = View.VISIBLE
+            lifecycleScope.launch {
+                mWearManager.sendMessage(null, WearableHelper.PingPath, null)
+                mWearManager.sendMessage(null, WearableHelper.BtDiscoverPath, null)
+            }
+            Log.i(TAG, "ACTION_REQUESTBTDISCOVERABLE")
+        }
+    }
+
     // Android Q+
     private val mReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -118,7 +143,7 @@ class WearPermissionsActivity : AppCompatActivity() {
                 timer?.cancel()
                 binding.companionPairProgress.visibility = View.GONE
                 Log.i(TAG, "node received")
-                pairDevice(intent.getStringExtra(WearableDataListenerService.EXTRA_NODEDEVICENAME))
+                pairDevice()
                 LocalBroadcastManager.getInstance(context)
                     .unregisterReceiver(this)
             }
@@ -126,7 +151,7 @@ class WearPermissionsActivity : AppCompatActivity() {
     }
 
     @TargetApi(Build.VERSION_CODES.Q)
-    private fun pairDevice(deviceName: String?) {
+    private fun pairDevice() {
         lifecycleScope.launch {
             val deviceManager =
                 getSystemService(Context.COMPANION_DEVICE_SERVICE) as CompanionDeviceManager
@@ -143,49 +168,50 @@ class WearPermissionsActivity : AppCompatActivity() {
             updatePairPermText(false)
 
             val request = AssociationRequest.Builder().apply {
-                if (!deviceName.isNullOrBlank()) {
+                if (BuildConfig.DEBUG) {
                     addDeviceFilter(
                         BluetoothDeviceFilter.Builder()
-                            .setNamePattern(Pattern.compile(".*$deviceName.*", Pattern.DOTALL))
+                            .setNamePattern(Pattern.compile(".*", Pattern.DOTALL))
                             .build()
                     )
-                    addDeviceFilter(
-                        WifiDeviceFilter.Builder()
-                            .setNamePattern(Pattern.compile(".*$deviceName.*", Pattern.DOTALL))
-                            .build()
-                    )
-                    addDeviceFilter(
-                        BluetoothLeDeviceFilter.Builder()
-                            .setNamePattern(Pattern.compile(".*$deviceName.*", Pattern.DOTALL))
-                            .build()
-                    )
-                }
-
-                // https://stackoverflow.com/questions/66222673/how-to-filter-nearby-bluetooth-devices-by-type
-                addDeviceFilter(
-                    BluetoothLeDeviceFilter.Builder()
-                        .setScanFilter(
-                            ScanFilter.Builder()
-                                .setManufacturerData(
-                                    0xE0,
-                                    BLE_WEAR_MATCH_DATA_LEGACY,
-                                    BLE_WEAR_MATCH_MASK
-                                )
-                                .build()
-                        )
-                        .setNamePattern(Pattern.compile(".*", Pattern.DOTALL))
-                        .build()
-                )
-                if (BuildConfig.DEBUG) {
                     addDeviceFilter(
                         WifiDeviceFilter.Builder()
                             .setNamePattern(Pattern.compile(".*", Pattern.DOTALL))
                             .build()
                     )
+                    addDeviceFilter(
+                        BluetoothLeDeviceFilter.Builder()
+                            .setNamePattern(Pattern.compile(".*", Pattern.DOTALL))
+                            .build()
+                    )
+                } else {
+                    addDeviceFilter(
+                        BluetoothDeviceFilter.Builder()
+                            .setNamePattern(Pattern.compile(".*", Pattern.DOTALL))
+                            .build()
+                    )
+                    addDeviceFilter(
+                        BluetoothLeDeviceFilter.Builder()
+                            .setNamePattern(Pattern.compile(".*", Pattern.DOTALL))
+                            .build()
+                    )
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    setDeviceProfile(AssociationRequest.DEVICE_PROFILE_WATCH)
                 }
             }
                 .setSingleDevice(false)
                 .build()
+
+            // Verify bluetooth permissions
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !isBluetoothConnectPermGranted()) {
+                requestPermissions(
+                    arrayOf(Manifest.permission.BLUETOOTH_CONNECT),
+                    BTCONNECT_REQCODE
+                )
+                return@launch
+            }
 
             Toast.makeText(
                 this@WearPermissionsActivity,
@@ -199,9 +225,17 @@ class WearPermissionsActivity : AppCompatActivity() {
 
                 Log.i(TAG, "sending pair request")
                 // Enable Bluetooth to discover devices
-                val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
-                if (bluetoothAdapter != null && !bluetoothAdapter.isEnabled) {
-                    bluetoothAdapter.enable()
+                val btService = this@WearPermissionsActivity.applicationContext.getSystemService(
+                    BluetoothManager::class.java
+                )
+                btService?.adapter?.run {
+                    runCatching {
+                        if (!this.isEnabled) {
+                            this.enable()
+                        }
+                    }.onFailure {
+                        Log.e(TAG, "Error", it)
+                    }
                 }
                 deviceManager.associate(request, object : CompanionDeviceManager.Callback() {
                     override fun onDeviceFound(chooserLauncher: IntentSender) {
@@ -256,6 +290,28 @@ class WearPermissionsActivity : AppCompatActivity() {
                     if (parcel.bondState != BluetoothDevice.BOND_BONDED) {
                         parcel.createBond()
                     }
+                }
+            }
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        val permGranted =
+            grantResults.isNotEmpty() && !grantResults.contains(PackageManager.PERMISSION_DENIED)
+
+        when (requestCode) {
+            BTCONNECT_REQCODE -> {
+                if (permGranted) {
+                    startDevicePairing()
+                } else {
+                    Toast.makeText(this, R.string.error_permissiondenied, Toast.LENGTH_SHORT)
+                        .show()
                 }
             }
         }
