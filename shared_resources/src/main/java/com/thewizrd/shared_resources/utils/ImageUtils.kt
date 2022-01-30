@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.drawable.Drawable
+import android.os.Build
 import android.util.Log
 import androidx.core.content.ContextCompat
 import com.google.android.gms.wearable.Asset
@@ -56,7 +57,13 @@ object ImageUtils {
     fun createAssetFromBitmap(bitmap: Bitmap): Asset {
         val byteStream = ByteArrayOutputStream()
         return byteStream.use { stream ->
-            bitmap.compress(Bitmap.CompressFormat.WEBP, 100, stream)
+            bitmap.compress(
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    Bitmap.CompressFormat.WEBP_LOSSLESS
+                } else {
+                    Bitmap.CompressFormat.WEBP
+                }, 100, stream
+            )
             Asset.createFromBytes(stream.toByteArray())
         }
     }
