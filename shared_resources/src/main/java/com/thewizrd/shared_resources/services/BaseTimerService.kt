@@ -24,7 +24,9 @@ import com.thewizrd.shared_resources.helpers.toImmutableCompatFlag
 import com.thewizrd.shared_resources.sleeptimer.TimerDataModel
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import kotlinx.coroutines.*
+import java.util.*
 import java.util.concurrent.Executors
+import kotlin.concurrent.schedule
 
 abstract class BaseTimerService : Service() {
     companion object {
@@ -57,6 +59,7 @@ abstract class BaseTimerService : Service() {
 
     private lateinit var mLocalBroadcastMgr: LocalBroadcastManager
     private lateinit var mAlarmManager: AlarmManager
+    private var timerFallback: Timer? = null
 
     private var mForegroundNotification: Notification? = null
     private var mIsBound: Boolean = false
@@ -245,6 +248,7 @@ abstract class BaseTimerService : Service() {
     private fun cancelTimer() {
         cancelUpdateIntent()
         cancelExpireIntent()
+        timerFallback?.cancel()
         if (model.isRunning) {
             model.stopTimer()
             sendTimerCancelled()
@@ -338,9 +342,25 @@ abstract class BaseTimerService : Service() {
         return PendingIntent.getService(this, 0, i, flags.toImmutableCompatFlag())
     }
 
+    private fun getTimerFallBack(): Timer {
+        if (timerFallback == null) {
+            timerFallback = Timer("sleeptimer")
+        }
+
+        return timerFallback!!
+    }
+
     private fun updateExpireIntent() {
         cancelExpireIntent()
-        scheduleExpirePendingIntent(getExpireIntent())
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !checkExactAlarmsPermission(this)) {
+            timerFallback?.cancel()
+            timerFallback = getTimerFallBack()
+            timerFallback!!.schedule(Date(model.endTimeInMs)) {
+                expireTimer()
+            }
+        } else {
+            scheduleExpirePendingIntent(getExpireIntent())
+        }
     }
 
     private fun cancelExpireIntent() {
@@ -467,6 +487,7 @@ abstract class BaseTimerService : Service() {
     @CallSuper
     override fun onDestroy() {
         cancelTimer()
+        timerFallback?.purge()
         scope.cancel()
         super.onDestroy()
         stopForeground(true)
