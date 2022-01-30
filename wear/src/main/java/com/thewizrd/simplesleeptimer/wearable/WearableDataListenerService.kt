@@ -20,6 +20,7 @@ import androidx.wear.ongoing.OngoingActivity
 import androidx.wear.ongoing.Status
 import com.google.android.gms.wearable.*
 import com.thewizrd.shared_resources.helpers.WearableHelper
+import com.thewizrd.shared_resources.helpers.toImmutableCompatFlag
 import com.thewizrd.shared_resources.sleeptimer.SleepTimerHelper
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.shared_resources.utils.JSONParser
@@ -147,7 +148,7 @@ class WearableDataListenerService : WearableListenerService() {
         return PendingIntent.getActivity(
             this, NOTIFICATION_ID,
             Intent(this, SleepTimerActivity::class.java),
-            0
+            0.toImmutableCompatFlag()
         )
     }
 
@@ -198,7 +199,7 @@ class WearableDataListenerService : WearableListenerService() {
         }
     }
 
-    protected suspend fun sendMessage(nodeID: String, path: String, data: ByteArray?) {
+    private suspend fun sendMessage(nodeID: String, path: String, data: ByteArray?) {
         try {
             Wearable.getMessageClient(this@WearableDataListenerService)
                 .sendMessage(nodeID, path, data).await()

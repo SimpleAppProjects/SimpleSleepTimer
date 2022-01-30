@@ -69,9 +69,7 @@ class App : Application(), ApplicationLib, ActivityLifecycleCallbacks, Configura
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-        if (activity.localClassName.contains(LaunchActivity::class.java.simpleName) ||
-            activity.localClassName.contains(SleepTimerActivity::class.java.simpleName)
-        ) {
+        if (activity.localClassName.contains(SleepTimerActivity::class.java.simpleName)) {
             applicationState = AppState.FOREGROUND
         }
     }

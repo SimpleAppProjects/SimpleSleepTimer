@@ -32,7 +32,6 @@ import com.thewizrd.simplesleeptimer.helpers.SpacerItemDecoration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import java.util.*
 import kotlin.math.roundToInt
 
 class MusicPlayersFragment : Fragment(), OnDataChangedListener {
@@ -58,13 +57,13 @@ class MusicPlayersFragment : Fragment(), OnDataChangedListener {
             }
         }
 
-        selectedPlayer.key.observe(this, { s ->
+        selectedPlayer.key.observe(this) { s ->
             val mapRequest = PutDataMapRequest.create(SleepTimerHelper.SleepTimerAudioPlayerPath)
             mapRequest.dataMap.putString(SleepTimerHelper.KEY_SELECTEDPLAYER, s)
             Wearable.getDataClient(requireActivity()).putDataItem(
                 mapRequest.asPutDataRequest()
             ).addOnFailureListener { e -> Log.e(TAG, "Error", e) }
-        })
+        }
     }
 
     override fun onCreateView(

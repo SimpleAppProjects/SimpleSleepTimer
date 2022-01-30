@@ -6,17 +6,22 @@ import android.app.ActivityOptions
 import android.content.*
 import android.content.res.Configuration
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.os.SystemClock
+import android.provider.Settings
+import android.util.Log
 import android.view.View
 import android.view.ViewTreeObserver
 import android.view.Window
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.material.animation.AnimationUtils
+import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.transition.platform.MaterialSharedAxis
 import com.thewizrd.shared_resources.controls.TimerStartView
 import com.thewizrd.shared_resources.services.BaseTimerService
@@ -58,6 +63,8 @@ class SleepTimerActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
+
         window.requestFeature(Window.FEATURE_ACTIVITY_TRANSITIONS)
         window.exitTransition = MaterialSharedAxis(MaterialSharedAxis.Z, true)
 
@@ -99,6 +106,25 @@ class SleepTimerActivity : AppCompatActivity() {
                     mTimerBinder.cancelTimer()
                     toRun = false
                 } else {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+                        !BaseTimerService.checkExactAlarmsPermission(this)
+                    ) {
+                        Snackbar.make(
+                            it,
+                            R.string.message_alarms_permission,
+                            Snackbar.LENGTH_INDEFINITE
+                        ).apply {
+                            setAction(R.string.cat_title_settings) {
+                                runCatching {
+                                    startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
+                                }.onFailure { t ->
+                                    Log.e("SleepTimerActivity", "Error", t)
+                                }
+                            }
+                        }.show()
+                        return@setOnClickListener
+                    }
+
                     applicationContext.startService(
                         Intent(applicationContext, TimerService::class.java)
                             .setAction(BaseTimerService.ACTION_START_TIMER)

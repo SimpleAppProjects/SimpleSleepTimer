@@ -9,6 +9,7 @@ import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import android.text.format.DateUtils
+import android.util.Log
 import android.view.KeyEvent
 import androidx.annotation.CallSuper
 import androidx.annotation.RequiresApi
@@ -19,6 +20,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.thewizrd.shared_resources.R
 import com.thewizrd.shared_resources.SimpleLibrary
 import com.thewizrd.shared_resources.helpers.AppState
+import com.thewizrd.shared_resources.helpers.toImmutableCompatFlag
 import com.thewizrd.shared_resources.sleeptimer.TimerDataModel
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import kotlinx.coroutines.*
@@ -43,6 +45,13 @@ abstract class BaseTimerService : Service() {
             } else {
                 context.startService(work)
             }
+        }
+
+        @RequiresApi(Build.VERSION_CODES.S)
+        fun checkExactAlarmsPermission(context: Context): Boolean {
+            val alarmMgr =
+                ContextCompat.getSystemService(context.applicationContext, AlarmManager::class.java)
+            return alarmMgr?.canScheduleExactAlarms() ?: false
         }
     }
 
@@ -269,7 +278,7 @@ abstract class BaseTimerService : Service() {
             context.applicationContext,
             0,
             intent,
-            PendingIntent.FLAG_UPDATE_CURRENT
+            PendingIntent.FLAG_UPDATE_CURRENT.toImmutableCompatFlag()
         )
     }
 
@@ -281,7 +290,7 @@ abstract class BaseTimerService : Service() {
             context.applicationContext,
             1,
             intent,
-            PendingIntent.FLAG_UPDATE_CURRENT
+            PendingIntent.FLAG_UPDATE_CURRENT.toImmutableCompatFlag()
         )
     }
 
@@ -301,7 +310,7 @@ abstract class BaseTimerService : Service() {
         val i = Intent(this, this::class.java)
             .setAction(ACTION_UPDATE_NOTIFICATION)
 
-        return PendingIntent.getService(this, 0, i, flags)
+        return PendingIntent.getService(this, 0, i, flags.toImmutableCompatFlag())
     }
 
     private fun cancelUpdateIntent() {
@@ -326,7 +335,7 @@ abstract class BaseTimerService : Service() {
         val i = Intent(this, this::class.java)
             .setAction(ACTION_EXPIRE_TIMER)
 
-        return PendingIntent.getService(this, 0, i, flags)
+        return PendingIntent.getService(this, 0, i, flags.toImmutableCompatFlag())
     }
 
     private fun updateExpireIntent() {
@@ -347,10 +356,18 @@ abstract class BaseTimerService : Service() {
     }
 
     private fun schedulePendingIntent(pi: PendingIntent, rtcExpireTimeInMs: Long) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            mAlarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, rtcExpireTimeInMs, pi)
-        } else {
-            mAlarmManager.setExact(AlarmManager.RTC_WAKEUP, rtcExpireTimeInMs, pi)
+        runCatching {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                mAlarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    rtcExpireTimeInMs,
+                    pi
+                )
+            } else {
+                mAlarmManager.setExact(AlarmManager.RTC_WAKEUP, rtcExpireTimeInMs, pi)
+            }
+        }.onFailure {
+            Log.e("BaseTimerService", "Error", it)
         }
     }
 
@@ -368,7 +385,7 @@ abstract class BaseTimerService : Service() {
         val i = Intent(this, this::class.java)
             .setAction(action)
 
-        return PendingIntent.getService(this, 0, i, flags)
+        return PendingIntent.getService(this, 0, i, flags.toImmutableCompatFlag())
     }
 
     private fun pauseMusicAction() {

@@ -13,4 +13,6 @@
     <dimen name="dashboard_bottom_margin">48dp</dimen>
     <dimen name="dashboard_horizontal_margin">14dp</dimen>
 
+    <dimen name="diag_button_size">48dp</dimen>
+
 </resources>

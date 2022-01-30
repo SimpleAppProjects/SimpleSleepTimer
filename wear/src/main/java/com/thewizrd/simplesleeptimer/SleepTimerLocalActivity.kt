@@ -3,9 +3,12 @@ package com.thewizrd.simplesleeptimer
 import android.animation.*
 import android.annotation.SuppressLint
 import android.content.*
+import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.os.SystemClock
+import android.provider.Settings
+import android.util.Log
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewTreeObserver
@@ -21,6 +24,7 @@ import com.thewizrd.shared_resources.services.BaseTimerService
 import com.thewizrd.shared_resources.sleeptimer.TimerDataModel
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.simplesleeptimer.databinding.ActivitySleeptimerLocalBinding
+import com.thewizrd.simplesleeptimer.helpers.AcceptDenyDialog
 import com.thewizrd.simplesleeptimer.services.TimerService
 
 /**
@@ -68,6 +72,24 @@ class SleepTimerLocalActivity : AppCompatActivity() {
                     mTimerBinder.cancelTimer()
                     toRun = false
                 } else {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+                        !BaseTimerService.checkExactAlarmsPermission(this)
+                    ) {
+                        AcceptDenyDialog.Builder(this) { _, which ->
+                            if (which == DialogInterface.BUTTON_POSITIVE) {
+                                runCatching {
+                                    startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
+                                }.onFailure {
+                                    Log.e("SleepTimerActivity", "Error", it)
+                                }
+                            }
+                        }
+                            .setMessage(R.string.message_alarms_permission)
+                            .show()
+
+                        return@setOnClickListener
+                    }
+
                     applicationContext.startService(
                         Intent(applicationContext, TimerService::class.java)
                             .setAction(BaseTimerService.ACTION_START_TIMER)

@@ -14,4 +14,5 @@
     <string name="label_btn_plus5min">+5M</string>
     <string name="label_btn_minus1min">-1M</string>
     <string name="label_btn_minus5min">-5M</string>
+    <string name="message_alarms_permission">Alarms &amp; reminders permission required to start timer</string>
 </resources>

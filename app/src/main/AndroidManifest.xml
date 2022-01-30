@@ -6,6 +6,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+
+    <uses-permission android:name="android.permission.REQUEST_COMPANION_PROFILE_WATCH" />
 
     <uses-feature
         android:name="android.software.companion_device_setup"
@@ -30,17 +33,18 @@
         android:theme="@style/AppTheme.Launcher"
         tools:ignore="GoogleAppIndexingWarning">
 
-        <activity android:name=".LaunchActivity">
+        <activity-alias
+            android:name=".LaunchActivity"
+            android:targetActivity=".SleepTimerActivity"
+            android:exported="true"
+            android:theme="@style/AppTheme.Launcher">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
+        </activity-alias>
 
-        <activity
-            android:name=".SleepTimerActivity"
-            android:label="@string/title_sleeptimer"
-            android:theme="@style/AppTheme" />
+        <activity android:name=".SleepTimerActivity" />
 
         <activity
             android:name=".wearable.WearPermissionsActivity"
@@ -53,7 +57,8 @@
 
         <service
             android:name=".wearable.WearableDataListenerService"
-            android:enabled="true">
+            android:enabled="true"
+            android:exported="true">
             <intent-filter>
                 <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
 
@@ -68,7 +73,8 @@
             android:enabled="@bool/enable_qstile_service"
             android:label="@string/title_sleeptimer"
             android:icon="@drawable/ic_logo"
-            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
             </intent-filter>
