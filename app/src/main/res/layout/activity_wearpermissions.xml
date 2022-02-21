@@ -110,9 +110,8 @@
                 android:paddingEnd="?android:attr/listPreferredItemPaddingRight"
                 android:text="@string/cat_title_settings"
                 android:textAlignment="viewStart"
-                android:textAppearance="?textAppearanceBody2"
-                android:textColor="?attr/colorPrimary"
-                tools:textColor="@color/colorPrimary" />
+                android:textAppearance="?textAppearanceBodyMedium"
+                android:textColor="?attr/colorPrimary" />
 
         </LinearLayout>
 
