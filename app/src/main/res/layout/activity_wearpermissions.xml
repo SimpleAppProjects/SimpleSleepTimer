@@ -148,7 +148,7 @@
                 android:text="@string/preference_summary_timerbridge"
                 android:textAppearance="?android:textAppearanceSmall" />
 
-            <com.google.android.material.switchmaterial.SwitchMaterial
+            <com.google.android.material.materialswitch.MaterialSwitch
                 android:id="@+id/bridge_timer_toggle"
                 android:duplicateParentState="true"
                 android:layout_width="wrap_content"
