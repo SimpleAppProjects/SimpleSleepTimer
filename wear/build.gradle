@@ -3,8 +3,7 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
 
 android {
-    compileSdkVersion 31
-    buildToolsVersion '31.0.0'
+    compileSdkVersion 33
 
     defaultConfig {
         applicationId "com.thewizrd.simplesleeptimer"
@@ -18,9 +17,9 @@ android {
         testInstrumentationRunnerArguments clearPackageData: 'true'
 
         minSdkVersion 25
-        targetSdkVersion 31
+        targetSdkVersion 33
         // NOTE: Version Code Format (TargetSDK, Version Name, Build Number, Variant Code (Android: 00, WearOS: 01)
-        versionCode 301210101
+        versionCode 331210101
         versionName "1.2.1"
 
         vectorDrawables.useSupportLibrary = true
@@ -50,35 +49,36 @@ android {
         // Flag to enable support for the new language APIs
         //coreLibraryDesugaringEnabled true
         // Sets Java compatibility to Java 8
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "1.8"
+    kotlin {
+        jvmToolchain(17)
     }
+    namespace 'com.thewizrd.simplesleeptimer'
 }
 
 dependencies {
     implementation project(":shared_resources")
 
     // Kotlin
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4'
 
-    implementation 'androidx.appcompat:appcompat:1.4.1'
-    implementation 'androidx.core:core-ktx:1.7.0'
-    implementation 'androidx.fragment:fragment-ktx:1.4.1'
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.4.1'
-    implementation 'androidx.core:core-splashscreen:1.0.0-beta01'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.core:core-ktx:1.10.0'
+    implementation 'androidx.fragment:fragment-ktx:1.5.7'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
+    implementation 'androidx.core:core-splashscreen:1.0.0'
 
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.3'
-    implementation 'androidx.recyclerview:recyclerview:1.2.1'
-    implementation 'com.google.android.material:material:1.5.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.recyclerview:recyclerview:1.3.0'
+    implementation 'com.google.android.material:material:1.8.0'
 
-    implementation 'com.google.android.gms:play-services-wearable:17.1.0'
-    compileOnly 'com.google.android.wearable:wearable:2.8.1'
+    implementation 'com.google.android.gms:play-services-wearable:18.0.0'
+    compileOnly 'com.google.android.wearable:wearable:2.9.0'
 
     implementation 'androidx.wear:wear:1.2.0'
     implementation 'androidx.wear:wear-ongoing:1.0.0'

@@ -4,7 +4,11 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.util.Log
-import android.view.*
+import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.View
+import android.view.ViewConfiguration
+import android.view.ViewGroup
 import androidx.core.view.InputDeviceCompat
 import androidx.core.view.MotionEventCompat
 import androidx.core.view.ViewConfigurationCompat
@@ -14,8 +18,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.wear.widget.WearableLinearLayoutManager
-import com.google.android.gms.wearable.*
 import com.google.android.gms.wearable.DataClient.OnDataChangedListener
+import com.google.android.gms.wearable.DataEvent
+import com.google.android.gms.wearable.DataEventBuffer
+import com.google.android.gms.wearable.DataMap
+import com.google.android.gms.wearable.DataMapItem
+import com.google.android.gms.wearable.PutDataMapRequest
+import com.google.android.gms.wearable.Wearable
 import com.thewizrd.shared_resources.helpers.RecyclerOnClickListenerInterface
 import com.thewizrd.shared_resources.helpers.WearableHelper
 import com.thewizrd.shared_resources.sleeptimer.SleepTimerHelper
@@ -59,7 +68,7 @@ class MusicPlayersFragment : Fragment(), OnDataChangedListener {
 
         selectedPlayer.key.observe(this) { s ->
             val mapRequest = PutDataMapRequest.create(SleepTimerHelper.SleepTimerAudioPlayerPath)
-            mapRequest.dataMap.putString(SleepTimerHelper.KEY_SELECTEDPLAYER, s)
+            mapRequest.dataMap.putString(SleepTimerHelper.KEY_SELECTEDPLAYER, s ?: "")
             Wearable.getDataClient(requireActivity()).putDataItem(
                 mapRequest.asPutDataRequest()
             ).addOnFailureListener { e -> Log.e(TAG, "Error", e) }
@@ -173,7 +182,7 @@ class MusicPlayersFragment : Fragment(), OnDataChangedListener {
                     if (SleepTimerHelper.SleepTimerAudioPlayerPath == item.uri.path) {
                         try {
                             val dataMap = DataMapItem.fromDataItem(item).dataMap
-                            prefKey = dataMap.getString(SleepTimerHelper.KEY_SELECTEDPLAYER, null)
+                            prefKey = dataMap.getString(SleepTimerHelper.KEY_SELECTEDPLAYER, "")
                         } catch (e: Exception) {
                             Log.e(TAG, "Error", e)
                         }

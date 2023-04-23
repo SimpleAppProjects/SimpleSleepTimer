@@ -249,7 +249,7 @@ class WearPermissionsActivity : AppCompatActivity() {
                         }
                     }
 
-                    override fun onFailure(error: CharSequence) {
+                    override fun onFailure(error: CharSequence?) {
                         Log.e(TAG, "failed to find any devices; $error")
                         Toast.makeText(
                             this@WearPermissionsActivity,

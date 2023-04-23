@@ -137,7 +137,11 @@ class WearableManager(private val mContext: Context) : OnCapabilityChangedListen
                     map.putString(WearableHelper.KEY_ACTIVITYNAME, activityInfo.activityInfo.name)
                     map.putAsset(
                         WearableHelper.KEY_ICON,
-                        iconBmp?.let { ImageUtils.createAssetFromBitmap(iconBmp) })
+                        iconBmp?.let { ImageUtils.createAssetFromBitmap(iconBmp) }
+                            ?: Asset.createFromBytes(
+                                ByteArray(0)
+                            )
+                    )
                     mapRequest.dataMap.putDataMap(key, map)
                     supportedPlayers.add(key)
                 }
@@ -244,7 +248,10 @@ class WearableManager(private val mContext: Context) : OnCapabilityChangedListen
 
     suspend fun sendSelectedAudioPlayer() {
         val mapRequest = PutDataMapRequest.create(SleepTimerHelper.SleepTimerAudioPlayerPath)
-        mapRequest.dataMap.putString(SleepTimerHelper.KEY_SELECTEDPLAYER, Settings.getMusicPlayer())
+        mapRequest.dataMap.putString(
+            SleepTimerHelper.KEY_SELECTEDPLAYER,
+            Settings.getMusicPlayer() ?: ""
+        )
         mapRequest.setUrgent()
         try {
             Wearable.getDataClient(mContext)
