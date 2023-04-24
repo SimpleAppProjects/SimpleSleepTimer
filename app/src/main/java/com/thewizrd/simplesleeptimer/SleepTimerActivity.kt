@@ -1,5 +1,6 @@
 package com.thewizrd.simplesleeptimer
 
+import android.Manifest
 import android.animation.*
 import android.annotation.SuppressLint
 import android.app.ActivityOptions
@@ -15,8 +16,11 @@ import android.util.Log
 import android.view.View
 import android.view.ViewTreeObserver
 import android.view.Window
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.PermissionChecker
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -45,6 +49,8 @@ class SleepTimerActivity : AppCompatActivity() {
     private var mBound: Boolean = false
     private lateinit var mBroadcastReceiver: BroadcastReceiver
 
+    private lateinit var permissionRequestLauncher: ActivityResultLauncher<String>
+
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
             // We've bound to LocalService, cast the IBinder and get LocalService instance
@@ -70,6 +76,9 @@ class SleepTimerActivity : AppCompatActivity() {
         window.exitTransition = MaterialSharedAxis(MaterialSharedAxis.Z, true)
 
         super.onCreate(savedInstanceState)
+
+        permissionRequestLauncher =
+            registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
 
         // Note: needed due to splash screen theme
         DynamicColors.applyIfAvailable(this)
@@ -121,6 +130,28 @@ class SleepTimerActivity : AppCompatActivity() {
                             setAction(R.string.cat_title_settings) {
                                 runCatching {
                                     startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
+                                }.onFailure { t ->
+                                    Log.e("SleepTimerActivity", "Error", t)
+                                }
+                            }
+                        }.show()
+                        return@setOnClickListener
+                    }
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                        PermissionChecker.checkSelfPermission(
+                            this@SleepTimerActivity,
+                            Manifest.permission.POST_NOTIFICATIONS
+                        ) != PermissionChecker.PERMISSION_GRANTED
+                    ) {
+                        Snackbar.make(
+                            it,
+                            R.string.notification_permission_prompt,
+                            Snackbar.LENGTH_INDEFINITE
+                        ).apply {
+                            setAction(R.string.cat_title_permissions) {
+                                runCatching {
+                                    permissionRequestLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                                 }.onFailure { t ->
                                     Log.e("SleepTimerActivity", "Error", t)
                                 }
