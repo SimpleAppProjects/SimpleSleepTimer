@@ -20,9 +20,6 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
-# Application classes that will be serialized/deserialized over Gson
-##
-
 # Crashlytics
 -keepattributes SourceFile,LineNumberTable        # Keep file names/line numbers
 -keep public class * extends java.lang.Exception  # Keep custom exceptions (opt)
