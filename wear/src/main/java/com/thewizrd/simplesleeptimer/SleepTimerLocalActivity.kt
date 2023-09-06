@@ -1,5 +1,6 @@
 package com.thewizrd.simplesleeptimer
 
+import android.Manifest
 import android.animation.*
 import android.annotation.SuppressLint
 import android.content.*
@@ -14,6 +15,7 @@ import android.view.View
 import android.view.ViewTreeObserver
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.PermissionChecker
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.marginBottom
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
@@ -148,6 +150,16 @@ class SleepTimerLocalActivity : AppCompatActivity() {
             showTimerProgressView()
         } else {
             showTimerStartView()
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (PermissionChecker.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PermissionChecker.PERMISSION_GRANTED
+            ) {
+                requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 0)
+            }
         }
     }
 

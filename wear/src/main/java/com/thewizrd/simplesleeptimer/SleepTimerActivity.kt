@@ -1,11 +1,13 @@
 package com.thewizrd.simplesleeptimer
 
+import android.Manifest
 import android.animation.*
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
 import android.text.format.DateUtils
@@ -15,6 +17,7 @@ import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
+import androidx.core.content.PermissionChecker
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.util.Pair
 import androidx.core.view.marginBottom
@@ -307,6 +310,20 @@ class SleepTimerActivity : WearableListenerActivity() {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (PermissionChecker.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PermissionChecker.PERMISSION_GRANTED
+            ) {
+                requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 0)
             }
         }
     }
