@@ -1,41 +1,46 @@
 package com.thewizrd.simplesleeptimer
 
 import android.Manifest
-import android.animation.*
-import android.annotation.SuppressLint
-import android.content.*
+import android.content.BroadcastReceiver
+import android.content.ComponentName
+import android.content.Context
+import android.content.DialogInterface
+import android.content.Intent
+import android.content.IntentFilter
+import android.content.ServiceConnection
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.os.SystemClock
 import android.provider.Settings
 import android.util.Log
-import android.util.TypedValue
-import android.view.View
-import android.view.ViewTreeObserver
+import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.PermissionChecker
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.core.view.marginBottom
-import androidx.interpolator.view.animation.FastOutSlowInInterpolator
+import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.google.android.material.animation.AnimationUtils
-import com.thewizrd.shared_resources.controls.TimerStartView
 import com.thewizrd.shared_resources.services.BaseTimerService
 import com.thewizrd.shared_resources.sleeptimer.TimerDataModel
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
-import com.thewizrd.simplesleeptimer.databinding.ActivitySleeptimerLocalBinding
 import com.thewizrd.simplesleeptimer.helpers.AcceptDenyDialog
 import com.thewizrd.simplesleeptimer.services.TimerService
+import com.thewizrd.simplesleeptimer.ui.SleepTimerApp
+import com.thewizrd.simplesleeptimer.viewmodels.TimerOperation
+import com.thewizrd.simplesleeptimer.viewmodels.TimerViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 
 /**
  * Sleep Timer for local WearOS device
  */
 class SleepTimerLocalActivity : AppCompatActivity() {
-    private lateinit var binding: ActivitySleeptimerLocalBinding
-
-    private val timerModel: TimerModel by viewModels()
+    private val timerViewModel: TimerViewModel by viewModels()
+    private var timerUpdateJob: Job? = null
 
     private lateinit var mTimerBinder: BaseTimerService.LocalBinder
     private var mBound: Boolean = false
@@ -64,80 +69,11 @@ class SleepTimerLocalActivity : AppCompatActivity() {
 
         installSplashScreen()
 
-        binding = ActivitySleeptimerLocalBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        timerViewModel.updateTimerState(isLocalTimer = true)
 
-        binding.fab.setOnClickListener {
-            if (mBound) {
-                var toRun = false
-                if (mTimerBinder.isRunning()) {
-                    mTimerBinder.cancelTimer()
-                    toRun = false
-                } else {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-                        !BaseTimerService.checkExactAlarmsPermission(this)
-                    ) {
-                        AcceptDenyDialog.Builder(this) { _, which ->
-                            if (which == DialogInterface.BUTTON_POSITIVE) {
-                                runCatching {
-                                    startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
-                                }.onFailure {
-                                    Log.e("SleepTimerActivity", "Error", it)
-                                }
-                            }
-                        }
-                            .setMessage(R.string.message_alarms_permission)
-                            .show()
-
-                        return@setOnClickListener
-                    }
-
-                    applicationContext.startService(
-                        Intent(applicationContext, TimerService::class.java)
-                            .setAction(BaseTimerService.ACTION_START_TIMER)
-                            .putExtra(
-                                BaseTimerService.EXTRA_TIME_IN_MINS,
-                                timerModel.timerLengthInMins
-                            )
-                    )
-                    toRun = true
-                }
-
-                animateToView(toRun)
-            }
+        setContent {
+            SleepTimerApp()
         }
-
-        binding.timerStartView.setOnProgressChangedListener(object :
-            TimerStartView.OnProgressChangedListener {
-            override fun onProgressChanged(progress: Int, fromUser: Boolean) {
-                timerModel.timerLengthInMins = progress
-                if (progress >= 1) {
-                    binding.fab.post { binding.fab.show() }
-                } else {
-                    binding.fab.post { binding.fab.hide() }
-                }
-            }
-        })
-
-        binding.timerStartView.setTimerMax(TimerModel.MAX_TIME_IN_MINS)
-        binding.timerStartView.setTimerProgress(timerModel.timerLengthInMins)
-
-        binding.timerProgressView.setOnClickExtend1MinButtonListener {
-            if (mBound) {
-                mTimerBinder.extend1MinTimer()
-            }
-        }
-        binding.timerProgressView.setOnClickExtend5MinButtonListener {
-            if (mBound) {
-                mTimerBinder.extend5MinTimer()
-            }
-        }
-
-        val padding =
-            TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4f, resources.displayMetrics)
-                .toInt()
-        binding.timerStartView.setButtonFlowBottomMargin(binding.fab.marginBottom + binding.fab.customSize + padding)
-        binding.timerProgressView.setButtonFlowBottomMargin(binding.fab.marginBottom + binding.fab.customSize + padding)
     }
 
     override fun onStart() {
@@ -159,6 +95,30 @@ class SleepTimerLocalActivity : AppCompatActivity() {
                 ) != PermissionChecker.PERMISSION_GRANTED
             ) {
                 requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 0)
+            }
+        }
+
+        lifecycleScope.launch {
+            timerViewModel.timerEvents.collect {
+                when (it) {
+                    TimerOperation.START -> startTimer()
+                    TimerOperation.STOP -> stopTimer()
+
+                    TimerOperation.EXTEND_1M -> {
+                        if (mBound && mTimerBinder.isRunning()) {
+                            mTimerBinder.extend1MinTimer()
+                        }
+                    }
+
+                    TimerOperation.EXTEND_5M -> {
+                        if (mBound && mTimerBinder.isRunning()) {
+                            mTimerBinder.extend5MinTimer()
+                        }
+                    }
+
+                    else -> { /* ignore */
+                    }
+                }
             }
         }
     }
@@ -198,185 +158,84 @@ class SleepTimerLocalActivity : AppCompatActivity() {
         mBound = false
     }
 
-    /* Views */
+    private fun stopTimer() {
+        if (mBound && mTimerBinder.isRunning()) {
+            mTimerBinder.cancelTimer()
+        }
+
+        showTimerStartView()
+    }
+
+    private fun startTimer() {
+        if (mBound) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+                !BaseTimerService.checkExactAlarmsPermission(this)
+            ) {
+                AcceptDenyDialog.Builder(this) { _, which ->
+                    if (which == DialogInterface.BUTTON_POSITIVE) {
+                        runCatching {
+                            startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
+                        }.onFailure {
+                            Log.e("SleepTimerActivity", "Error", it)
+                        }
+                    }
+                }
+                    .setMessage(R.string.message_alarms_permission)
+                    .show()
+
+                return
+            }
+
+            lifecycleScope.launch {
+                val state = timerViewModel.uiState.value
+                val timerLengthInMins = state.timerLengthInMs.let {
+                    TimeUnit.MILLISECONDS.toMinutes(it)
+                } ?: TimerModel.DEFAULT_TIME_MIN
+
+                applicationContext.startService(
+                    Intent(applicationContext, TimerService::class.java)
+                        .setAction(BaseTimerService.ACTION_START_TIMER)
+                        .putExtra(
+                            BaseTimerService.EXTRA_TIME_IN_MINS,
+                            timerLengthInMins.toInt()
+                        )
+                )
+
+                showTimerProgressView()
+            }
+        }
+    }
+
     private fun showTimerStartView() {
         stopUpdatingTime()
-
-        binding.timerProgressView.visibility = View.GONE
-        binding.timerStartView.visibility = View.VISIBLE
-        binding.timerStartView.requestFocus()
-
-        updateFab()
+        timerViewModel.updateTimerState(isRunning = false)
     }
 
     private fun showTimerProgressView() {
-        binding.timerProgressView.visibility = View.VISIBLE
-        binding.timerStartView.visibility = View.GONE
-
-        updateFab()
-
+        timerViewModel.updateTimerState(isRunning = true)
         startUpdatingTime()
-    }
-
-    private fun updateFab() {
-        if (TimerDataModel.getDataModel().isRunning) {
-            binding.fab.setImageResource(R.drawable.ic_stop)
-        } else {
-            binding.fab.setImageResource(R.drawable.ic_play_arrow)
-        }
-    }
-
-    private fun animateToView(isRunning: Boolean) {
-        if (isRunning && binding.timerProgressView.visibility == View.VISIBLE ||
-            !isRunning && binding.timerStartView.visibility == View.VISIBLE
-        ) {
-            return
-        }
-
-        val currentView = if (!isRunning) {
-            binding.timerProgressView
-        } else {
-            binding.timerStartView
-        }
-        val toView = if (isRunning) {
-            binding.timerProgressView
-        } else {
-            binding.timerStartView
-        }
-        toView.visibility = View.VISIBLE
-
-        val animDuration = resources.getInteger(android.R.integer.config_longAnimTime).toLong()
-
-        val viewTreeObserver = toView.viewTreeObserver
-        viewTreeObserver.addOnPreDrawListener(object : ViewTreeObserver.OnPreDrawListener {
-            override fun onPreDraw(): Boolean {
-                if (viewTreeObserver.isAlive) {
-                    viewTreeObserver.removeOnPreDrawListener(this)
-                }
-
-                val distanceY =
-                    toView.context.resources.getDimensionPixelSize(R.dimen.mtrl_transition_shared_axis_slide_distance)
-                        .toFloat()
-                val translationDistance = if (!isRunning) distanceY else -distanceY
-
-                toView.translationY = -translationDistance
-                currentView.translationY = 0f
-                toView.alpha = 0f
-                currentView.alpha = 1f
-
-                val translateCurrent = ObjectAnimator.ofFloat(
-                    currentView,
-                    View.TRANSLATION_Y, translationDistance
-                )
-                val translateNew = ObjectAnimator.ofFloat(toView, View.TRANSLATION_Y, 0f)
-                val translationAnimatorSet = AnimatorSet().apply {
-                    playTogether(translateCurrent, translateNew)
-                    duration = animDuration
-                    interpolator = FastOutSlowInInterpolator()
-                }
-
-                val fadeOutAnimator = ObjectAnimator.ofFloat(currentView, View.ALPHA, 0f)
-                fadeOutAnimator.duration = animDuration / 2
-                fadeOutAnimator.addUpdateListener(object : ValueAnimator.AnimatorUpdateListener {
-                    val view = currentView
-                    val startValue = 1f
-                    val endValue = 0f
-                    val startFraction = 0f
-                    val endFraction = 0.35f
-
-                    @SuppressLint("RestrictedApi")
-                    override fun onAnimationUpdate(animation: ValueAnimator) {
-                        val progress = animation.animatedValue as Float
-                        view.alpha = AnimationUtils.lerp(
-                            startValue,
-                            endValue,
-                            startFraction,
-                            endFraction,
-                            progress
-                        )
-                    }
-                })
-                fadeOutAnimator.addListener(object : AnimatorListenerAdapter() {
-                    override fun onAnimationStart(animation: Animator) {
-                        super.onAnimationStart(animation)
-                    }
-
-                    override fun onAnimationEnd(animation: Animator) {
-                        super.onAnimationEnd(animation)
-                        if (isRunning) {
-                            showTimerProgressView()
-                        } else {
-                            showTimerStartView()
-                        }
-                    }
-                })
-
-                val fadeInAnimator = ObjectAnimator.ofFloat(toView, View.ALPHA, 1f).apply {
-                    duration = animDuration / 2
-                    //startDelay = animDuration / 2
-                }
-                fadeInAnimator.addUpdateListener(object : ValueAnimator.AnimatorUpdateListener {
-                    val view = toView
-                    val startValue = 0f
-                    val endValue = 1f
-                    val startFraction = 0f
-                    val endFraction = 0.35f
-
-                    @SuppressLint("RestrictedApi")
-                    override fun onAnimationUpdate(animation: ValueAnimator) {
-                        val progress = animation.animatedValue as Float
-                        view.alpha = AnimationUtils.lerp(
-                            startValue,
-                            endValue,
-                            startFraction,
-                            endFraction,
-                            progress
-                        )
-                    }
-                })
-
-                val animatorSet = AnimatorSet().apply {
-                    playTogether(fadeOutAnimator, fadeInAnimator, translationAnimatorSet)
-                }
-                animatorSet.addListener(object : AnimatorListenerAdapter() {
-                    override fun onAnimationEnd(animation: Animator) {
-                        super.onAnimationEnd(animation)
-                        currentView.translationY = 0f
-                        toView.translationY = 0f
-                        currentView.alpha = 1f
-                        toView.alpha = 1f
-                    }
-                })
-                animatorSet.start()
-
-                return true
-            }
-        })
     }
 
     private fun startUpdatingTime() {
         stopUpdatingTime()
-        binding.fragmentContainer.post(updateRunnable)
+        timerUpdateJob = lifecycleScope.launch {
+            while (isActive) {
+                val model = TimerDataModel.getDataModel()
+                val startTime = SystemClock.elapsedRealtime()
+                // If no timers require continuous updates, avoid scheduling the next update.
+                if (!model.isRunning) {
+                    break
+                } else {
+                    timerViewModel.updateTimerState(model.toModel())
+                }
+                val endTime = SystemClock.elapsedRealtime()
+
+                delay(startTime + 20 - endTime)
+            }
+        }
     }
 
     private fun stopUpdatingTime() {
-        binding.fragmentContainer.removeCallbacks(updateRunnable)
-    }
-
-    private val updateRunnable = object : Runnable {
-        private val model = TimerDataModel.getDataModel()
-
-        override fun run() {
-            val startTime = SystemClock.elapsedRealtime()
-            // If no timers require continuous updates, avoid scheduling the next update.
-            if (!model.isRunning) {
-                return
-            } else {
-                binding.timerProgressView.updateTimer(model.toModel())
-            }
-            val endTime = SystemClock.elapsedRealtime()
-
-            binding.fragmentContainer.postOnAnimationDelayed(this, startTime + 20 - endTime)
-        }
+        timerUpdateJob?.cancel()
     }
 }

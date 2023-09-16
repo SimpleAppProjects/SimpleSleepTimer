@@ -5,8 +5,8 @@ import androidx.lifecycle.ViewModel
 
 class TimerModel : ViewModel() {
     companion object {
-        const val DEFAULT_TIME_MIN = 5
-        const val MAX_TIME_IN_MINS = 120
+        const val DEFAULT_TIME_MIN = 15
+        const val MAX_TIME_IN_MINS = 1440 // 24hrs
         private const val DEFAULT_TIME_MS = DEFAULT_TIME_MIN * DateUtils.MINUTE_IN_MILLIS
     }
 

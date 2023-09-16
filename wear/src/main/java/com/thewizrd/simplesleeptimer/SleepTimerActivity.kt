@@ -20,11 +20,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.util.Pair
-import androidx.core.view.marginBottom
-import androidx.core.view.updateLayoutParams
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.lifecycle.lifecycleScope
-import androidx.wear.widget.drawer.WearableDrawerLayout
 import androidx.wear.widget.drawer.WearableDrawerView
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.material.animation.AnimationUtils
@@ -39,7 +36,6 @@ import com.thewizrd.simplesleeptimer.databinding.ActivitySleeptimerBinding
 import com.thewizrd.simplesleeptimer.helpers.showConfirmationOverlay
 import kotlinx.coroutines.*
 import kotlinx.coroutines.guava.await
-import kotlin.math.max
 
 /**
  * Sleep Timer remote control activity for connected device
@@ -152,64 +148,6 @@ class SleepTimerActivity : WearableListenerActivity() {
             addAction(ACTION_UPDATECONNECTIONSTATUS)
             addAction(WearableHelper.MusicPlayersPath)
         }
-
-        binding.drawerLayout.setDrawerStateCallback(object :
-            WearableDrawerLayout.DrawerStateCallback() {
-            override fun onDrawerOpened(
-                layout: WearableDrawerLayout?,
-                drawerView: WearableDrawerView?
-            ) {
-                super.onDrawerOpened(layout, drawerView)
-                drawerView?.let { requestDrawerFocus(it, true) }
-            }
-
-            override fun onDrawerClosed(
-                layout: WearableDrawerLayout?,
-                drawerView: WearableDrawerView?
-            ) {
-                super.onDrawerClosed(layout, drawerView)
-                drawerView?.let { requestDrawerFocus(it, false) }
-                binding.fragmentContainer.requestFocus()
-            }
-
-            override fun onDrawerStateChanged(layout: WearableDrawerLayout?, newState: Int) {
-                super.onDrawerStateChanged(layout, newState)
-                if (newState == WearableDrawerView.STATE_IDLE) {
-                    if (binding.bottomActionDrawer.isPeeking && !binding.fragmentContainer.hasFocus()) {
-                        requestDrawerFocus(false)
-                        binding.fragmentContainer.requestFocus()
-                    }
-                }
-            }
-        })
-        binding.bottomActionDrawer.setIsLocked(false)
-        binding.bottomActionDrawer.controller.peekDrawer()
-
-        val peekContainer = binding.peekView
-        peekContainer.viewTreeObserver.addOnPreDrawListener(object :
-            ViewTreeObserver.OnPreDrawListener {
-            override fun onPreDraw(): Boolean {
-                peekContainer.viewTreeObserver.removeOnPreDrawListener(this)
-
-                val iconSize =
-                    peekContainer.context.resources.getDimensionPixelSize(R.dimen.ws_peek_view_icon_size)
-                val topPadd =
-                    peekContainer.context.resources.getDimensionPixelSize(R.dimen.ws_peek_view_top_padding)
-                val botPadd =
-                    peekContainer.context.resources.getDimensionPixelSize(R.dimen.ws_peek_view_bottom_padding)
-                val peekContainerHeight = peekContainer.measuredHeight + topPadd + botPadd
-                val totalSize = iconSize + topPadd + botPadd
-
-                binding.fab.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                    bottomMargin = max(peekContainerHeight, totalSize)
-                }
-
-                binding.timerStartView.setButtonFlowBottomMargin(binding.fab.marginBottom + binding.fab.customSize + botPadd + topPadd)
-                binding.timerProgressView.setButtonFlowBottomMargin(binding.fab.marginBottom + binding.fab.customSize + botPadd + topPadd)
-
-                return true
-            }
-        })
 
         binding.fab.setOnClickListener {
             var toRun = false
@@ -408,10 +346,6 @@ class SleepTimerActivity : WearableListenerActivity() {
 
     /* Views */
     override fun onBackPressed() {
-        if (binding.bottomActionDrawer.isOpened) {
-            binding.bottomActionDrawer.controller.peekDrawer()
-            return
-        }
         super.onBackPressed()
     }
 

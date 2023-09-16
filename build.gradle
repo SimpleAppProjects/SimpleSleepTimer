@@ -9,6 +9,9 @@ buildscript {
         kotlin_version = '1.9.0'
         kotlinx_version = '1.7.3'
 
+        desugar_version = '2.0.3'
+
+        activity_version = '1.7.2'
         appcompat_version = '1.6.1'
         constraintlayout_version = '2.1.4'
         core_version = '1.10.1'

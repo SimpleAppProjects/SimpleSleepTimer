@@ -16,7 +16,7 @@ android {
         // that the app's state is completely cleared between tests.
         testInstrumentationRunnerArguments clearPackageData: 'true'
 
-        minSdkVersion 25
+        minSdkVersion 26
         targetSdkVersion rootProject.targetSdkVersion
         // NOTE: Version Code Format (TargetSDK, Version Name, Build Number, Variant Code (Android: 00, WearOS: 01)
         versionCode 331220001
@@ -41,13 +41,21 @@ android {
     }
 
     buildFeatures {
+        compose true
         dataBinding true
         viewBinding true
     }
 
     compileOptions {
+        // Flag to enable support for the new language APIs
+        coreLibraryDesugaringEnabled true
+
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion compose_compiler_version
     }
 
     kotlin {
@@ -58,6 +66,8 @@ android {
 
 dependencies {
     implementation project(":shared_resources")
+
+    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:$desugar_version"
 
     // Kotlin
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_version"
@@ -74,6 +84,7 @@ dependencies {
     implementation "androidx.recyclerview:recyclerview:$recyclerview_version"
     implementation 'com.google.android.material:material:1.9.0'
 
+    // WearOS
     implementation 'com.google.android.gms:play-services-wearable:18.1.0'
     compileOnly 'com.google.android.wearable:wearable:2.9.0'
 
@@ -81,4 +92,29 @@ dependencies {
     implementation 'androidx.wear:wear-ongoing:1.0.0'
     implementation 'androidx.wear:wear-phone-interactions:1.0.1'
     implementation 'androidx.wear:wear-remote-interactions:1.0.0'
+
+    // WearOS Tiles
+    implementation('androidx.wear.tiles:tiles:1.2.0')
+    debugImplementation('androidx.wear.tiles:tiles-renderer:1.2.0')
+    testImplementation('androidx.wear.tiles:tiles-testing:1.2.0')
+    implementation "androidx.wear.protolayout:protolayout-material:1.0.0"
+    implementation "com.google.android.horologist:horologist-tiles:$horologist_version"
+    implementation "com.google.android.horologist:horologist-compose-tools:$horologist_version"
+
+    // WearOS Compose
+    implementation "androidx.activity:activity-compose:$activity_version"
+    implementation "androidx.compose.compiler:compiler:$compose_compiler_version"
+    implementation "androidx.compose.runtime:runtime-livedata:$compose_version"
+    implementation "androidx.compose.ui:ui:$compose_version"
+    implementation "androidx.compose.ui:ui-tooling-preview:$compose_version"
+    implementation "androidx.compose.animation:animation-graphics:$compose_version"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycle_version"
+    implementation "androidx.wear.compose:compose-foundation:$wear_compose_version"
+    implementation "androidx.wear.compose:compose-material:$wear_compose_version"
+    implementation "androidx.wear.compose:compose-navigation:$wear_compose_version"
+    implementation "com.google.android.horologist:horologist-composables:$horologist_version"
+    implementation "com.google.android.horologist:horologist-compose-layout:$horologist_version"
+
+    androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
+    debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
 }
