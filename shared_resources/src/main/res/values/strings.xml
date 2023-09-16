@@ -16,4 +16,9 @@
     <string name="label_btn_minus5min">-5M</string>
     <string name="message_alarms_permission">Alarms &amp; reminders permission required to start timer</string>
     <string name="notification_permission_prompt">Notification permission required to start timer</string>
+
+    <string name="label_stop">Stop</string>
+    <string name="label_start">Start</string>
+    <string name="action_reset">Reset</string>
+
 </resources>

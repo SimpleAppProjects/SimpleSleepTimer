@@ -16,4 +16,6 @@
 
     <string name="error_sleeptimer_notinstalled">SleepTimer app not installed.\nPlease install to continue.</string>
 
+    <string name="action_retry">Retry</string>
+
 </resources>

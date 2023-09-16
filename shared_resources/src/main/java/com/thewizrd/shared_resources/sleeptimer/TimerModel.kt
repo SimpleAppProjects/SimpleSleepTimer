@@ -56,6 +56,7 @@ class TimerModel : ViewModel() {
 
     fun stopTimer() {
         this.isRunning = false
+        timerLengthInMs = DEFAULT_TIME_MS
     }
 
     fun updateModel(model: TimerModel) {

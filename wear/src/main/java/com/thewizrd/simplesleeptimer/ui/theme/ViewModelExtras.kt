@@ -1,5 +1,6 @@
 package com.thewizrd.simplesleeptimer.ui.theme
 
+import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalContext
@@ -27,6 +28,19 @@ inline fun <reified T : ViewModel> safeActivityViewModel(): Result<T> = runCatch
     return viewModelInStore(activity)
 }
 
+/** Try to fetch a viewModel with current context (i.e. activity)  */
+@Composable
+inline fun <reified T : ViewModel> safeActivityViewModel(context: Context): Result<T> =
+    runCatching {
+        val activity = context as? ViewModelStoreOwner
+            ?: throw IllegalStateException("Current context is not a viewModelStoreOwner.")
+        return viewModelInStore(activity)
+    }
+
 /** Force fetch a viewModel inside context's viewModelStore */
 @Composable
 inline fun <reified T : ViewModel> activityViewModel(): T = safeActivityViewModel<T>().getOrThrow()
+
+@Composable
+inline fun <reified T : ViewModel> activityViewModel(context: Context): T =
+    safeActivityViewModel<T>(context).getOrThrow()

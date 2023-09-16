@@ -1,7 +1,8 @@
 package com.thewizrd.simplesleeptimer.viewmodels
 
+import android.app.Application
 import android.text.format.DateUtils
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import kotlinx.coroutines.channels.BufferOverflow
@@ -14,7 +15,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
-open class TimerViewModel : ViewModel() {
+open class TimerViewModel(app: Application) : AndroidViewModel(app) {
     companion object {
         private val MAX_TIME_IN_MINS = TimeUnit.HOURS.toMinutes(24)
         private val MAX_TIME_IN_MILLIS = TimeUnit.MINUTES.toMillis(MAX_TIME_IN_MINS)
@@ -76,7 +77,8 @@ open class TimerViewModel : ViewModel() {
             TimerOperation.ADD_1M -> {
                 viewModelState.update {
                     it.copy(
-                        timerLengthInMs = MAX_TIME_IN_MILLIS.coerceAtMost(it.timerLengthInMs + ONE_MIN_IN_MILLIS)
+                        timerLengthInMs = MAX_TIME_IN_MILLIS
+                            .coerceAtMost(it.timerLengthInMs + ONE_MIN_IN_MILLIS)
                     )
                 }
             }
@@ -84,11 +86,10 @@ open class TimerViewModel : ViewModel() {
             TimerOperation.ADD_5M -> {
                 viewModelState.update {
                     it.copy(
-                        timerLengthInMs = MAX_TIME_IN_MILLIS.coerceAtMost(
-                            it.timerLengthInMs + ONE_MIN_IN_MILLIS.times(
-                                5
+                        timerLengthInMs = MAX_TIME_IN_MILLIS
+                            .coerceAtMost(
+                                it.timerLengthInMs + ONE_MIN_IN_MILLIS.times(5)
                             )
-                        )
                     )
                 }
             }
@@ -96,7 +97,8 @@ open class TimerViewModel : ViewModel() {
             TimerOperation.MINUS_1M -> {
                 viewModelState.update {
                     it.copy(
-                        timerLengthInMs = (it.timerLengthInMs - ONE_MIN_IN_MILLIS).coerceAtLeast(0)
+                        timerLengthInMs = (it.timerLengthInMs - ONE_MIN_IN_MILLIS)
+                            .coerceAtLeast(0)
                     )
                 }
             }
@@ -104,9 +106,8 @@ open class TimerViewModel : ViewModel() {
             TimerOperation.MINUS_5M -> {
                 viewModelState.update {
                     it.copy(
-                        timerLengthInMs = (it.timerLengthInMs - ONE_MIN_IN_MILLIS.times(5)).coerceAtLeast(
-                            0
-                        )
+                        timerLengthInMs = (it.timerLengthInMs - ONE_MIN_IN_MILLIS.times(5))
+                            .coerceAtLeast(0)
                     )
                 }
             }
@@ -134,7 +135,7 @@ data class TimerUiState(
 ) {
     fun getTimerProgress(): Float = 1f - (remainingTimeInMs.toFloat() / timerLengthInMs)
 
-    fun getTimerLengthInMins(): Long = TimeUnit.MILLISECONDS.toMinutes(timerLengthInMs)
+    fun getTimerLengthInMins(): Int = TimeUnit.MILLISECONDS.toMinutes(timerLengthInMs).toInt()
 }
 
 enum class TimerOperation {
@@ -145,6 +146,5 @@ enum class TimerOperation {
     ADD_1M,
     ADD_5M,
     MINUS_1M,
-    MINUS_5M,
-    OPEN_MUSIC
+    MINUS_5M
 }

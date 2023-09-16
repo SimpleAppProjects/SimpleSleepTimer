@@ -1,41 +1,43 @@
 package com.thewizrd.simplesleeptimer
 
 import android.Manifest
-import android.animation.*
-import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
-import android.os.SystemClock
 import android.text.format.DateUtils
 import android.util.Log
-import android.view.View
-import android.view.ViewGroup
-import android.view.ViewTreeObserver
+import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.util.Pair
-import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.lifecycle.lifecycleScope
-import androidx.wear.widget.drawer.WearableDrawerView
 import com.google.android.gms.wearable.MessageEvent
-import com.google.android.material.animation.AnimationUtils
-import com.thewizrd.shared_resources.controls.TimerStartView
 import com.thewizrd.shared_resources.helpers.WearConnectionStatus
 import com.thewizrd.shared_resources.helpers.WearableHelper
 import com.thewizrd.shared_resources.sleeptimer.SleepTimerHelper
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
-import com.thewizrd.shared_resources.utils.*
+import com.thewizrd.shared_resources.utils.JSONParser
+import com.thewizrd.shared_resources.utils.bytesToBool
+import com.thewizrd.shared_resources.utils.bytesToString
+import com.thewizrd.shared_resources.utils.intToBytes
+import com.thewizrd.shared_resources.utils.stringToBytes
 import com.thewizrd.simplesleeptimer.controls.CustomConfirmationOverlay
-import com.thewizrd.simplesleeptimer.databinding.ActivitySleeptimerBinding
 import com.thewizrd.simplesleeptimer.helpers.showConfirmationOverlay
-import kotlinx.coroutines.*
+import com.thewizrd.simplesleeptimer.ui.SleepTimerApp
+import com.thewizrd.simplesleeptimer.viewmodels.SelectedPlayerViewModel
+import com.thewizrd.simplesleeptimer.viewmodels.TimerOperation
+import com.thewizrd.simplesleeptimer.viewmodels.TimerViewModel
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.guava.await
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 /**
  * Sleep Timer remote control activity for connected device
@@ -46,18 +48,21 @@ class SleepTimerActivity : WearableListenerActivity() {
     override lateinit var intentFilter: IntentFilter
         private set
 
-    private lateinit var binding: ActivitySleeptimerBinding
-
-    private val timerModel: TimerModel by viewModels()
-    private val selectedPlayer: SelectedPlayerViewModel by viewModels()
+    private val timerViewModel: TimerViewModel by viewModels()
+    private val selectedPlayerViewModel: SelectedPlayerViewModel by viewModels()
+    private val timeKeeperModel: TimerModel by viewModels()
+    private var timerUpdateJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         installSplashScreen()
 
-        binding = ActivitySleeptimerBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        timerViewModel.updateTimerState(isLocalTimer = false, isLoading = true)
+
+        setContent {
+            SleepTimerApp()
+        }
 
         broadcastReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
@@ -102,20 +107,10 @@ class SleepTimerActivity : WearableListenerActivity() {
                                     WearConnectionStatus.CONNECTED -> {
                                         launch {
                                             delay(1000)
-                                            showProgressBar(false)
-                                            binding.fragmentContainer.visibility = View.VISIBLE
-                                            binding.bottomActionDrawer.visibility = View.VISIBLE
-                                            if (timerModel.isRunning) {
-                                                closeBottomDrawer()
-                                            } else {
-                                                peekBottomDrawer()
-                                            }
-                                            binding.bottomActionDrawer.clearAnimation()
-                                            if (timerModel.isRunning || binding.timerStartView.getTimerProgress() >= 1) {
-                                                binding.fab.post { binding.fab.show() }
-                                            } else {
-                                                binding.fab.post { binding.fab.hide() }
-                                            }
+                                            timerViewModel.updateTimerState(
+                                                isLoading = false,
+                                                isRunning = timeKeeperModel.isRunning
+                                            )
                                         }
                                     }
 
@@ -148,46 +143,6 @@ class SleepTimerActivity : WearableListenerActivity() {
             addAction(ACTION_UPDATECONNECTIONSTATUS)
             addAction(WearableHelper.MusicPlayersPath)
         }
-
-        binding.fab.setOnClickListener {
-            var toRun = false
-            if (timerModel.isRunning) {
-                timerModel.stopTimer()
-                requestSleepTimerStop()
-                toRun = false
-            } else {
-                timerModel.startTimer()
-                requestSleepTimerStart()
-                toRun = true
-            }
-
-            animateToView(toRun)
-        }
-
-        binding.timerStartView.setOnProgressChangedListener(object :
-            TimerStartView.OnProgressChangedListener {
-            override fun onProgressChanged(progress: Int, fromUser: Boolean) {
-                timerModel.timerLengthInMins = progress
-                if (progress >= 1) {
-                    binding.fab.post { binding.fab.show() }
-                } else {
-                    binding.fab.post { binding.fab.hide() }
-                }
-            }
-        })
-
-        binding.timerStartView.setTimerMax(TimerModel.MAX_TIME_IN_MINS)
-        binding.timerStartView.setTimerProgress(timerModel.timerLengthInMins)
-        binding.fab.post { binding.fab.visibility = View.GONE }
-
-        binding.timerProgressView.setOnClickExtend1MinButtonListener {
-            timerModel.extend1Min()
-            requestUpdateTimer()
-        }
-        binding.timerProgressView.setOnClickExtend5MinButtonListener {
-            timerModel.extend5Min()
-            requestUpdateTimer()
-        }
     }
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
@@ -202,27 +157,27 @@ class SleepTimerActivity : WearableListenerActivity() {
                     )
 
                     data?.let {
-                        data.startTimeInMs =
-                            data.startTimeInMs - (data.startTimeInMs % DateUtils.SECOND_IN_MILLIS)
-                        data.endTimeInMs =
-                            data.endTimeInMs - (data.endTimeInMs % DateUtils.SECOND_IN_MILLIS)
-                        if (timerModel.isRunning || it.isRunning != timerModel.isRunning) {
-                            timerModel.updateModel(it)
-                            if (!it.isRunning && timerModel.timerLengthInMins <= 0) {
-                                timerModel.timerLengthInMins = TimerModel.DEFAULT_TIME_MIN
+                        // Add a second for latency
+                        it.endTimeInMs = it.endTimeInMs + DateUtils.SECOND_IN_MILLIS
+
+                        if (timeKeeperModel.isRunning || it.isRunning != timeKeeperModel.isRunning) {
+                            timeKeeperModel.updateModel(it)
+                            if (!it.isRunning && timeKeeperModel.timerLengthInMins <= 0) {
+                                timeKeeperModel.timerLengthInMins = TimerModel.DEFAULT_TIME_MIN
                             }
                         }
+
+                        timerViewModel.updateTimerState(timeKeeperModel)
                     } ?: return@launch
 
-                    if (timerModel.isRunning) {
+                    if (timeKeeperModel.isRunning) {
                         showTimerProgressView()
                     } else {
                         showTimerStartView()
                     }
-                    binding.fragmentContainer.requestFocus()
                 }
                 SleepTimerHelper.SleepTimerStopPath -> {
-                    timerModel.stopTimer()
+                    timeKeeperModel.stopTimer()
                     showTimerStartView()
                 }
                 WearableHelper.OpenMusicPlayerPath -> {
@@ -264,19 +219,41 @@ class SleepTimerActivity : WearableListenerActivity() {
                 requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 0)
             }
         }
+
+        lifecycleScope.launch {
+            timerViewModel.timerEvents.collect {
+                when (it) {
+                    TimerOperation.START -> {
+                        timeKeeperModel.timerLengthInMs =
+                            timerViewModel.uiState.value.timerLengthInMs
+
+                        requestSleepTimerStart()
+                    }
+
+                    TimerOperation.STOP -> requestSleepTimerStop()
+
+                    TimerOperation.EXTEND_1M -> {
+                        timeKeeperModel.extend1Min()
+                        requestUpdateTimer()
+                    }
+
+                    TimerOperation.EXTEND_5M -> {
+                        timeKeeperModel.extend5Min()
+                        requestUpdateTimer()
+                    }
+
+                    else -> { /* ignore */
+                    }
+                }
+            }
+        }
     }
 
     override fun onResume() {
         super.onResume()
 
         // Update statuses
-        showProgressBar(true)
-        if (binding.bottomActionDrawer.isOpened) {
-            closeBottomDrawer()
-        }
-        binding.bottomActionDrawer.visibility = View.INVISIBLE
-        binding.fragmentContainer.visibility = View.GONE
-        binding.fab.visibility = View.GONE
+        timerViewModel.updateTimerState(isLoading = true)
 
         lifecycleScope.launch {
             updateConnectionStatus()
@@ -287,7 +264,7 @@ class SleepTimerActivity : WearableListenerActivity() {
     override fun onStop() {
         super.onStop()
         stopUpdatingTime()
-        timerModel.clearModel()
+        timeKeeperModel.stopTimer()
     }
 
     private suspend fun requestTimerStatus() {
@@ -307,27 +284,24 @@ class SleepTimerActivity : WearableListenerActivity() {
     private fun requestSleepTimerStart() {
         lifecycleScope.launch {
             if (connect()) {
+                val selectedPlayer = selectedPlayerViewModel.selectedPlayer.value
+
                 sendMessage(
                     mPhoneNodeWithApp!!.id, SleepTimerHelper.SleepTimerStartPath,
-                    timerModel.timerLengthInMins.intToBytes()
+                    timeKeeperModel.timerLengthInMins.intToBytes()
                 )
 
-                if (selectedPlayer.keyValue != null) {
-                    val data = selectedPlayer.keyValue!!.split("/").toTypedArray()
-                    if (data.size == 2) {
-                        val packageName = data[0]
-                        val activityName = data[1]
-                        sendMessage(
-                            mPhoneNodeWithApp!!.id,
-                            WearableHelper.OpenMusicPlayerPath,
-                            JSONParser.serializer(
-                                Pair.create(
-                                    packageName,
-                                    activityName
-                                ), Pair::class.java
-                            ).stringToBytes()
-                        )
-                    }
+                if (selectedPlayer.isValid) {
+                    sendMessage(
+                        mPhoneNodeWithApp!!.id,
+                        WearableHelper.OpenMusicPlayerPath,
+                        JSONParser.serializer(
+                            Pair.create(
+                                selectedPlayer.packageName,
+                                selectedPlayer.activityName
+                            ), Pair::class.java
+                        ).stringToBytes()
+                    )
                 }
             }
         }
@@ -338,236 +312,40 @@ class SleepTimerActivity : WearableListenerActivity() {
             if (connect()) {
                 sendMessage(
                     mPhoneNodeWithApp!!.id, SleepTimerHelper.SleepTimerUpdateStatePath,
-                    JSONParser.serializer(timerModel, TimerModel::class.java).stringToBytes()
+                    JSONParser.serializer(timeKeeperModel, TimerModel::class.java).stringToBytes()
                 )
             }
         }
-    }
-
-    /* Views */
-    override fun onBackPressed() {
-        super.onBackPressed()
     }
 
     private fun showTimerStartView() {
         stopUpdatingTime()
-
-        binding.timerProgressView.visibility = View.GONE
-        binding.timerStartView.visibility = View.VISIBLE
-        peekBottomDrawer()
-        binding.fragmentContainer.requestFocus()
-
-        updateFab()
+        timerViewModel.updateTimerState(timeKeeperModel)
     }
 
     private fun showTimerProgressView() {
-        binding.timerProgressView.visibility = View.VISIBLE
-        binding.timerStartView.visibility = View.GONE
-        closeBottomDrawer()
-        binding.fragmentContainer.requestFocus()
-
-        updateFab()
-
+        timerViewModel.updateTimerState(timeKeeperModel)
         startUpdatingTime()
-    }
-
-    private fun updateFab() {
-        if (timerModel.isRunning) {
-            binding.fab.setImageResource(R.drawable.ic_stop)
-        } else {
-            binding.fab.setImageResource(R.drawable.ic_play_arrow)
-        }
-    }
-
-    private fun peekBottomDrawer() {
-        binding.bottomActionDrawer.setIsLocked(false)
-        binding.bottomActionDrawer.controller.peekDrawer()
-    }
-
-    private fun closeBottomDrawer() {
-        binding.bottomActionDrawer.controller.closeDrawer()
-        binding.bottomActionDrawer.setIsLocked(true)
-    }
-
-    private fun animateToView(isRunning: Boolean) {
-        // Set BottomDrawer state before transitioning to avoid weird transition
-        if (isRunning) {
-            closeBottomDrawer()
-        } else {
-            peekBottomDrawer()
-        }
-        if (isRunning && binding.timerProgressView.visibility == View.VISIBLE ||
-            !isRunning && binding.timerStartView.visibility == View.VISIBLE
-        ) {
-            return
-        }
-
-        val currentView = if (!isRunning) {
-            binding.timerProgressView
-        } else {
-            binding.timerStartView
-        }
-        val toView = if (isRunning) {
-            binding.timerProgressView
-        } else {
-            binding.timerStartView
-        }
-        toView.visibility = View.VISIBLE
-
-        val animDuration = resources.getInteger(android.R.integer.config_longAnimTime).toLong()
-
-        val viewTreeObserver = toView.viewTreeObserver
-        viewTreeObserver.addOnPreDrawListener(object : ViewTreeObserver.OnPreDrawListener {
-            override fun onPreDraw(): Boolean {
-                if (viewTreeObserver.isAlive) {
-                    viewTreeObserver.removeOnPreDrawListener(this)
-                }
-
-                val distanceY =
-                    toView.context.resources.getDimensionPixelSize(R.dimen.mtrl_transition_shared_axis_slide_distance)
-                        .toFloat()
-                val translationDistance = if (!isRunning) distanceY else -distanceY
-
-                toView.translationY = -translationDistance
-                currentView.translationY = 0f
-                toView.alpha = 0f
-                currentView.alpha = 1f
-
-                val translateCurrent = ObjectAnimator.ofFloat(
-                    currentView,
-                    View.TRANSLATION_Y, translationDistance
-                )
-                val translateNew = ObjectAnimator.ofFloat(toView, View.TRANSLATION_Y, 0f)
-                val translationAnimatorSet = AnimatorSet().apply {
-                    playTogether(translateCurrent, translateNew)
-                    duration = animDuration
-                    interpolator = FastOutSlowInInterpolator()
-                }
-
-                val fadeOutAnimator = ObjectAnimator.ofFloat(currentView, View.ALPHA, 0f)
-                fadeOutAnimator.duration = animDuration / 2
-                fadeOutAnimator.addUpdateListener(object : ValueAnimator.AnimatorUpdateListener {
-                    val view = currentView
-                    val startValue = 1f
-                    val endValue = 0f
-                    val startFraction = 0f
-                    val endFraction = 0.35f
-
-                    @SuppressLint("RestrictedApi")
-                    override fun onAnimationUpdate(animation: ValueAnimator) {
-                        val progress = animation.animatedValue as Float
-                        view.alpha = AnimationUtils.lerp(
-                            startValue,
-                            endValue,
-                            startFraction,
-                            endFraction,
-                            progress
-                        )
-                    }
-                })
-                fadeOutAnimator.addListener(object : AnimatorListenerAdapter() {
-                    override fun onAnimationStart(animation: Animator) {
-                        super.onAnimationStart(animation)
-                    }
-
-                    override fun onAnimationEnd(animation: Animator) {
-                        super.onAnimationEnd(animation)
-                        if (isRunning) {
-                            showTimerProgressView()
-                        } else {
-                            showTimerStartView()
-                        }
-                    }
-                })
-
-                val fadeInAnimator = ObjectAnimator.ofFloat(toView, View.ALPHA, 1f).apply {
-                    duration = animDuration / 2
-                    //startDelay = animDuration / 2
-                }
-                fadeInAnimator.addUpdateListener(object : ValueAnimator.AnimatorUpdateListener {
-                    val view = toView
-                    val startValue = 0f
-                    val endValue = 1f
-                    val startFraction = 0f
-                    val endFraction = 0.35f
-
-                    @SuppressLint("RestrictedApi")
-                    override fun onAnimationUpdate(animation: ValueAnimator) {
-                        val progress = animation.animatedValue as Float
-                        view.alpha = AnimationUtils.lerp(
-                            startValue,
-                            endValue,
-                            startFraction,
-                            endFraction,
-                            progress
-                        )
-                    }
-                })
-
-                val animatorSet = AnimatorSet().apply {
-                    playTogether(fadeOutAnimator, fadeInAnimator, translationAnimatorSet)
-                }
-                animatorSet.addListener(object : AnimatorListenerAdapter() {
-                    override fun onAnimationEnd(animation: Animator) {
-                        super.onAnimationEnd(animation)
-                        currentView.translationY = 0f
-                        toView.translationY = 0f
-                        currentView.alpha = 1f
-                        toView.alpha = 1f
-                    }
-                })
-                animatorSet.start()
-
-                return true
-            }
-        })
     }
 
     private fun startUpdatingTime() {
         stopUpdatingTime()
-        binding.fragmentContainer.post(updateRunnable)
+        timerUpdateJob = lifecycleScope.launch {
+            while (isActive) {
+                // If no timers require continuous updates, avoid scheduling the next update.
+                if (!timeKeeperModel.isRunning) {
+                    break
+                } else {
+                    timerViewModel.updateTimerState(timeKeeperModel)
+                }
+
+                // Repeat for progress animation
+                delay(50)
+            }
+        }
     }
 
     private fun stopUpdatingTime() {
-        binding.fragmentContainer.removeCallbacks(updateRunnable)
-    }
-
-    private val updateRunnable = object : Runnable {
-        override fun run() {
-            val startTime = SystemClock.elapsedRealtime()
-            // If no timers require continuous updates, avoid scheduling the next update.
-            if (!timerModel.isRunning) {
-                return
-            } else {
-                binding.timerProgressView.updateTimer(timerModel)
-            }
-            val endTime = SystemClock.elapsedRealtime()
-
-            binding.fragmentContainer.postOnAnimationDelayed(this, startTime + 20 - endTime)
-        }
-    }
-
-    private fun requestDrawerFocus(focus: Boolean) {
-        requestDrawerFocus(binding.bottomActionDrawer, focus)
-    }
-
-    private fun requestDrawerFocus(drawer: WearableDrawerView, focus: Boolean) {
-        drawer.descendantFocusability =
-            if (focus) ViewGroup.FOCUS_AFTER_DESCENDANTS else ViewGroup.FOCUS_BLOCK_DESCENDANTS
-        if (focus) {
-            drawer.requestFocus()
-        } else {
-            drawer.clearFocus()
-        }
-    }
-
-    private fun showProgressBar(show: Boolean) {
-        lifecycleScope.launch {
-            if (show) {
-                binding.progressBar.show()
-            } else {
-                binding.progressBar.hide()
-            }
-        }
+        timerUpdateJob?.cancel()
     }
 }

@@ -39,6 +39,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.CircularProgressIndicator
@@ -46,19 +47,18 @@ import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.TimeText
-import androidx.wear.compose.material.dialog.Dialog
 import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
 import androidx.wear.compose.ui.tooling.preview.WearPreviewFontScales
 import com.google.android.horologist.annotations.ExperimentalHorologistApi
-import com.google.android.horologist.composables.TimePicker
 import com.google.android.horologist.compose.rotaryinput.onRotaryInputAccumulatedWithFocus
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.shared_resources.utils.TimerStringFormatter
 import com.thewizrd.simplesleeptimer.R
+import com.thewizrd.simplesleeptimer.ui.components.MusicPlayersDialog
+import com.thewizrd.simplesleeptimer.ui.components.SleepTimePickerDialog
 import com.thewizrd.simplesleeptimer.viewmodels.TimerOperation.*
 import com.thewizrd.simplesleeptimer.viewmodels.TimerViewModel
 import java.time.Duration
-import java.time.LocalTime
 import java.util.Locale
 import kotlin.math.sign
 import kotlin.math.sqrt
@@ -73,6 +73,9 @@ fun StartTimerScreen(
 
     val state by timerModel.uiState.collectAsState()
     var showPickerDialog by remember {
+        mutableStateOf(false)
+    }
+    var showMusicPlayerDialog by remember {
         mutableStateOf(false)
     }
 
@@ -109,11 +112,11 @@ fun StartTimerScreen(
                 Icon(
                     modifier = Modifier
                         .requiredSize(20.dp)
-                        .clickable {
-                            timerModel.requestTimerOp(OPEN_MUSIC)
+                        .clickable(role = Role.Button) {
+                            showMusicPlayerDialog = true
                         },
                     painter = painterResource(id = R.drawable.ic_music_note),
-                    contentDescription = ""
+                    contentDescription = stringResource(id = R.string.title_audioplayer)
                 )
             }
             Box(
@@ -193,7 +196,7 @@ fun StartTimerScreen(
                             timerModel.updateTimerState(timerLengthInMs = TimerModel.DEFAULT_TIME_MIN * DateUtils.MINUTE_IN_MILLIS)
                         },
                     painter = painterResource(id = R.drawable.ic_baseline_restart_alt_24),
-                    contentDescription = "",
+                    contentDescription = stringResource(id = R.string.action_reset),
                     tint = MaterialTheme.colors.onBackground
                 )
                 Text(
@@ -250,7 +253,7 @@ fun StartTimerScreen(
                                 if (isLarge) ButtonDefaults.DefaultIconSize else ButtonDefaults.SmallIconSize
                             ),
                             painter = painterResource(id = R.drawable.ic_play_arrow),
-                            contentDescription = "Start"
+                            contentDescription = stringResource(id = R.string.label_start)
                         )
                     }
                 }
@@ -270,25 +273,21 @@ fun StartTimerScreen(
         }
     }
 
-    Dialog(
+    SleepTimePickerDialog(
         showDialog = showPickerDialog,
-        onDismissRequest = { showPickerDialog = false }
-    ) {
-        TimePicker(
-            modifier = Modifier.fillMaxSize(),
-            time = LocalTime.of(timerDuration.toHoursPart(), timerDuration.toMinutesPart()),
-            showSeconds = false,
-            onTimeConfirm = {
-                val duration = Duration.ofNanos(it.toNanoOfDay())
+        onDismissRequest = { showPickerDialog = false },
+        timerDuration = timerDuration,
+        onTimeConfirm = {
+            timerModel.updateTimerState(
+                timerLengthInMs = it.toMillis()
+            )
+        }
+    )
 
-                timerModel.updateTimerState(
-                    timerLengthInMs = duration.toMillis()
-                )
-
-                showPickerDialog = false
-            }
-        )
-    }
+    MusicPlayersDialog(
+        showDialog = showMusicPlayerDialog,
+        onDismissRequest = { showMusicPlayerDialog = false }
+    )
 }
 
 @Composable
@@ -419,7 +418,7 @@ fun TimerInProgressScreen(
                             if (isLarge) ButtonDefaults.LargeIconSize else ButtonDefaults.DefaultIconSize
                         ),
                         painter = painterResource(id = R.drawable.ic_stop),
-                        contentDescription = "Stop"
+                        contentDescription = stringResource(id = R.string.label_stop)
                     )
                 }
             }
@@ -431,10 +430,8 @@ fun TimerInProgressScreen(
 @WearPreviewFontScales
 @Composable
 private fun PreviewStartTimerScreen() {
-    val timerModel = remember {
-        TimerViewModel().apply {
-            updateTimerState(TimerModel())
-        }
+    val timerModel = viewModel<TimerViewModel>().apply {
+        updateTimerState(TimerModel())
     }
 
     Box(
@@ -449,10 +446,8 @@ private fun PreviewStartTimerScreen() {
 @WearPreviewFontScales
 @Composable
 private fun PreviewStartRemoteTimerScreen() {
-    val timerModel = remember {
-        TimerViewModel().apply {
-            updateTimerState(isLocalTimer = false)
-        }
+    val timerModel = viewModel<TimerViewModel>().apply {
+        updateTimerState(isLocalTimer = false)
     }
 
     Box(
@@ -467,10 +462,8 @@ private fun PreviewStartRemoteTimerScreen() {
 @WearPreviewFontScales
 @Composable
 private fun PreviewTimerInProgressScreen() {
-    val timerModel = remember {
-        TimerViewModel().apply {
-            updateTimerState(TimerModel())
-        }
+    val timerModel = viewModel<TimerViewModel>().apply {
+        updateTimerState(TimerModel())
     }
 
     Box(

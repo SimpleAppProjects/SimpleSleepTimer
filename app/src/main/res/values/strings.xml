@@ -17,7 +17,4 @@
     <string name="preference_title_timerbridge">Bridge timer notification</string>
     <string name="preference_summary_timerbridge">Show timer notification on watch when the sleep timer is active</string>
 
-    <string name="label_stop">Stop</string>
-    <string name="label_start">Start</string>
-
 </resources>

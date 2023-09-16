@@ -11,7 +11,6 @@ import android.content.ServiceConnection
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
-import android.os.SystemClock
 import android.provider.Settings
 import android.util.Log
 import androidx.activity.compose.setContent
@@ -221,16 +220,16 @@ class SleepTimerLocalActivity : AppCompatActivity() {
         timerUpdateJob = lifecycleScope.launch {
             while (isActive) {
                 val model = TimerDataModel.getDataModel()
-                val startTime = SystemClock.elapsedRealtime()
+
                 // If no timers require continuous updates, avoid scheduling the next update.
                 if (!model.isRunning) {
                     break
                 } else {
                     timerViewModel.updateTimerState(model.toModel())
                 }
-                val endTime = SystemClock.elapsedRealtime()
 
-                delay(startTime + 20 - endTime)
+                // Repeat for progress animation
+                delay(50)
             }
         }
     }

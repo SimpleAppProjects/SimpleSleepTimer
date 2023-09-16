@@ -114,6 +114,7 @@ dependencies {
     implementation "androidx.wear.compose:compose-navigation:$wear_compose_version"
     implementation "com.google.android.horologist:horologist-composables:$horologist_version"
     implementation "com.google.android.horologist:horologist-compose-layout:$horologist_version"
+    implementation "com.google.android.horologist:horologist-compose-material:$horologist_version"
 
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
