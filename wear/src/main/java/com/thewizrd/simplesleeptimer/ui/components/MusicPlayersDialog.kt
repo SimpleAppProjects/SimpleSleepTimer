@@ -37,6 +37,7 @@ import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.CircularProgressIndicator
 import androidx.wear.compose.material.CompactChip
 import androidx.wear.compose.material.Icon
+import androidx.wear.compose.material.ListHeader
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
@@ -94,12 +95,12 @@ private fun MusicPlayersDialog(
         ) {
             ScalingLazyColumn {
                 item {
-                    Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        text = stringResource(id = R.string.select_player_pause_prompt),
-                        style = MaterialTheme.typography.button,
-                        textAlign = TextAlign.Center
-                    )
+                    ListHeader {
+                        Text(
+                            text = stringResource(id = R.string.select_player_pause_prompt),
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
                 items(uiState.players) { player ->
                     val isChecked = selectedPlayer.key != null && selectedPlayer.key == player.key
