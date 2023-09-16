@@ -27,6 +27,8 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.material.animation.AnimationUtils
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.timepicker.MaterialTimePicker
+import com.google.android.material.timepicker.TimeFormat
 import com.google.android.material.transition.platform.MaterialSharedAxis
 import com.thewizrd.shared_resources.controls.TimerStartView
 import com.thewizrd.shared_resources.services.BaseTimerService
@@ -34,6 +36,7 @@ import com.thewizrd.shared_resources.sleeptimer.TimerDataModel
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.shared_resources.utils.ContextUtils.getAttrColor
 import com.thewizrd.shared_resources.utils.ContextUtils.getOrientation
+import com.thewizrd.shared_resources.utils.ContextUtils.isWatchUi
 import com.thewizrd.simplesleeptimer.databinding.ActivityMainBinding
 import com.thewizrd.simplesleeptimer.services.TimerService
 import com.thewizrd.simplesleeptimer.utils.ActivityUtils.setFullScreen
@@ -81,7 +84,7 @@ class SleepTimerActivity : AppCompatActivity() {
             registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
 
         // Note: needed due to splash screen theme
-        DynamicColors.applyIfAvailable(this)
+        DynamicColors.applyToActivityIfAvailable(this)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -171,6 +174,12 @@ class SleepTimerActivity : AppCompatActivity() {
                     toRun = true
                 }
 
+                if (!toRun) {
+                    // Reset timer state
+                    timerModel.stopTimer()
+                    binding.timerStartView.setTimerProgress(timerModel.timerLengthInMins)
+                }
+
                 animateToView(toRun)
             }
         }
@@ -189,6 +198,27 @@ class SleepTimerActivity : AppCompatActivity() {
 
         binding.timerStartView.setTimerMax(TimerModel.MAX_TIME_IN_MINS)
         binding.timerStartView.setTimerProgress(timerModel.timerLengthInMins)
+        binding.timerStartView.setOnProgressTextClickedListener {
+            if (!it.context.isWatchUi()) {
+                val hours = timerModel.timerLengthInMins / 60
+                val minutes = timerModel.timerLengthInMins - (hours * 60)
+
+                val picker = MaterialTimePicker.Builder()
+                    .setTimeFormat(TimeFormat.CLOCK_24H)
+                    .setHour(hours)
+                    .setMinute(minutes)
+                    .setInputMode(MaterialTimePicker.INPUT_MODE_CLOCK)
+                    .build()
+
+                picker.addOnPositiveButtonClickListener {
+                    binding.timerStartView.setTimerProgress(
+                        (picker.hour * 60) + picker.minute
+                    )
+                }
+
+                picker.show(supportFragmentManager, "MaterialTimePicker")
+            }
+        }
 
         binding.timerProgressView.setOnClickExtend1MinButtonListener {
             if (mBound) {
@@ -449,7 +479,7 @@ class SleepTimerActivity : AppCompatActivity() {
             }
             val endTime = SystemClock.elapsedRealtime()
 
-            binding.fragmentContainer.postOnAnimationDelayed(this, startTime + 20 - endTime)
+            binding.fragmentContainer.postOnAnimationDelayed(this, startTime + 50 - endTime)
         }
     }
 }

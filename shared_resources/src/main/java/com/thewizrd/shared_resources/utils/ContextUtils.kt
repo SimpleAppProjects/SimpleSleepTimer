@@ -81,4 +81,8 @@ object ContextUtils {
         array.recycle()
         return resourceId
     }
+
+    fun Context.isWatchUi(): Boolean {
+        return this.resources.configuration.uiMode.and(Configuration.UI_MODE_TYPE_MASK) == Configuration.UI_MODE_TYPE_WATCH
+    }
 }

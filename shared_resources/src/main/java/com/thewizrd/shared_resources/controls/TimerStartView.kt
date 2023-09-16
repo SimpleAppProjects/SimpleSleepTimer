@@ -44,11 +44,9 @@ class TimerStartView @JvmOverloads constructor(
                 onProgressChangedListener?.onProgressChanged(progress, fromUser)
             }
 
-            override fun onStartTrackingTouch(seekBar: CircularSeekBar?) {
-            }
+            override fun onStartTrackingTouch(seekBar: CircularSeekBar?) {}
 
-            override fun onStopTrackingTouch(seekBar: CircularSeekBar?) {
-            }
+            override fun onStopTrackingTouch(seekBar: CircularSeekBar?) {}
         })
         binding.timerProgressScroller.setOnGenericMotionListener { v, ev ->
             if (ev.action == MotionEvent.ACTION_SCROLL &&
@@ -101,6 +99,10 @@ class TimerStartView @JvmOverloads constructor(
 
     fun setOnProgressChangedListener(listener: OnProgressChangedListener?) {
         this.onProgressChangedListener = listener
+    }
+
+    fun setOnProgressTextClickedListener(listener: OnClickListener?) {
+        binding.progressText.setOnClickListener(listener)
     }
 
     fun setTimerMax(timeInMins: Int) {
