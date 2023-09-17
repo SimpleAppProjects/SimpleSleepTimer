@@ -172,7 +172,7 @@ private fun MusicPlayersDialog(
                         )
                     },
                     onClick = {
-                        musicPlayersViewModel.reloadMusicPlayers()
+                        musicPlayersViewModel.loadMusicPlayers()
                     }
                 )
             }

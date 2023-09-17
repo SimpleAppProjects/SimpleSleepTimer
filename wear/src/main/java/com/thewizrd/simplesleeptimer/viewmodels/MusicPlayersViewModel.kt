@@ -43,7 +43,7 @@ class MusicPlayersViewModel(private val app: Application) : AndroidViewModel(app
             .addListener(this)
     }
 
-    fun reloadMusicPlayers() {
+    private fun reloadMusicPlayers() {
         viewModelScope.launch {
             viewModelState.update {
                 it.copy(isLoading = true)
@@ -67,24 +67,23 @@ class MusicPlayersViewModel(private val app: Application) : AndroidViewModel(app
 
     override fun onDataChanged(dataEventBuffer: DataEventBuffer) {
         viewModelScope.launch {
-            // Cancel job
-            refreshJob?.cancel()
-
             for (event in dataEventBuffer) {
                 if (event.type == DataEvent.TYPE_CHANGED) {
                     val item = event.dataItem
                     if (WearableHelper.MusicPlayersPath == item.uri.path) {
+                        // Cancel job
+                        refreshJob?.cancel()
+
                         try {
                             val dataMap = DataMapItem.fromDataItem(item).dataMap
                             updateMusicPlayers(dataMap)
+                            viewModelState.update { it.copy(isLoading = false) }
                         } catch (e: Exception) {
                             Log.e("MusicPlayersViewModel", "Error", e)
                         }
                     }
                 }
             }
-
-            viewModelState.update { it.copy(isLoading = false) }
         }
     }
 
@@ -101,7 +100,7 @@ class MusicPlayersViewModel(private val app: Application) : AndroidViewModel(app
 
             for (i in 0 until buff.count) {
                 val item = buff[i]
-                if (WearableHelper.MusicPlayersPath == item.uri.path) {
+                if (isActive && WearableHelper.MusicPlayersPath == item.uri.path) {
                     try {
                         val dataMap = DataMapItem.fromDataItem(item).dataMap
                         updateMusicPlayers(dataMap)

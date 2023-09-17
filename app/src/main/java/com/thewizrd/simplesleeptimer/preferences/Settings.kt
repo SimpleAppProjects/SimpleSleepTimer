@@ -2,8 +2,8 @@ package com.thewizrd.simplesleeptimer.preferences
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.preference.PreferenceManager
 import androidx.core.content.edit
+import androidx.preference.PreferenceManager
 import com.thewizrd.simplesleeptimer.App
 
 object Settings {
