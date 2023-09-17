@@ -18,6 +18,7 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.wearable.MessageEvent
 import com.thewizrd.shared_resources.helpers.WearConnectionStatus
 import com.thewizrd.shared_resources.helpers.WearableHelper
+import com.thewizrd.shared_resources.services.BaseTimerService
 import com.thewizrd.shared_resources.sleeptimer.SleepTimerHelper
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.shared_resources.utils.JSONParser
@@ -33,10 +34,14 @@ import com.thewizrd.simplesleeptimer.viewmodels.TimerOperation
 import com.thewizrd.simplesleeptimer.viewmodels.TimerViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 
 /**
  * Sleep Timer remote control activity for connected device
@@ -51,6 +56,8 @@ class SleepTimerActivity : WearableListenerActivity() {
     private val selectedPlayerViewModel: SelectedPlayerViewModel by viewModels()
     private val timeKeeperModel: TimerModel by viewModels()
     private var timerUpdateJob: Job? = null
+
+    private var handledIntent = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -142,6 +149,8 @@ class SleepTimerActivity : WearableListenerActivity() {
             addAction(ACTION_UPDATECONNECTIONSTATUS)
             addAction(WearableHelper.MusicPlayersPath)
         }
+
+        handleIntent(intent)
     }
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
@@ -248,6 +257,37 @@ class SleepTimerActivity : WearableListenerActivity() {
         }
     }
 
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        handledIntent = true
+
+        if (intent?.hasExtra(BaseTimerService.EXTRA_TIME_IN_MINS) == true) {
+            lifecycleScope.launch {
+                supervisorScope {
+                    timerViewModel.uiState.filterNot {
+                        it.isLoading
+                    }.collectLatest { state ->
+                        intent.getIntExtra(BaseTimerService.EXTRA_TIME_IN_MINS, 0).takeIf { it > 0 }
+                            ?.let {
+                                if (!state.isRunning) {
+                                    timeKeeperModel.timerLengthInMins = it
+                                    requestSleepTimerStart()
+                                }
+
+                                // Cancel flow subscription
+                                this.cancel()
+                            }
+                    }
+                }
+            }
+        }
+    }
+
     override fun onResume() {
         super.onResume()
 
@@ -298,7 +338,7 @@ class SleepTimerActivity : WearableListenerActivity() {
                         )
                         remoteActivityHelper.startRemoteActivity(intent).await()
                     }.onFailure {
-                        Log.e(this::class.java.name, "Error starting remote activity", it)
+                        Log.e(this::class.java.simpleName, "Error starting remote activity", it)
 
                         CustomConfirmationOverlay()
                             .setType(CustomConfirmationOverlay.FAILURE_ANIMATION)

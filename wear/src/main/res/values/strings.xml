@@ -17,5 +17,10 @@
     <string name="error_sleeptimer_notinstalled">SleepTimer app not installed.\nPlease install to continue.</string>
 
     <string name="action_retry">Retry</string>
+    <string name="action_open">Open</string>
+    <string name="label_remote">Remote</string>
+
+    <string name="label_tile_duration_hr_min">%1$02dh:%2$02dm Timer</string>
+    <string name="label_tile_duration_mins">%1$dm Timer</string>
 
 </resources>

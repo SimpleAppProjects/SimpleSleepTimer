@@ -16,7 +16,7 @@ class RemoteLaunchActivity : ComponentActivity() {
                 runCatching {
                     this.startActivity(uri.toLaunchIntent())
                 }.onFailure { e ->
-                    Log.e(this::class.java.name, "Unable to launch intent remotely - $uri", e)
+                    Log.e(this::class.java.simpleName, "Unable to launch intent remotely - $uri", e)
                 }
             }
         }

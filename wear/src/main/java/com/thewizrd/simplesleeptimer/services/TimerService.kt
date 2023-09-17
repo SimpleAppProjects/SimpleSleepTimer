@@ -1,10 +1,11 @@
 package com.thewizrd.simplesleeptimer.services
 
-import android.app.*
+import android.app.Activity
+import android.app.Notification
 import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.os.*
+import android.os.SystemClock
 import android.text.format.DateUtils
 import android.util.Log
 import android.view.KeyEvent
@@ -19,10 +20,10 @@ import androidx.wear.ongoing.Status
 import com.thewizrd.shared_resources.services.BaseTimerService
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.shared_resources.utils.TimerStringFormatter
-import com.thewizrd.simplesleeptimer.*
+import com.thewizrd.simplesleeptimer.R
+import com.thewizrd.simplesleeptimer.SleepTimerLocalActivity
 import com.thewizrd.simplesleeptimer.preferences.Settings
-import kotlinx.coroutines.*
-import java.util.*
+import com.thewizrd.simplesleeptimer.wearable.tiles.SleepTimerLocalTileService
 
 class TimerService : BaseTimerService() {
     companion object {
@@ -119,16 +120,20 @@ class TimerService : BaseTimerService() {
     override fun sendTimerStarted() {
         super.sendTimerStarted()
         createTimerShortcut()
+        sendPublicTimerUpdate()
     }
 
     override fun getOnClickActivityClass(): Class<out Activity> {
         return SleepTimerLocalActivity::class.java
     }
 
-    override fun sendPublicTimerUpdate() {}
+    override fun sendPublicTimerUpdate() {
+        SleepTimerLocalTileService.requestTileUpdate(this)
+    }
 
     override fun sendTimerCancelled() {
         super.sendTimerCancelled()
+        sendPublicTimerUpdate()
         ShortcutManagerCompat.removeDynamicShortcuts(this, listOf(LOCAL_TIMER_LOCUS_ID))
     }
 

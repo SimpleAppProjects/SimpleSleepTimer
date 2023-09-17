@@ -52,6 +52,7 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity-alias>
 
@@ -99,6 +100,38 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
+
+        <service
+            android:icon="@mipmap/ic_launcher"
+            android:label="@string/title_sleeptimer_remote"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER"
+            android:enabled="true"
+            android:exported="true"
+            android:name=".wearable.tiles.SleepTimerTileService">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/tile_remote_preview" />
+        </service>
+
+        <service
+            android:icon="@mipmap/ic_launcher"
+            android:label="@string/title_sleeptimer"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER"
+            android:enabled="true"
+            android:exported="true"
+            android:name=".wearable.tiles.SleepTimerLocalTileService">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data
+                android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/tile_local_preview" />
+        </service>
 
         <service
             android:name=".wearable.WearableDataListenerService"

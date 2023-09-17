@@ -45,6 +45,8 @@ class SleepTimerLocalActivity : AppCompatActivity() {
     private var mBound: Boolean = false
     private lateinit var mBroadcastReceiver: BroadcastReceiver
 
+    private var handledIntent = false
+
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
             // We've bound to LocalService, cast the IBinder and get LocalService instance
@@ -55,6 +57,10 @@ class SleepTimerLocalActivity : AppCompatActivity() {
                 showTimerProgressView()
             } else {
                 showTimerStartView()
+            }
+
+            if (!handledIntent) {
+                handleIntent(intent)
             }
         }
 
@@ -122,6 +128,22 @@ class SleepTimerLocalActivity : AppCompatActivity() {
         }
     }
 
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        handledIntent = true
+
+        if (intent?.hasExtra(BaseTimerService.EXTRA_TIME_IN_MINS) == true && mBound && !mTimerBinder.isRunning()) {
+            intent.getIntExtra(BaseTimerService.EXTRA_TIME_IN_MINS, 0).takeIf { it > 0 }?.let {
+                mTimerBinder.startTimer(it)
+            }
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         mBroadcastReceiver = object : BroadcastReceiver() {
@@ -130,6 +152,7 @@ class SleepTimerLocalActivity : AppCompatActivity() {
                     BaseTimerService.ACTION_START_TIMER -> {
                         showTimerProgressView()
                     }
+
                     BaseTimerService.ACTION_CANCEL_TIMER -> {
                         showTimerStartView()
                     }

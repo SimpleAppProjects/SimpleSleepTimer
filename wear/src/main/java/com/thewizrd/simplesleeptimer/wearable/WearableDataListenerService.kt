@@ -25,6 +25,7 @@ import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.shared_resources.utils.JSONParser
 import com.thewizrd.simplesleeptimer.R
 import com.thewizrd.simplesleeptimer.SleepTimerActivity
+import com.thewizrd.simplesleeptimer.wearable.tiles.SleepTimerTileService
 import kotlinx.coroutines.tasks.await
 
 class WearableDataListenerService : WearableListenerService() {
@@ -51,6 +52,10 @@ class WearableDataListenerService : WearableListenerService() {
             val startIntent = Intent(this, SleepTimerActivity::class.java)
                 .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
             this.startActivity(startIntent)
+        } else if (messageEvent.path == SleepTimerHelper.SleepTimerStartPath ||
+            messageEvent.path == SleepTimerHelper.SleepTimerStopPath
+        ) {
+            SleepTimerTileService.requestTileUpdate(this)
         }
     }
 
