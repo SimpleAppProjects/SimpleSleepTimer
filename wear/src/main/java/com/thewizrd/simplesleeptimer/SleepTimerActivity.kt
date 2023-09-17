@@ -14,7 +14,6 @@ import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.core.util.Pair
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.wearable.MessageEvent
 import com.thewizrd.shared_resources.helpers.WearConnectionStatus
@@ -292,16 +291,19 @@ class SleepTimerActivity : WearableListenerActivity() {
                 )
 
                 if (selectedPlayer.isValid) {
-                    sendMessage(
-                        mPhoneNodeWithApp!!.id,
-                        WearableHelper.OpenMusicPlayerPath,
-                        JSONParser.serializer(
-                            Pair.create(
-                                selectedPlayer.packageName,
-                                selectedPlayer.activityName
-                            ), Pair::class.java
-                        ).stringToBytes()
-                    )
+                    runCatching {
+                        val intent = WearableHelper.createRemoteActivityIntent(
+                            selectedPlayer.packageName!!,
+                            selectedPlayer.activityName!!
+                        )
+                        remoteActivityHelper.startRemoteActivity(intent).await()
+                    }.onFailure {
+                        Log.e(this::class.java.name, "Error starting remote activity", it)
+
+                        CustomConfirmationOverlay()
+                            .setType(CustomConfirmationOverlay.FAILURE_ANIMATION)
+                            .showOn(this@SleepTimerActivity)
+                    }
                 }
             }
         }

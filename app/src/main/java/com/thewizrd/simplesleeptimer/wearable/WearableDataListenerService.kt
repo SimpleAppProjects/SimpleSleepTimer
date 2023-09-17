@@ -1,7 +1,6 @@
 package com.thewizrd.simplesleeptimer.wearable
 
 import android.content.Intent
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
 import com.thewizrd.shared_resources.helpers.WearableHelper
@@ -52,14 +51,6 @@ class WearableDataListenerService : WearableListenerService() {
             WearableHelper.OpenMusicPlayerPath -> {
                 val jsonData = messageEvent.data.bytesToString()
                 WearableWorker.startMusicPlayer(this, messageEvent.sourceNodeId, jsonData)
-            }
-            WearableHelper.BtDiscoverPath -> {
-                val deviceName = messageEvent.data.bytesToString()
-                LocalBroadcastManager.getInstance(this)
-                    .sendBroadcast(
-                        Intent(ACTION_GETCONNECTEDNODE)
-                            .putExtra(EXTRA_NODEDEVICENAME, deviceName)
-                    )
             }
             SleepTimerHelper.SleepTimerStartPath -> {
                 val timeInMins = messageEvent.data.bytesToInt()

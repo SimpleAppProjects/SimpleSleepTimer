@@ -3,7 +3,6 @@ package com.thewizrd.simplesleeptimer.wearable
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.bluetooth.BluetoothAdapter
 import android.content.Intent
 import android.os.Build
 import android.os.SystemClock
@@ -24,12 +23,8 @@ import com.thewizrd.shared_resources.helpers.toImmutableCompatFlag
 import com.thewizrd.shared_resources.sleeptimer.SleepTimerHelper
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.shared_resources.utils.JSONParser
-import com.thewizrd.shared_resources.utils.stringToBytes
 import com.thewizrd.simplesleeptimer.R
 import com.thewizrd.simplesleeptimer.SleepTimerActivity
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 class WearableDataListenerService : WearableListenerService() {
@@ -56,20 +51,6 @@ class WearableDataListenerService : WearableListenerService() {
             val startIntent = Intent(this, SleepTimerActivity::class.java)
                 .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
             this.startActivity(startIntent)
-        } else if (messageEvent.path == WearableHelper.BtDiscoverPath) {
-            this.startActivity(
-                Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE)
-                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    .putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 30)
-            )
-
-            GlobalScope.launch(Dispatchers.Default) {
-                sendMessage(
-                    messageEvent.sourceNodeId,
-                    messageEvent.path,
-                    Build.MODEL.stringToBytes()
-                )
-            }
         }
     }
 

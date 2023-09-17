@@ -88,14 +88,18 @@ class WearableManager(private val mContext: Context) : OnCapabilityChangedListen
                 // Android Q puts a limitation on starting activities from the background
                 // We are allowed to bypass this if we have a device registered as companion,
                 // which will be our WearOS device; Check if device is associated before we start
+                // OR if SYSTEM_ALERT_WINDOW is granted
                 val deviceManager =
                     mContext.getSystemService(Context.COMPANION_DEVICE_SERVICE) as CompanionDeviceManager
                 val associated_devices = deviceManager.associations
-                if (associated_devices.isEmpty()) {
+                if (associated_devices.isNotEmpty() || android.provider.Settings.canDrawOverlays(
+                        mContext
+                    )
+                ) {
+                    mContext.startActivity(appIntent)
+                } else {
                     // No devices associated; send message to user
                     sendMessage(nodeID, WearableHelper.OpenMusicPlayerPath, false.booleanToBytes())
-                } else {
-                    mContext.startActivity(appIntent)
                 }
             }
         }
