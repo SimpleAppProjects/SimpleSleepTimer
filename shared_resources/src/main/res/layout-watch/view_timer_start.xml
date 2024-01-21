@@ -67,6 +67,20 @@
         tools:textColor="@color/colorPrimaryLight"
         tools:text="02h:00m" />
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/reset_btn"
+        style="@style/Widget.MaterialComponents.FloatingActionButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@id/buttonflow"
+        app:layout_constraintEnd_toEndOf="@id/timerProgressScroller"
+        app:layout_constraintStart_toStartOf="@id/timerProgressScroller"
+        android:contentDescription="@string/action_reset"
+        android:src="@drawable/ic_baseline_restart_alt_24"
+        app:useCompatPadding="false"
+        app:fabCustomSize="24dp"
+        app:maxImageSize="24dp" />
+
     <com.google.android.material.button.MaterialButton
         android:id="@+id/minus_5minbtn"
         style="@style/TimerStart5Style"

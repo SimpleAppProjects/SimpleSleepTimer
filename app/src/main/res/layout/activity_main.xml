@@ -32,7 +32,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginBottom="60dp"
-        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
+        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"
+        tools:layout_behavior="@null">
 
         <com.thewizrd.shared_resources.controls.TimerStartView
             android:id="@+id/timerStartView"
@@ -57,6 +58,7 @@
         android:layout_margin="12dp"
         android:contentDescription="@string/label_start"
         app:layout_behavior="com.thewizrd.simplesleeptimer.helpers.MarginInsetFloatingActionButtonBehavior"
-        app:srcCompat="@drawable/ic_play_arrow" />
+        app:srcCompat="@drawable/ic_play_arrow"
+        tools:layout_behavior="com.google.android.material.floatingactionbutton.FloatingActionButton$Behavior" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

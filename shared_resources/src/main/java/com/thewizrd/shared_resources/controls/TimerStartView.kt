@@ -15,6 +15,7 @@ import androidx.core.view.updateLayoutParams
 import com.devadvance.circularseekbar.CircularSeekBar
 import com.thewizrd.shared_resources.R
 import com.thewizrd.shared_resources.databinding.ViewTimerStartBinding
+import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.shared_resources.utils.TimerStringFormatter
 import kotlin.math.max
 import kotlin.math.min
@@ -92,6 +93,9 @@ class TimerStartView @JvmOverloads constructor(
         binding.plus5minbtn.setOnClickListener {
             binding.timerProgressScroller.progress =
                 binding.timerProgressScroller.max.coerceAtMost(binding.timerProgressScroller.progress + 5)
+        }
+        binding.resetBtn.setOnClickListener {
+            binding.timerProgressScroller.progress = TimerModel.DEFAULT_TIME_MIN
         }
 
         binding.timerProgressScroller.requestFocus()
