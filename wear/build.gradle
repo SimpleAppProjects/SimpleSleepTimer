@@ -44,6 +44,7 @@ android {
         compose true
         dataBinding true
         viewBinding true
+        buildConfig true
     }
 
     compileOptions {
@@ -82,7 +83,7 @@ dependencies {
 
     implementation "androidx.constraintlayout:constraintlayout:$constraintlayout_version"
     implementation "androidx.recyclerview:recyclerview:$recyclerview_version"
-    implementation 'com.google.android.material:material:1.9.0'
+    implementation "com.google.android.material:material:$material_version"
 
     // WearOS
     implementation 'com.google.android.gms:play-services-wearable:18.1.0'
@@ -103,11 +104,11 @@ dependencies {
 
     // WearOS Compose
     implementation "androidx.activity:activity-compose:$activity_version"
-    implementation "androidx.compose.compiler:compiler:$compose_compiler_version"
-    implementation "androidx.compose.runtime:runtime-livedata:$compose_version"
-    implementation "androidx.compose.ui:ui:$compose_version"
-    implementation "androidx.compose.ui:ui-tooling-preview:$compose_version"
-    implementation "androidx.compose.animation:animation-graphics:$compose_version"
+    implementation platform("androidx.compose:compose-bom:2023.10.01")
+    implementation "androidx.compose.runtime:runtime-livedata"
+    implementation "androidx.compose.ui:ui"
+    implementation "androidx.compose.ui:ui-tooling-preview"
+    implementation "androidx.compose.animation:animation-graphics"
     implementation "androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycle_version"
     implementation "androidx.wear.compose:compose-foundation:$wear_compose_version"
     implementation "androidx.wear.compose:compose-material:$wear_compose_version"
@@ -116,6 +117,6 @@ dependencies {
     implementation "com.google.android.horologist:horologist-compose-layout:$horologist_version"
     implementation "com.google.android.horologist:horologist-compose-material:$horologist_version"
 
-    androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
-    debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
+    androidTestImplementation "androidx.compose.ui:ui-test-junit4"
+    debugImplementation "androidx.compose.ui:ui-tooling"
 }
