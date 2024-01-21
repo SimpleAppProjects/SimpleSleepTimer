@@ -74,6 +74,7 @@ class SleepTimerActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
+        enableEdgeToEdge()
 
         window.requestFeature(Window.FEATURE_ACTIVITY_TRANSITIONS)
         window.exitTransition = MaterialSharedAxis(MaterialSharedAxis.Z, true)
@@ -89,10 +90,22 @@ class SleepTimerActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val backgroundColor = getAttrColor(android.R.attr.colorBackground)
-        val surfaceColor = getAttrColor(R.attr.colorSurface)
-        window.setTransparentWindow(backgroundColor, Color.TRANSPARENT, surfaceColor)
-        window.setFullScreen(getOrientation() == Configuration.ORIENTATION_PORTRAIT)
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, windowInsets ->
+            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            // Apply the insets as a margin to the view. This solution sets
+            // only the bottom, left, and right dimensions, but you can apply whichever
+            // insets are appropriate to your layout. You can also update the view padding
+            // if that's more appropriate.
+            view.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                leftMargin = insets.left
+                bottomMargin = insets.bottom
+                rightMargin = insets.right
+            }
+
+            // Return CONSUMED if you don't want want the window insets to keep passing
+            // down to descendant views.
+            windowInsets
+        }
 
         binding.topAppBar.setOnMenuItemClickListener {
             when (it.itemId) {

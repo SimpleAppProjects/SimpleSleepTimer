@@ -39,7 +39,9 @@
             </intent-filter>
         </activity-alias>
 
-        <activity android:name=".SleepTimerActivity" />
+        <activity
+            android:name=".SleepTimerActivity"
+            android:theme="@style/AppTheme" />
 
         <activity
             android:name=".wearable.WearPermissionsActivity"
