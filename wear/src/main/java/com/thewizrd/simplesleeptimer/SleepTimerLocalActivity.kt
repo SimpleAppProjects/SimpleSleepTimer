@@ -22,7 +22,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.thewizrd.shared_resources.services.BaseTimerService
 import com.thewizrd.shared_resources.sleeptimer.TimerDataModel
-import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.simplesleeptimer.helpers.AcceptDenyDialog
 import com.thewizrd.simplesleeptimer.services.TimerService
 import com.thewizrd.simplesleeptimer.ui.SleepTimerApp
@@ -33,6 +32,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
+import com.thewizrd.simplesleeptimer.preferences.Settings as SleepTimerSettings
 
 /**
  * Sleep Timer for local WearOS device
@@ -212,7 +212,7 @@ class SleepTimerLocalActivity : AppCompatActivity() {
                 val state = timerViewModel.uiState.value
                 val timerLengthInMins = state.timerLengthInMs.let {
                     TimeUnit.MILLISECONDS.toMinutes(it)
-                } ?: TimerModel.DEFAULT_TIME_MIN
+                } ?: SleepTimerSettings.getLastTimeSet()
 
                 applicationContext.startService(
                     Intent(applicationContext, TimerService::class.java)

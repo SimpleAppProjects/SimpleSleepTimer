@@ -1,10 +1,10 @@
 package com.thewizrd.simplesleeptimer.viewmodels
 
-import android.app.Application
 import android.text.format.DateUtils
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
+import com.thewizrd.simplesleeptimer.preferences.Settings
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
-open class TimerViewModel(app: Application) : AndroidViewModel(app) {
+open class TimerViewModel : ViewModel() {
     companion object {
         private val MAX_TIME_IN_MINS = TimeUnit.HOURS.toMinutes(24)
         private val MAX_TIME_IN_MILLIS = TimeUnit.MINUTES.toMillis(MAX_TIME_IN_MINS)
@@ -115,7 +115,7 @@ open class TimerViewModel(app: Application) : AndroidViewModel(app) {
             TimerOperation.STOP -> {
                 // Reset timer length
                 viewModelState.update {
-                    it.copy(timerLengthInMs = TimerModel.DEFAULT_TIME_MIN * ONE_MIN_IN_MILLIS)
+                    it.copy(timerLengthInMs = Settings.getLastTimeSet() * ONE_MIN_IN_MILLIS)
                 }
             }
 

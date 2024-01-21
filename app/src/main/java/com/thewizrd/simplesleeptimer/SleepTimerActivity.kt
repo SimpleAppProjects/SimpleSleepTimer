@@ -5,8 +5,6 @@ import android.animation.*
 import android.annotation.SuppressLint
 import android.app.ActivityOptions
 import android.content.*
-import android.content.res.Configuration
-import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
@@ -14,14 +12,19 @@ import android.os.SystemClock
 import android.provider.Settings
 import android.util.Log
 import android.view.View
+import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.view.Window
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.PermissionChecker
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updateLayoutParams
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.material.animation.AnimationUtils
@@ -34,14 +37,11 @@ import com.thewizrd.shared_resources.controls.TimerStartView
 import com.thewizrd.shared_resources.services.BaseTimerService
 import com.thewizrd.shared_resources.sleeptimer.TimerDataModel
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
-import com.thewizrd.shared_resources.utils.ContextUtils.getAttrColor
-import com.thewizrd.shared_resources.utils.ContextUtils.getOrientation
 import com.thewizrd.shared_resources.utils.ContextUtils.isWatchUi
 import com.thewizrd.simplesleeptimer.databinding.ActivityMainBinding
 import com.thewizrd.simplesleeptimer.services.TimerService
-import com.thewizrd.simplesleeptimer.utils.ActivityUtils.setFullScreen
-import com.thewizrd.simplesleeptimer.utils.ActivityUtils.setTransparentWindow
 import com.thewizrd.simplesleeptimer.wearable.WearPermissionsActivity
+import com.thewizrd.simplesleeptimer.preferences.Settings as SleepTimerSettings
 
 class SleepTimerActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -174,9 +174,13 @@ class SleepTimerActivity : AppCompatActivity() {
                     toRun = true
                 }
 
-                if (!toRun) {
+                if (toRun) {
+                    SleepTimerSettings.setLastTimeSet(timerModel.timerLengthInMins)
+                } else {
                     // Reset timer state
                     timerModel.stopTimer()
+
+                    timerModel.timerLengthInMins = SleepTimerSettings.getLastTimeSet()
                     binding.timerStartView.setTimerProgress(timerModel.timerLengthInMins)
                 }
 
@@ -291,6 +295,9 @@ class SleepTimerActivity : AppCompatActivity() {
     /* Views */
     private fun showTimerStartView() {
         stopUpdatingTime()
+
+        timerModel.timerLengthInMins = SleepTimerSettings.getLastTimeSet()
+        binding.timerStartView.setTimerProgress(SleepTimerSettings.getLastTimeSet())
 
         binding.timerProgressView.visibility = View.GONE
         binding.timerStartView.visibility = View.VISIBLE

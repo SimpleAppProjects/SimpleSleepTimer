@@ -28,6 +28,7 @@ import com.thewizrd.shared_resources.utils.intToBytes
 import com.thewizrd.shared_resources.utils.stringToBytes
 import com.thewizrd.simplesleeptimer.controls.CustomConfirmationOverlay
 import com.thewizrd.simplesleeptimer.helpers.showConfirmationOverlay
+import com.thewizrd.simplesleeptimer.preferences.Settings
 import com.thewizrd.simplesleeptimer.ui.SleepTimerApp
 import com.thewizrd.simplesleeptimer.viewmodels.SelectedPlayerViewModel
 import com.thewizrd.simplesleeptimer.viewmodels.TimerOperation
@@ -171,7 +172,7 @@ class SleepTimerActivity : WearableListenerActivity() {
                         if (timeKeeperModel.isRunning || it.isRunning != timeKeeperModel.isRunning) {
                             timeKeeperModel.updateModel(it)
                             if (!it.isRunning && timeKeeperModel.timerLengthInMins <= 0) {
-                                timeKeeperModel.timerLengthInMins = TimerModel.DEFAULT_TIME_MIN
+                                timeKeeperModel.timerLengthInMins = Settings.getLastTimeSet()
                             }
                         }
 

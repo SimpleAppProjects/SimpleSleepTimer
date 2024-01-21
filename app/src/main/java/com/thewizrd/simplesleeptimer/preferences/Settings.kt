@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
+import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.simplesleeptimer.App
 
 object Settings {
@@ -12,6 +13,7 @@ object Settings {
 
     private const val KEY_MUSICPLAYER: String = "key_musicplayer"
     private const val KEY_BRIDGETIMER: String = "key_bridgetimer"
+    private const val KEY_LASTTIME_SET: String = "key_lasttime_set"
 
     fun getMusicPlayer(): String? {
         return playerPreferences.getString(KEY_MUSICPLAYER, null)
@@ -35,5 +37,15 @@ object Settings {
         preferences.edit {
             putBoolean(KEY_BRIDGETIMER, value)
         }
+    }
+
+    fun getLastTimeSet(): Int {
+        val preferences = PreferenceManager.getDefaultSharedPreferences(App.instance.appContext)
+        return preferences.getInt(KEY_LASTTIME_SET, TimerModel.DEFAULT_TIME_MIN)
+    }
+
+    fun setLastTimeSet(timeInMins: Int) {
+        val preferences = PreferenceManager.getDefaultSharedPreferences(App.instance.appContext)
+        preferences.edit().putInt(KEY_LASTTIME_SET, timeInMins).apply()
     }
 }

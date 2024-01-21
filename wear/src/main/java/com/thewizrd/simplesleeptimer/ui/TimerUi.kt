@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,6 +34,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -54,12 +56,21 @@ import com.google.android.horologist.compose.rotaryinput.onRotaryInputAccumulate
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.shared_resources.utils.TimerStringFormatter
 import com.thewizrd.simplesleeptimer.R
+import com.thewizrd.simplesleeptimer.preferences.Settings
 import com.thewizrd.simplesleeptimer.ui.components.MusicPlayersDialog
 import com.thewizrd.simplesleeptimer.ui.components.SleepTimePickerDialog
-import com.thewizrd.simplesleeptimer.viewmodels.TimerOperation.*
+import com.thewizrd.simplesleeptimer.viewmodels.TimerOperation.ADD_1M
+import com.thewizrd.simplesleeptimer.viewmodels.TimerOperation.ADD_5M
+import com.thewizrd.simplesleeptimer.viewmodels.TimerOperation.EXTEND_1M
+import com.thewizrd.simplesleeptimer.viewmodels.TimerOperation.EXTEND_5M
+import com.thewizrd.simplesleeptimer.viewmodels.TimerOperation.MINUS_1M
+import com.thewizrd.simplesleeptimer.viewmodels.TimerOperation.MINUS_5M
+import com.thewizrd.simplesleeptimer.viewmodels.TimerOperation.START
+import com.thewizrd.simplesleeptimer.viewmodels.TimerOperation.STOP
 import com.thewizrd.simplesleeptimer.viewmodels.TimerViewModel
 import java.time.Duration
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 import kotlin.math.sign
 import kotlin.math.sqrt
 
@@ -68,6 +79,7 @@ import kotlin.math.sqrt
 fun StartTimerScreen(
     timerModel: TimerViewModel
 ) {
+    val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
     val isPreview = LocalInspectionMode.current
 
@@ -84,6 +96,12 @@ fun StartTimerScreen(
     }
     val containerWidth = LocalConfiguration.current.screenWidthDp
     val isLarge = containerWidth > 192
+
+    LaunchedEffect(lifecycleOwner) {
+        timerModel.updateTimerState(
+            timerLengthInMs = TimeUnit.MINUTES.toMillis(Settings.getLastTimeSet().toLong())
+        )
+    }
 
     Box(
         modifier = Modifier
@@ -245,6 +263,7 @@ fun StartTimerScreen(
                             backgroundColor = MaterialTheme.colors.secondary
                         ),
                         onClick = {
+                            Settings.setLastTimeSet(state.getTimerLengthInMins())
                             timerModel.requestTimerOp(START)
                         }
                     ) {
@@ -284,10 +303,12 @@ fun StartTimerScreen(
         }
     )
 
-    MusicPlayersDialog(
-        showDialog = showMusicPlayerDialog,
-        onDismissRequest = { showMusicPlayerDialog = false }
-    )
+    if (!isPreview) {
+        MusicPlayersDialog(
+            showDialog = showMusicPlayerDialog,
+            onDismissRequest = { showMusicPlayerDialog = false }
+        )
+    }
 }
 
 @Composable
