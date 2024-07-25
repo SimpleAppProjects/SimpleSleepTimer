@@ -72,25 +72,29 @@
         <activity
             android:name=".SleepTimerLocalActivity"
             android:launchMode="singleInstance"
-            android:theme="@style/WearAppTheme.Launcher" />
+            android:theme="@style/WearAppTheme.Launcher"
+            android:taskAffinity=".local" />
 
         <activity
             android:name=".SleepTimerActivity"
             android:label="@string/title_sleeptimer_remote"
             android:launchMode="singleInstance"
             android:exported="true"
-            android:theme="@style/WearAppTheme.Launcher" />
+            android:theme="@style/WearAppTheme.Launcher"
+            android:taskAffinity=".remote" />
 
         <activity
             android:name=".PhoneSyncActivity"
             android:launchMode="singleInstance"
-            android:theme="@style/WearAppTheme" />
+            android:theme="@style/WearAppTheme"
+            android:taskAffinity=".remote" />
 
         <service
             android:name=".services.TimerService"
             android:exported="false"
             android:enabled="true"
-            android:foregroundServiceType="systemExempted" />
+            android:foregroundServiceType="systemExempted"
+            tools:ignore="ForegroundServicePermission" />
 
         <receiver
             android:name=".receivers.UpdateBroadcastReceiver"
@@ -136,7 +140,8 @@
         <service
             android:name=".wearable.WearableDataListenerService"
             android:enabled="true"
-            android:exported="true">
+            android:exported="true"
+            tools:ignore="IntentFilterUniqueDataAttributes">
             <intent-filter>
                 <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
                 <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
