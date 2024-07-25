@@ -1,8 +1,16 @@
 package com.thewizrd.shared_resources.services
 
-import android.app.*
+import android.annotation.SuppressLint
+import android.app.Activity
+import android.app.AlarmManager
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.os.Binder
@@ -23,8 +31,13 @@ import com.thewizrd.shared_resources.helpers.AppState
 import com.thewizrd.shared_resources.helpers.toImmutableCompatFlag
 import com.thewizrd.shared_resources.sleeptimer.TimerDataModel
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
-import kotlinx.coroutines.*
-import java.util.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import java.util.Date
+import java.util.Timer
 import java.util.concurrent.Executors
 import kotlin.concurrent.schedule
 
@@ -98,7 +111,15 @@ abstract class BaseTimerService : Service() {
 
     private fun startForegroundIfNeeded(forceForeground: Boolean = false) {
         if (!mIsBound || forceForeground) {
-            startForeground(notificationId, getForegroundNotification())
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                startForeground(
+                    notificationId,
+                    getForegroundNotification(),
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_SYSTEM_EXEMPTED
+                )
+            } else {
+                startForeground(notificationId, getForegroundNotification())
+            }
             updateNotification()
         }
     }
@@ -152,6 +173,7 @@ abstract class BaseTimerService : Service() {
         return mForegroundNotification!!
     }
 
+    @SuppressLint("MissingPermission")
     private fun updateNotification() {
         val remainingTime = model.remainingTimeInMs
 
