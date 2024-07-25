@@ -64,7 +64,7 @@ class App : Application(), ApplicationLib, Application.ActivityLifecycleCallback
     }
 
     override fun onActivityResumed(activity: Activity) {
-        if (activity is WearableListenerActivity && applicationState != AppState.FOREGROUND) {
+        if ((activity is WearableListenerActivity || activity is SleepTimerLocalActivity) && applicationState != AppState.FOREGROUND) {
             applicationState = AppState.FOREGROUND
         }
     }
