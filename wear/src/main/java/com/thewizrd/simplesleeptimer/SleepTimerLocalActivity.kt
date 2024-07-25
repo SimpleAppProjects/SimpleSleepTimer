@@ -128,16 +128,16 @@ class SleepTimerLocalActivity : AppCompatActivity() {
         }
     }
 
-    override fun onNewIntent(intent: Intent?) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
         handleIntent(intent)
     }
 
-    private fun handleIntent(intent: Intent?) {
+    private fun handleIntent(intent: Intent) {
         handledIntent = true
 
-        if (intent?.hasExtra(BaseTimerService.EXTRA_TIME_IN_MINS) == true && mBound && !mTimerBinder.isRunning()) {
+        if (intent.hasExtra(BaseTimerService.EXTRA_TIME_IN_MINS) && mBound && !mTimerBinder.isRunning()) {
             intent.getIntExtra(BaseTimerService.EXTRA_TIME_IN_MINS, 0).takeIf { it > 0 }?.let {
                 mTimerBinder.startTimer(it)
             }

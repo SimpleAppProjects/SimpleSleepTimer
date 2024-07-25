@@ -167,7 +167,7 @@ class SleepTimerActivity : WearableListenerActivity() {
 
                     data?.let {
                         // Add a second for latency
-                        it.endTimeInMs = it.endTimeInMs + DateUtils.SECOND_IN_MILLIS
+                        it.endTimeInMs += DateUtils.SECOND_IN_MILLIS
 
                         if (timeKeeperModel.isRunning || it.isRunning != timeKeeperModel.isRunning) {
                             timeKeeperModel.updateModel(it)
@@ -258,16 +258,16 @@ class SleepTimerActivity : WearableListenerActivity() {
         }
     }
 
-    override fun onNewIntent(intent: Intent?) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
         handleIntent(intent)
     }
 
-    private fun handleIntent(intent: Intent?) {
+    private fun handleIntent(intent: Intent) {
         handledIntent = true
 
-        if (intent?.hasExtra(BaseTimerService.EXTRA_TIME_IN_MINS) == true) {
+        if (intent.hasExtra(BaseTimerService.EXTRA_TIME_IN_MINS)) {
             lifecycleScope.launch {
                 supervisorScope {
                     timerViewModel.uiState.filterNot {
