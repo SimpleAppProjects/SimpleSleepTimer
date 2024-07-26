@@ -14,6 +14,8 @@ import com.thewizrd.simplesleeptimer.wearable.tiles.SleepTimerTileRenderer.Compa
 import com.thewizrd.simplesleeptimer.wearable.tiles.SleepTimerTileRenderer.Companion.ID_30MIN
 import com.thewizrd.simplesleeptimer.wearable.tiles.SleepTimerTileRenderer.Companion.ID_5MIN
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.coroutines.cancellation.CancellationException
 
 @OptIn(ExperimentalHorologistApi::class)
 class SleepTimerTileService : SuspendingTileService() {
@@ -25,6 +27,8 @@ class SleepTimerTileService : SuspendingTileService() {
 
     private val tileRenderer = SleepTimerTileRenderer(this)
     private val tileMessenger = TimerTileMessenger(this)
+
+    private var isUpdating: Boolean = false
 
     override fun onCreate() {
         super.onCreate()
@@ -41,10 +45,17 @@ class SleepTimerTileService : SuspendingTileService() {
 
         lifecycleScope.launch {
             tileMessenger.checkConnectionStatus()
+        }.invokeOnCompletion {
+            if (it is CancellationException || !isUpdating) {
+                // If update timed out
+                requestTileUpdate(this)
+            }
         }
     }
 
     override suspend fun tileRequest(requestParams: RequestBuilders.TileRequest): TileBuilders.Tile {
+        isUpdating = true
+
         if (requestParams.currentState.lastClickableId.isNotBlank()) {
             when (requestParams.currentState.lastClickableId) {
                 ID_5MIN -> tileMessenger.requestTimerStart(5)
@@ -56,8 +67,12 @@ class SleepTimerTileService : SuspendingTileService() {
         }
 
         tileMessenger.checkConnectionStatus()
-        val state = tileMessenger.getRemoteTimerStatus()
 
+        val state = withTimeoutOrNull(5000) {
+            tileMessenger.getRemoteTimerStatus()
+        } ?: tileMessenger.getRemoteTimerState()
+
+        isUpdating = false
         return tileRenderer.renderTimeline(state, requestParams)
     }
 

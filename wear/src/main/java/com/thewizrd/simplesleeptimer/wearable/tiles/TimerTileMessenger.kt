@@ -228,6 +228,12 @@ class TimerTileMessenger(private val context: Context) :
             }
         }
 
+    fun getRemoteTimerState(): RemoteTimerTileState = RemoteTimerTileState(
+        isLocalTimer = false,
+        connectionStatus = mConnectionStatus,
+        timerModel = timerModel
+    )
+
     suspend fun requestTimerStart(timerLengthInMins: Int): Boolean {
         return if (connect()) {
             runCatching {
