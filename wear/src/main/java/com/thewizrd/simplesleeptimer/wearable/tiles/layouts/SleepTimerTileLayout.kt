@@ -51,9 +51,8 @@ fun StartTimerLayout(
     deviceParameters: DeviceParameters,
     state: TimerState
 ): LayoutElementBuilders.LayoutElement {
-    val isSmol = minOf(deviceParameters.screenHeightDp, deviceParameters.screenWidthDp) <= 192f
-
     return PrimaryLayout.Builder(deviceParameters)
+        .setResponsiveContentInsetEnabled(true)
         .setContent(
             MultiButtonLayout.Builder()
                 .addButtonContent(TimerButton(context, state, TimerTileDuration.DURATION_5))
@@ -163,6 +162,7 @@ fun WearConnectionStatusLayout(
     deviceParameters: DeviceParameters,
     connectionStatus: WearConnectionStatus
 ) = PrimaryLayout.Builder(deviceParameters)
+    .setResponsiveContentInsetEnabled(true)
     .setContent(
         Text.Builder(
             context,

@@ -1,6 +1,5 @@
 package com.thewizrd.shared_resources.utils
 
-import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.stream.JsonReader
@@ -14,6 +13,7 @@ object JSONParser {
 
     private val gson: Gson = GsonBuilder()
         .serializeNulls()
+        .enableComplexMapKeySerialization()
         .create()
 
     fun <T> deserializer(response: String?, type: Type?): T? {
@@ -22,7 +22,7 @@ object JSONParser {
         try {
             `object` = gson.fromJson(response, type)
         } catch (ex: Exception) {
-            Log.e(TAG, "Error", ex)
+            Logger.error(TAG, ex, "Error")
         }
 
         return `object`
@@ -34,7 +34,7 @@ object JSONParser {
         try {
             `object` = gson.fromJson(response, obj)
         } catch (ex: Exception) {
-            Log.e(TAG, "Error", ex)
+            Logger.error(TAG, ex, "Error")
         }
 
         return `object`
@@ -51,7 +51,7 @@ object JSONParser {
 
             `object` = gson.fromJson(reader, type)
         } catch (ex: Exception) {
-            Log.e(TAG, "Error", ex)
+            Logger.error(TAG, ex, "Error")
         } finally {
             try {
                 reader?.close()

@@ -1,6 +1,7 @@
 package com.thewizrd.shared_resources.sleeptimer
 
 import android.net.Uri
+import androidx.core.net.toUri
 import com.thewizrd.shared_resources.BuildConfig
 
 object SleepTimerHelper {
@@ -8,12 +9,13 @@ object SleepTimerHelper {
     private const val PACKAGE_NAME = "com.thewizrd.simplesleeptimer"
     private const val PLAY_STORE_APP_URI = "market://details?id=$PACKAGE_NAME"
 
-    fun getPlayStoreURI(): Uri = Uri.parse(PLAY_STORE_APP_URI)
+    fun getPlayStoreURI(): Uri = PLAY_STORE_APP_URI.toUri()
 
     const val SleepTimerStartPath = "/status/sleeptimer/start"
     const val SleepTimerStopPath = "/status/sleeptimer/stop"
     const val SleepTimerStatusPath = "/status/sleeptimer/status"
     const val SleepTimerAudioPlayerPath = "/sleeptimer/audioplayer"
+    const val SleepTimerUpdateAudioPlayerPath = "/sleeptimer/audioplayer/update"
     const val SleepTimerUpdateStatePath = "/status/sleeptimer/update"
     const val SleepTimerBridgePath = "/status/sleeptimer/bridge"
 

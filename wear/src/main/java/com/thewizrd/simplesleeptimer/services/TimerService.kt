@@ -7,7 +7,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.SystemClock
 import android.text.format.DateUtils
-import android.util.Log
 import android.view.KeyEvent
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
@@ -19,6 +18,7 @@ import androidx.wear.ongoing.OngoingActivity
 import androidx.wear.ongoing.Status
 import com.thewizrd.shared_resources.services.BaseTimerService
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
+import com.thewizrd.shared_resources.utils.Logger
 import com.thewizrd.shared_resources.utils.TimerStringFormatter
 import com.thewizrd.simplesleeptimer.R
 import com.thewizrd.simplesleeptimer.SleepTimerLocalActivity
@@ -174,7 +174,7 @@ class TimerService : BaseTimerService() {
                         runCatching {
                             applicationContext.sendBroadcast(pauseKeyIntent)
                         }.onFailure {
-                            Log.e("TimerService", "error sending pause intent", it)
+                            Logger.error("TimerService", it, "error sending pause intent")
                         }
                     }
                 }

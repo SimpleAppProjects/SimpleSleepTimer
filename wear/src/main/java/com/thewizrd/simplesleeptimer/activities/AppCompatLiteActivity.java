@@ -1,7 +1,6 @@
 package com.thewizrd.simplesleeptimer.activities;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 
 import androidx.annotation.ContentView;
@@ -9,6 +8,8 @@ import androidx.annotation.LayoutRes;
 import androidx.annotation.Nullable;
 import androidx.core.view.LayoutInflaterCompat;
 import androidx.fragment.app.FragmentActivity;
+
+import com.thewizrd.shared_resources.utils.Logger;
 
 /**
  * Adds custom view inflater to inflate AppCompat views instead of inheriting AppCompatActivity
@@ -37,7 +38,7 @@ public class AppCompatLiteActivity extends FragmentActivity {
             LayoutInflaterCompat.setFactory2(layoutInflater, new AppCompatLiteViewInflater());
         } else {
             if (!(layoutInflater.getFactory2() instanceof AppCompatLiteViewInflater)) {
-                Log.i(TAG, "The Activity's LayoutInflater already has a Factory installed"
+                Logger.info(TAG, "The Activity's LayoutInflater already has a Factory installed"
                         + " so we can not install AppCompat's");
             }
         }

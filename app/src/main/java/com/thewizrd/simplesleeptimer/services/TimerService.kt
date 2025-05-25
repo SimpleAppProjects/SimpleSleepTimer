@@ -1,24 +1,25 @@
 package com.thewizrd.simplesleeptimer.services
 
-import android.app.*
+import android.app.Activity
+import android.app.Notification
 import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.os.*
+import android.os.Build
+import android.os.SystemClock
 import android.text.format.DateUtils
-import android.util.Log
 import android.view.KeyEvent
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.thewizrd.shared_resources.services.BaseTimerService
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
+import com.thewizrd.shared_resources.utils.Logger
 import com.thewizrd.shared_resources.utils.TimerStringFormatter
-import com.thewizrd.simplesleeptimer.*
+import com.thewizrd.simplesleeptimer.R
+import com.thewizrd.simplesleeptimer.SleepTimerActivity
 import com.thewizrd.simplesleeptimer.preferences.Settings
 import com.thewizrd.simplesleeptimer.wearable.WearableManager
-import kotlinx.coroutines.*
-import java.util.*
 
 class TimerService : BaseTimerService() {
     companion object {
@@ -170,7 +171,7 @@ class TimerService : BaseTimerService() {
                         runCatching {
                             applicationContext.sendBroadcast(pauseKeyIntent)
                         }.onFailure {
-                            Log.e("TimerService", "error sending pause intent", it)
+                            Logger.error("TimerService", it, "error sending pause intent")
                         }
                     }
                 }

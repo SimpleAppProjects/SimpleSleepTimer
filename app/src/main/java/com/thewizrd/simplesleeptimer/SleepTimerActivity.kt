@@ -1,16 +1,24 @@
 package com.thewizrd.simplesleeptimer
 
 import android.Manifest
-import android.animation.*
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.ActivityOptions
-import android.content.*
+import android.content.BroadcastReceiver
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.content.ServiceConnection
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.os.SystemClock
 import android.provider.Settings
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
@@ -24,8 +32,10 @@ import androidx.core.content.PermissionChecker
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
+import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.material.animation.AnimationUtils
 import com.google.android.material.color.DynamicColors
@@ -38,12 +48,20 @@ import com.thewizrd.shared_resources.services.BaseTimerService
 import com.thewizrd.shared_resources.sleeptimer.TimerDataModel
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.shared_resources.utils.ContextUtils.isWatchUi
+import com.thewizrd.shared_resources.utils.Logger
 import com.thewizrd.simplesleeptimer.databinding.ActivityMainBinding
 import com.thewizrd.simplesleeptimer.services.TimerService
+import com.thewizrd.simplesleeptimer.updates.InAppUpdateManager
 import com.thewizrd.simplesleeptimer.wearable.WearPermissionsActivity
+import kotlinx.coroutines.launch
 import com.thewizrd.simplesleeptimer.preferences.Settings as SleepTimerSettings
 
 class SleepTimerActivity : AppCompatActivity() {
+    companion object {
+        private const val INSTALL_REQUESTCODE = 168
+    }
+
+    private lateinit var inAppUpdateManager: InAppUpdateManager
     private lateinit var binding: ActivityMainBinding
 
     private val timerModel: TimerModel by viewModels()
@@ -86,6 +104,8 @@ class SleepTimerActivity : AppCompatActivity() {
 
         // Note: needed due to splash screen theme
         DynamicColors.applyToActivityIfAvailable(this)
+
+        inAppUpdateManager = InAppUpdateManager.create(applicationContext)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -147,7 +167,7 @@ class SleepTimerActivity : AppCompatActivity() {
                                 runCatching {
                                     startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
                                 }.onFailure { t ->
-                                    Log.e("SleepTimerActivity", "Error", t)
+                                    Logger.error("SleepTimerActivity", t, "Error")
                                 }
                             }
                         }.show()
@@ -169,7 +189,7 @@ class SleepTimerActivity : AppCompatActivity() {
                                 runCatching {
                                     permissionRequestLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                                 }.onFailure { t ->
-                                    Log.e("SleepTimerActivity", "Error", t)
+                                    Logger.error("SleepTimerActivity", t, "Error")
                                 }
                             }
                         }.show()
@@ -247,6 +267,15 @@ class SleepTimerActivity : AppCompatActivity() {
                 mTimerBinder.extend5MinTimer()
             }
         }
+
+        lifecycleScope.launch {
+            if (inAppUpdateManager.shouldStartImmediateUpdateFlow()) {
+                inAppUpdateManager.startImmediateUpdateFlow(
+                    this@SleepTimerActivity,
+                    INSTALL_REQUESTCODE
+                )
+            }
+        }
     }
 
     override fun onStart() {
@@ -282,6 +311,10 @@ class SleepTimerActivity : AppCompatActivity() {
         }
         LocalBroadcastManager.getInstance(this)
             .registerReceiver(mBroadcastReceiver, filter)
+
+        // Checks that the update is not stalled during 'onResume()'.
+        // However, you should execute this check at all entry points into the app.
+        inAppUpdateManager.resumeUpdateIfStarted(this, INSTALL_REQUESTCODE)
     }
 
     override fun onPause() {
@@ -350,8 +383,8 @@ class SleepTimerActivity : AppCompatActivity() {
     private fun animateToView(isRunning: Boolean) {
         dismissPlayersFragment()
 
-        if (isRunning && binding.timerProgressView.visibility == View.VISIBLE ||
-            !isRunning && binding.timerStartView.visibility == View.VISIBLE
+        if (isRunning && binding.timerProgressView.isVisible ||
+            !isRunning && binding.timerStartView.isVisible
         ) {
             return
         }
@@ -500,6 +533,18 @@ class SleepTimerActivity : AppCompatActivity() {
             val endTime = SystemClock.elapsedRealtime()
 
             binding.fragmentContainer.postOnAnimationDelayed(this, startTime + 50 - endTime)
+        }
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == INSTALL_REQUESTCODE) {
+            if (resultCode != RESULT_OK) {
+                // Update flow failed; exit
+                finishAffinity()
+            }
+        } else {
+            super.onActivityResult(requestCode, resultCode, data)
         }
     }
 }

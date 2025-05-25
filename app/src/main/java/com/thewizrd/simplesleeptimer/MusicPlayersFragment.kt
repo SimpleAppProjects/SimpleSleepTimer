@@ -110,7 +110,7 @@ class MusicPlayersFragment : Fragment() {
                         val drawable =
                             requireContext().packageManager.getActivityIcon(activityCmpName)
                         iconBmp = drawable.toBitmap()
-                    } catch (e: PackageManager.NameNotFoundException) {
+                    } catch (_: PackageManager.NameNotFoundException) {
                     }
 
                     playerModels.add(MusicPlayerViewModel().apply {

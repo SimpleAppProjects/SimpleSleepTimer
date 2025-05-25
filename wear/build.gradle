@@ -1,6 +1,8 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
+apply plugin: 'com.google.gms.google-services'
+apply plugin: 'com.google.firebase.crashlytics'
 apply plugin: 'org.jetbrains.kotlin.plugin.compose'
 
 android {
@@ -51,7 +53,6 @@ android {
     compileOptions {
         // Flag to enable support for the new language APIs
         coreLibraryDesugaringEnabled true
-
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
@@ -86,6 +87,11 @@ dependencies {
     implementation "androidx.recyclerview:recyclerview:$recyclerview_version"
     implementation "com.google.android.material:material:$material_version"
 
+    implementation platform("com.google.firebase:firebase-bom:$firebase_version")
+    implementation 'com.google.firebase:firebase-analytics'
+    implementation 'com.google.firebase:firebase-crashlytics'
+    implementation 'com.google.firebase:firebase-config'
+
     // WearOS
     implementation 'com.google.android.gms:play-services-wearable:19.0.0'
     compileOnly 'com.google.android.wearable:wearable:2.9.0'
@@ -118,8 +124,10 @@ dependencies {
     implementation "com.google.android.horologist:horologist-compose-layout:$horologist_version"
     implementation "com.google.android.horologist:horologist-compose-material:$horologist_version"
 
-
     androidTestImplementation platform("androidx.compose:compose-bom:$compose_bom_version")
     androidTestImplementation "androidx.compose.ui:ui-test-junit4"
     debugImplementation "androidx.compose.ui:ui-tooling"
+
+    implementation "com.jakewharton.timber:timber:$timber_version"
+    implementation "com.google.code.gson:gson:$gson_version"
 }

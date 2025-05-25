@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RestrictTo
 import androidx.annotation.VisibleForTesting
@@ -18,6 +17,7 @@ import com.google.android.gms.wearable.CapabilityClient.OnCapabilityChangedListe
 import com.google.android.gms.wearable.MessageClient.OnMessageReceivedListener
 import com.thewizrd.shared_resources.helpers.WearConnectionStatus
 import com.thewizrd.shared_resources.helpers.WearableHelper
+import com.thewizrd.shared_resources.utils.Logger
 import com.thewizrd.simplesleeptimer.activities.AppCompatLiteActivity
 import com.thewizrd.simplesleeptimer.helpers.showConfirmationOverlay
 import kotlinx.coroutines.CancellationException
@@ -188,7 +188,7 @@ abstract class WearableListenerActivity : AppCompatLiteActivity(), OnMessageRece
                         if (e.statusCode == WearableStatusCodes.TARGET_NODE_NOT_CONNECTED) {
                             mConnectionStatus = WearConnectionStatus.DISCONNECTED
                         } else {
-                            Log.e(TAG, "Error", e)
+                            Logger.error(TAG, e, "Error")
                         }
                     }
                 }
@@ -241,7 +241,7 @@ abstract class WearableListenerActivity : AppCompatLiteActivity(), OnMessageRece
                     if (e.statusCode == WearableStatusCodes.TARGET_NODE_NOT_CONNECTED) {
                         mConnectionStatus = WearConnectionStatus.DISCONNECTED
                     } else {
-                        Log.e(TAG, "Error", e)
+                        Logger.error(TAG, e, "Error")
                     }
                 }
             }
@@ -265,7 +265,7 @@ abstract class WearableListenerActivity : AppCompatLiteActivity(), OnMessageRece
                 .await()
             node = pickBestNodeId(capabilityInfo.nodes)
         } catch (e: Exception) {
-            Log.e(TAG, "Error", e)
+            Logger.error(TAG, e, "Error")
         }
 
         return node
@@ -301,7 +301,7 @@ abstract class WearableListenerActivity : AppCompatLiteActivity(), OnMessageRece
                 .connectedNodes
                 .await()
         } catch (e: Exception) {
-            Log.e(TAG, "Error", e)
+            Logger.error(TAG, e, "Error")
         }
 
         return emptyList()
@@ -325,7 +325,7 @@ abstract class WearableListenerActivity : AppCompatLiteActivity(), OnMessageRece
                 }
             }
 
-            Log.e(TAG, "Error", e)
+            Logger.error(TAG, e, "Error")
         }
 
         return -1
@@ -341,7 +341,7 @@ abstract class WearableListenerActivity : AppCompatLiteActivity(), OnMessageRece
                 val apiException = e.cause as? ApiException ?: e as ApiException
                 throw apiException
             }
-            Log.e(TAG, "Error", e)
+            Logger.error(TAG, e, "Error")
         }
     }
 

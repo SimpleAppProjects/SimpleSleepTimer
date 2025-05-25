@@ -12,7 +12,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.provider.Settings
-import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -22,6 +21,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.thewizrd.shared_resources.services.BaseTimerService
 import com.thewizrd.shared_resources.sleeptimer.TimerDataModel
+import com.thewizrd.shared_resources.utils.Logger
 import com.thewizrd.simplesleeptimer.helpers.AcceptDenyDialog
 import com.thewizrd.simplesleeptimer.services.TimerService
 import com.thewizrd.simplesleeptimer.ui.SleepTimerApp
@@ -198,7 +198,7 @@ class SleepTimerLocalActivity : AppCompatActivity() {
                         runCatching {
                             startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
                         }.onFailure {
-                            Log.e("SleepTimerActivity", "Error", it)
+                            Logger.error("SleepTimerActivity", it, "Error")
                         }
                     }
                 }

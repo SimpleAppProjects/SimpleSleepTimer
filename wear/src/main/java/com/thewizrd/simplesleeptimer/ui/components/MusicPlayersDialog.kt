@@ -1,7 +1,6 @@
 package com.thewizrd.simplesleeptimer.ui.components
 
 import android.content.Context
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -43,16 +42,13 @@ import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.ToggleChipDefaults
 import androidx.wear.compose.material.dialog.Dialog
-import com.google.android.gms.wearable.PutDataMapRequest
-import com.google.android.gms.wearable.Wearable
-import com.thewizrd.shared_resources.sleeptimer.SleepTimerHelper
+import com.thewizrd.shared_resources.utils.Logger
 import com.thewizrd.simplesleeptimer.R
 import com.thewizrd.simplesleeptimer.ui.theme.activityViewModel
 import com.thewizrd.simplesleeptimer.ui.theme.findActivity
 import com.thewizrd.simplesleeptimer.viewmodels.MusicPlayersViewModel
 import com.thewizrd.simplesleeptimer.viewmodels.SelectedPlayerViewModel
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.tasks.await
 
 @Composable
 fun MusicPlayersDialog(
@@ -194,14 +190,9 @@ private fun MusicPlayersDialog(
         LaunchedEffect(showDialog) {
             selectedPlayerViewModel.selectedPlayer.collectLatest { s ->
                 runCatching {
-                    val mapRequest =
-                        PutDataMapRequest.create(SleepTimerHelper.SleepTimerAudioPlayerPath)
-                    mapRequest.dataMap.putString(SleepTimerHelper.KEY_SELECTEDPLAYER, s.key ?: "")
-                    Wearable.getDataClient(context).putDataItem(
-                        mapRequest.asPutDataRequest()
-                    ).await()
+                    selectedPlayerViewModel.sendSelectedPlayerUpdate(s.key)
                 }.onFailure {
-                    Log.e("MusicPlayerFragment", "Error", it)
+                    Logger.error("MusicPlayerFragment", it, "Error")
                 }
             }
         }

@@ -22,6 +22,7 @@ import com.thewizrd.shared_resources.services.BaseTimerService
 import com.thewizrd.shared_resources.sleeptimer.SleepTimerHelper
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.shared_resources.utils.JSONParser
+import com.thewizrd.shared_resources.utils.Logger
 import com.thewizrd.shared_resources.utils.bytesToBool
 import com.thewizrd.shared_resources.utils.bytesToString
 import com.thewizrd.shared_resources.utils.intToBytes
@@ -339,7 +340,11 @@ class SleepTimerActivity : WearableListenerActivity() {
                         )
                         remoteActivityHelper.startRemoteActivity(intent).await()
                     }.onFailure {
-                        Log.e(this::class.java.simpleName, "Error starting remote activity", it)
+                        Logger.error(
+                            this::class.java.simpleName,
+                            it,
+                            "Error starting remote activity"
+                        )
 
                         CustomConfirmationOverlay()
                             .setType(CustomConfirmationOverlay.FAILURE_ANIMATION)

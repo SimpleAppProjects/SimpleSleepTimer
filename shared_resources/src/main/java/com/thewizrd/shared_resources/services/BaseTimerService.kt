@@ -17,7 +17,6 @@ import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import android.text.format.DateUtils
-import android.util.Log
 import android.view.KeyEvent
 import androidx.annotation.CallSuper
 import androidx.annotation.RequiresApi
@@ -26,11 +25,12 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.thewizrd.shared_resources.R
-import com.thewizrd.shared_resources.SimpleLibrary
+import com.thewizrd.shared_resources.appLib
 import com.thewizrd.shared_resources.helpers.AppState
 import com.thewizrd.shared_resources.helpers.toImmutableCompatFlag
 import com.thewizrd.shared_resources.sleeptimer.TimerDataModel
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
+import com.thewizrd.shared_resources.utils.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -55,7 +55,7 @@ abstract class BaseTimerService : Service() {
         private const val EXTRA_FORCEFOREGROUND = "SimpleSleepTimer.extra.FORCE_FOREGROUND"
 
         fun enqueueWork(context: Context, work: Intent) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && SimpleLibrary.instance.app.applicationState != AppState.FOREGROUND) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && appLib.appState != AppState.FOREGROUND) {
                 context.startForegroundService(work.putExtra(EXTRA_FORCEFOREGROUND, true))
             } else {
                 context.startService(work)
@@ -103,7 +103,7 @@ abstract class BaseTimerService : Service() {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             initChannel()
-            if (SimpleLibrary.instance.app.applicationState != AppState.FOREGROUND) {
+            if (appLib.appState != AppState.FOREGROUND) {
                 startForegroundIfNeeded()
             }
         }
@@ -409,7 +409,7 @@ abstract class BaseTimerService : Service() {
                 mAlarmManager.setExact(AlarmManager.RTC_WAKEUP, rtcExpireTimeInMs, pi)
             }
         }.onFailure {
-            Log.e("BaseTimerService", "Error", it)
+            Logger.error("BaseTimerService", it, "Error")
         }
     }
 

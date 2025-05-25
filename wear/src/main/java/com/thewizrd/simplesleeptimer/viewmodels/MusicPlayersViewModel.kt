@@ -1,36 +1,36 @@
 package com.thewizrd.simplesleeptimer.viewmodels
 
 import android.app.Application
-import android.content.Intent
-import android.util.Log
-import androidx.lifecycle.AndroidViewModel
+import android.os.Bundle
 import androidx.lifecycle.viewModelScope
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.google.android.gms.wearable.DataClient
-import com.google.android.gms.wearable.DataEvent
-import com.google.android.gms.wearable.DataEventBuffer
-import com.google.android.gms.wearable.DataMap
-import com.google.android.gms.wearable.DataMapItem
+import com.google.android.gms.wearable.ChannelClient.Channel
+import com.google.android.gms.wearable.ChannelClient.ChannelCallback
+import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.Wearable
 import com.thewizrd.shared_resources.helpers.WearableHelper
-import com.thewizrd.shared_resources.utils.ImageUtils
+import com.thewizrd.shared_resources.media.MusicPlayersData
+import com.thewizrd.shared_resources.utils.ImageUtils.toBitmap
+import com.thewizrd.shared_resources.utils.JSONParser
+import com.thewizrd.shared_resources.utils.Logger
+import com.thewizrd.shared_resources.utils.bytesToBool
 import com.thewizrd.shared_resources.viewmodels.MusicPlayerViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withContext
 
-class MusicPlayersViewModel(private val app: Application) : AndroidViewModel(app),
-    DataClient.OnDataChangedListener {
+data class MusicPlayersUiState(
+    val players: List<MusicPlayerViewModel> = emptyList(),
+    val isLoading: Boolean = false
+)
+
+class MusicPlayersViewModel(app: Application) : WearableListenerViewModel(app) {
     private val viewModelState = MutableStateFlow(MusicPlayersUiState(isLoading = true))
-    private var refreshJob: Job? = null
 
     val uiState = viewModelState.stateIn(
         viewModelScope,
@@ -38,9 +38,126 @@ class MusicPlayersViewModel(private val app: Application) : AndroidViewModel(app
         viewModelState.value
     )
 
+    private val channelCallback = object : ChannelCallback() {
+        override fun onChannelOpened(channel: Channel) {
+            startChannelListener(channel)
+        }
+
+        override fun onChannelClosed(
+            channel: Channel,
+            closeReason: Int,
+            appSpecificErrorCode: Int
+        ) {
+            Logger.debug(
+                "ChannelCallback",
+                "channel closed - reason = $closeReason | path = ${channel.path}"
+            )
+        }
+    }
+
     init {
-        Wearable.getDataClient(app.applicationContext)
-            .addListener(this)
+        Wearable.getChannelClient(appContext).run {
+            registerChannelCallback(channelCallback)
+        }
+
+        viewModelScope.launch {
+            channelEventsFlow.collect { event ->
+                when (event.eventType) {
+                    WearableHelper.MusicPlayersPath -> {
+                        val jsonData = event.data.getString(EXTRA_EVENTDATA)
+
+                        viewModelScope.launch {
+                            val playersData = jsonData?.let {
+                                JSONParser.deserializer(it, MusicPlayersData::class.java)
+                            }
+
+                            updateMusicPlayers(playersData)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    override fun onMessageReceived(messageEvent: MessageEvent) {
+        when (messageEvent.path) {
+            WearableHelper.MusicPlayersPath -> {
+                val success = messageEvent.data.bytesToBool()
+
+                if (!success) {
+                    viewModelState.update {
+                        it.copy(
+                            players = emptyList()
+                        )
+                    }
+                }
+
+                _eventsFlow.tryEmit(WearableEvent(messageEvent.path, Bundle().apply {
+                    putBoolean(EXTRA_STATUS, success)
+                }))
+            }
+
+            else -> super.onMessageReceived(messageEvent)
+        }
+    }
+
+    private fun startChannelListener(channel: Channel) {
+        when (channel.path) {
+            WearableHelper.MusicPlayersPath -> {
+                createChannelListener(channel)
+            }
+        }
+    }
+
+    private fun createChannelListener(channel: Channel): Job =
+        viewModelScope.launch(Dispatchers.Default) {
+            supervisorScope {
+                runCatching {
+                    val stream = Wearable.getChannelClient(appContext)
+                        .getInputStream(channel).await()
+                    stream.bufferedReader().use { reader ->
+                        val line = reader.readLine()
+
+                        when {
+                            line.startsWith("data: ") -> {
+                                runCatching {
+                                    val json = line.substringAfter("data: ")
+                                    _channelEventsFlow.tryEmit(
+                                        WearableEvent(channel.path, Bundle().apply {
+                                            putString(EXTRA_EVENTDATA, json)
+                                        })
+                                    )
+                                }.onFailure {
+                                    Logger.error(
+                                        "MusicPlayersChannelListener",
+                                        it,
+                                        "error reading data for channel = ${channel.path}"
+                                    )
+                                }
+                            }
+
+                            line.isEmpty() -> {
+                                // empty line; data terminator
+                            }
+
+                            else -> {}
+                        }
+                    }
+                }.onFailure {
+                    Logger.error("MusicPlayersChannelListener", it, "error")
+                }
+            }
+        }
+
+    override fun onCleared() {
+        Wearable.getChannelClient(appContext).run {
+            unregisterChannelCallback(channelCallback)
+        }
+        super.onCleared()
+    }
+
+    fun loadMusicPlayers() {
+        reloadMusicPlayers()
     }
 
     private fun reloadMusicPlayers() {
@@ -49,109 +166,27 @@ class MusicPlayersViewModel(private val app: Application) : AndroidViewModel(app
                 it.copy(isLoading = true)
             }
 
-            LocalBroadcastManager.getInstance(app.applicationContext)
-                .sendBroadcast(Intent(WearableHelper.MusicPlayersPath))
-        }
-    }
-
-    fun loadMusicPlayers() {
-        reloadMusicPlayers()
-
-        refreshJob = viewModelScope.launch {
-            delay(3000)
-            if (isActive) {
-                refreshMusicPlayers()
+            if (connect()) {
+                sendMessage(mPhoneNodeWithApp!!.id, WearableHelper.MusicPlayersPath, null)
             }
         }
     }
 
-    override fun onDataChanged(dataEventBuffer: DataEventBuffer) {
-        viewModelScope.launch {
-            for (event in dataEventBuffer) {
-                if (event.type == DataEvent.TYPE_CHANGED) {
-                    val item = event.dataItem
-                    if (WearableHelper.MusicPlayersPath == item.uri.path) {
-                        // Cancel job
-                        refreshJob?.cancel()
-
-                        try {
-                            val dataMap = DataMapItem.fromDataItem(item).dataMap
-                            updateMusicPlayers(dataMap)
-                            viewModelState.update { it.copy(isLoading = false) }
-                        } catch (e: Exception) {
-                            Log.e("MusicPlayersViewModel", "Error", e)
-                        }
-                    }
-                }
+    private suspend fun updateMusicPlayers(playersData: MusicPlayersData?) {
+        val musicPlayersList = playersData?.musicPlayers?.mapTo(mutableListOf()) { player ->
+            MusicPlayerViewModel().apply {
+                appLabel = player.label
+                packageName = player.packageName
+                activityName = player.activityName
+                bitmapIcon = player.iconBitmap?.toBitmap()
             }
-        }
-    }
-
-    private suspend fun refreshMusicPlayers() = withContext(Dispatchers.IO) {
-        try {
-            val buff = Wearable.getDataClient(app.applicationContext)
-                .getDataItems(
-                    WearableHelper.getWearDataUri(
-                        "*",
-                        WearableHelper.MusicPlayersPath
-                    )
-                )
-                .await()
-
-            for (i in 0 until buff.count) {
-                val item = buff[i]
-                if (isActive && WearableHelper.MusicPlayersPath == item.uri.path) {
-                    try {
-                        val dataMap = DataMapItem.fromDataItem(item).dataMap
-                        updateMusicPlayers(dataMap)
-                    } catch (e: Exception) {
-                        Log.e("MusicPlayersViewModel", "Error", e)
-                    }
-                    viewModelState.update { it.copy(isLoading = false) }
-                }
-            }
-            buff.release()
-        } catch (e: Exception) {
-            Log.e("MusicPlayersViewModel", "Error", e)
-        }
-    }
-
-    private suspend fun updateMusicPlayers(dataMap: DataMap) {
-        val supportedPlayers =
-            dataMap.getStringArrayList(WearableHelper.KEY_SUPPORTEDPLAYERS) ?: return
-        val viewModels = mutableListOf<MusicPlayerViewModel>()
-        for (key in supportedPlayers) {
-            val map = dataMap.getDataMap(key) ?: continue
-
-            val model = MusicPlayerViewModel().apply {
-                appLabel = map.getString(WearableHelper.KEY_LABEL)
-                packageName = map.getString(WearableHelper.KEY_PKGNAME)
-                activityName = map.getString(WearableHelper.KEY_ACTIVITYNAME)
-                bitmapIcon = runCatching {
-                    ImageUtils.bitmapFromAssetStream(
-                        Wearable.getDataClient(app.applicationContext),
-                        map.getAsset(WearableHelper.KEY_ICON)
-                    )
-                }.getOrNull()
-            }
-
-            viewModels.add(model)
         }
 
         viewModelState.update {
-            it.copy(players = viewModels)
+            it.copy(
+                players = musicPlayersList ?: emptyList(),
+                isLoading = false
+            )
         }
     }
-
-    override fun onCleared() {
-        super.onCleared()
-        refreshJob?.cancel()
-        Wearable.getDataClient(app.applicationContext)
-            .removeListener(this)
-    }
 }
-
-data class MusicPlayersUiState(
-    val players: List<MusicPlayerViewModel> = emptyList(),
-    val isLoading: Boolean = false
-)

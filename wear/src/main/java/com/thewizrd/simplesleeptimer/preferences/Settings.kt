@@ -2,12 +2,13 @@ package com.thewizrd.simplesleeptimer.preferences
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
+import com.thewizrd.shared_resources.appLib
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
-import com.thewizrd.simplesleeptimer.App
 
 object Settings {
     private val preferences: SharedPreferences =
-        App.instance.appContext.getSharedPreferences("players", Context.MODE_PRIVATE)
+        appLib.context.getSharedPreferences("players", Context.MODE_PRIVATE)
 
     private const val KEY_MUSICPLAYER: String = "key_musicplayer"
     private const val KEY_LASTTIME_SET: String = "key_lasttime_set"
@@ -18,9 +19,9 @@ object Settings {
 
     fun setMusicPlayer(player: String?) {
         if (player != null) {
-            preferences.edit().putString(KEY_MUSICPLAYER, player).apply()
+            preferences.edit { putString(KEY_MUSICPLAYER, player) }
         } else {
-            preferences.edit().remove(KEY_MUSICPLAYER).apply()
+            preferences.edit { remove(KEY_MUSICPLAYER) }
         }
     }
 
@@ -29,6 +30,6 @@ object Settings {
     }
 
     fun setLastTimeSet(timeInMins: Int) {
-        preferences.edit().putInt(KEY_LASTTIME_SET, timeInMins).apply()
+        preferences.edit { putInt(KEY_LASTTIME_SET, timeInMins) }
     }
 }

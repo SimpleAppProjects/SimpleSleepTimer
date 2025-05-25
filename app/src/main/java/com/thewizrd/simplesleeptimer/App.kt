@@ -3,43 +3,50 @@ package com.thewizrd.simplesleeptimer
 import android.app.Activity
 import android.app.Application
 import android.app.Application.ActivityLifecycleCallbacks
-import android.content.Context
+import android.content.SharedPreferences
 import android.os.Build
 import android.os.Bundle
 import android.os.StrictMode
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.preference.PreferenceManager
 import androidx.work.Configuration
 import com.google.android.material.color.DynamicColors
 import com.thewizrd.shared_resources.ApplicationLib
-import com.thewizrd.shared_resources.SimpleLibrary
+import com.thewizrd.shared_resources.SharedModule
+import com.thewizrd.shared_resources.appLib
 import com.thewizrd.shared_resources.helpers.AppState
+import com.thewizrd.shared_resources.sharedDeps
+import com.thewizrd.shared_resources.utils.Logger
+import kotlinx.coroutines.cancel
 
-class App : Application(), ApplicationLib, ActivityLifecycleCallbacks, Configuration.Provider {
-    companion object {
-        @JvmStatic
-        lateinit var instance: ApplicationLib
-            private set
-    }
-
-    override lateinit var appContext: Context
-        private set
-    override lateinit var applicationState: AppState
-        private set
-    override val isPhone: Boolean = true
-
-    private var mActivitiesStarted: Int = 0
+class App : Application(), ActivityLifecycleCallbacks, Configuration.Provider {
+    private lateinit var applicationState: AppState
+    private var mActivitiesStarted = 0
 
     override fun onCreate() {
         super.onCreate()
-        appContext = applicationContext
-        instance = this
+
         registerActivityLifecycleCallbacks(this)
         applicationState = AppState.CLOSED
         mActivitiesStarted = 0
 
-        // Init shared library
-        SimpleLibrary.initialize(this)
+        // Initialize app dependencies (library module chain)
+        // 1. ApplicationLib + SharedModule, 2. Firebase
+        appLib = object : ApplicationLib() {
+            override val context = applicationContext
+            override val preferences: SharedPreferences
+                get() = PreferenceManager.getDefaultSharedPreferences(context)
+            override val appState: AppState
+                get() = applicationState
+            override val isPhone = true
+        }
+
+        sharedDeps = object : SharedModule() {
+            override val context = appLib.context // keep same context as applib
+        }
+
+        FirebaseConfigurator.initialize(applicationContext)
 
         // Debugging
         if (BuildConfig.DEBUG) {
@@ -67,7 +74,9 @@ class App : Application(), ApplicationLib, ActivityLifecycleCallbacks, Configura
     }
 
     override fun onTerminate() {
-        SimpleLibrary.unregister()
+        // Shutdown logger
+        Logger.shutdown()
+        appLib.appScope.cancel()
         super.onTerminate()
     }
 

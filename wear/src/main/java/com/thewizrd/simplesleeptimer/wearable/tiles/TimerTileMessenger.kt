@@ -2,7 +2,6 @@ package com.thewizrd.simplesleeptimer.wearable.tiles
 
 import android.content.Context
 import android.text.format.DateUtils
-import android.util.Log
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.CapabilityInfo
@@ -16,6 +15,7 @@ import com.thewizrd.shared_resources.helpers.WearableHelper
 import com.thewizrd.shared_resources.sleeptimer.SleepTimerHelper
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.shared_resources.utils.JSONParser
+import com.thewizrd.shared_resources.utils.Logger
 import com.thewizrd.shared_resources.utils.bytesToString
 import com.thewizrd.shared_resources.utils.intToBytes
 import kotlinx.coroutines.CoroutineScope
@@ -59,7 +59,7 @@ class TimerTileMessenger(private val context: Context) :
     }
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
-        Log.d(TAG, "message received - path: ${messageEvent.path}")
+        Logger.debug(TAG, "message received - path: ${messageEvent.path}")
 
         scope.launch {
             when (messageEvent.path) {
@@ -115,7 +115,7 @@ class TimerTileMessenger(private val context: Context) :
                         if (e.statusCode == WearableStatusCodes.TARGET_NODE_NOT_CONNECTED) {
                             mConnectionStatus = WearConnectionStatus.DISCONNECTED
                         } else {
-                            Log.e(TAG, "Error", e)
+                            Logger.error(TAG, e, "Error")
                         }
                     }
                 }
@@ -152,7 +152,7 @@ class TimerTileMessenger(private val context: Context) :
                     if (e.statusCode == WearableStatusCodes.TARGET_NODE_NOT_CONNECTED) {
                         mConnectionStatus = WearConnectionStatus.DISCONNECTED
                     } else {
-                        Log.e(TAG, "Error", e)
+                        Logger.error(TAG, e, "Error")
                     }
                 }
             }
@@ -171,7 +171,7 @@ class TimerTileMessenger(private val context: Context) :
                 .await()
             node = pickBestNodeId(capabilityInfo.nodes)
         } catch (e: Exception) {
-            Log.e(TAG, "Error", e)
+            Logger.error(TAG, e, "Error")
         }
 
         return node
@@ -271,7 +271,7 @@ class TimerTileMessenger(private val context: Context) :
                 .connectedNodes
                 .await()
         } catch (e: Exception) {
-            Log.e(TAG, "Error", e)
+            Logger.error(TAG, e, "Error")
         }
 
         return emptyList()
@@ -290,7 +290,7 @@ class TimerTileMessenger(private val context: Context) :
                 }
             }
 
-            Log.e(TAG, "Error", e)
+            Logger.error(TAG, e, "Error")
         }
     }
 
@@ -304,7 +304,7 @@ class TimerTileMessenger(private val context: Context) :
                 val apiException = e.cause as? ApiException ?: e as ApiException
                 throw apiException
             }
-            Log.e(TAG, "Error", e)
+            Logger.error(TAG, e, "Error")
         }
     }
 }

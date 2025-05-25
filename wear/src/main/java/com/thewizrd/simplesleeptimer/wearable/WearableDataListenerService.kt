@@ -6,7 +6,6 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.os.Build
 import android.os.SystemClock
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -17,12 +16,18 @@ import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import androidx.wear.ongoing.OngoingActivity
 import androidx.wear.ongoing.Status
-import com.google.android.gms.wearable.*
+import com.google.android.gms.wearable.CapabilityInfo
+import com.google.android.gms.wearable.MessageEvent
+import com.google.android.gms.wearable.Node
+import com.google.android.gms.wearable.Wearable
+import com.google.android.gms.wearable.WearableListenerService
 import com.thewizrd.shared_resources.helpers.WearableHelper
 import com.thewizrd.shared_resources.helpers.toImmutableCompatFlag
 import com.thewizrd.shared_resources.sleeptimer.SleepTimerHelper
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.shared_resources.utils.JSONParser
+import com.thewizrd.shared_resources.utils.Logger
+import com.thewizrd.shared_resources.utils.bytesToString
 import com.thewizrd.simplesleeptimer.R
 import com.thewizrd.simplesleeptimer.SleepTimerActivity
 import com.thewizrd.simplesleeptimer.wearable.tiles.SleepTimerTileService
@@ -48,46 +53,36 @@ class WearableDataListenerService : WearableListenerService() {
     }
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
-        if (messageEvent.path == WearableHelper.StartActivityPath) {
-            val startIntent = Intent(this, SleepTimerActivity::class.java)
-                .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-            this.startActivity(startIntent)
-        } else if (messageEvent.path == SleepTimerHelper.SleepTimerStartPath ||
-            messageEvent.path == SleepTimerHelper.SleepTimerStopPath
-        ) {
-            SleepTimerTileService.requestTileUpdate(this)
-        }
-    }
-
-    override fun onDataChanged(dataEventBuffer: DataEventBuffer) {
-        super.onDataChanged(dataEventBuffer)
-
-        for (event in dataEventBuffer) {
-            if (event.type == DataEvent.TYPE_CHANGED) {
-                val item = event.dataItem
-                if (item.uri.path == SleepTimerHelper.SleepTimerBridgePath) {
-                    createTimerOngoingActivity(item)
-                }
+        when (messageEvent.path) {
+            WearableHelper.StartActivityPath -> {
+                val startIntent = Intent(this, SleepTimerActivity::class.java)
+                    .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                this.startActivity(startIntent)
             }
-            if (event.type == DataEvent.TYPE_DELETED) {
-                val item = event.dataItem
-                if (item.uri.path == SleepTimerHelper.SleepTimerBridgePath) {
+
+            SleepTimerHelper.SleepTimerStartPath, SleepTimerHelper.SleepTimerStopPath -> {
+                SleepTimerTileService.requestTileUpdate(this)
+            }
+
+            SleepTimerHelper.SleepTimerBridgePath -> {
+                val jsonData = messageEvent.data?.bytesToString()
+                val model = jsonData?.let {
+                    JSONParser.deserializer(it, TimerModel::class.java)
+                }
+
+                if (model != null) {
+                    createTimerOngoingActivity(model)
+                } else {
                     dismissTimerOngoingActivity()
                 }
             }
         }
     }
 
-    private fun createTimerOngoingActivity(item: DataItem) {
+    private fun createTimerOngoingActivity(model: TimerModel) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             initTimerNotifChannel()
         }
-
-        val dataMap = DataMapItem.fromDataItem(item).dataMap
-        val model = JSONParser.deserializer(
-            dataMap.getString(SleepTimerHelper.KEY_TIMERDATA),
-            TimerModel::class.java
-        ) ?: return
 
         val notifBuilder = NotificationCompat.Builder(this, NOT_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_hourglass_empty)
@@ -190,7 +185,7 @@ class WearableDataListenerService : WearableListenerService() {
             Wearable.getMessageClient(this@WearableDataListenerService)
                 .sendMessage(nodeID, path, data).await()
         } catch (e: Exception) {
-            Log.e(TAG, "Error", e)
+            Logger.error(TAG, e, "Error")
         }
     }
 

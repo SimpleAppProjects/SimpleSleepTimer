@@ -11,7 +11,7 @@ import androidx.wear.protolayout.ModifiersBuilders.Clickable
 import androidx.wear.protolayout.ResourceBuilders
 import com.google.android.horologist.annotations.ExperimentalHorologistApi
 import com.google.android.horologist.tiles.images.drawableResToImageResource
-import com.google.android.horologist.tiles.render.SingleTileLayoutRenderer
+import com.google.android.horologist.tiles.render.SingleTileLayoutRendererWithState
 import com.thewizrd.shared_resources.helpers.WearConnectionStatus
 import com.thewizrd.simplesleeptimer.R
 import com.thewizrd.simplesleeptimer.wearable.tiles.layouts.StartTimerLayout
@@ -21,7 +21,7 @@ import com.thewizrd.simplesleeptimer.wearable.tiles.layouts.getTapAction
 
 @OptIn(ExperimentalHorologistApi::class)
 class SleepTimerTileRenderer(context: Context, debugResourceMode: Boolean = false) :
-    SingleTileLayoutRenderer<TimerState, Unit>(context, debugResourceMode) {
+    SingleTileLayoutRendererWithState<TimerState, Unit>(context, debugResourceMode) {
     companion object {
         internal const val ID_5MIN = "id_5m"
         internal const val ID_10MIN = "id_10m"
@@ -105,7 +105,7 @@ class SleepTimerTileRenderer(context: Context, debugResourceMode: Boolean = fals
     override fun ResourceBuilders.Resources.Builder.produceRequestedResources(
         resourceState: Unit,
         deviceParameters: DeviceParametersBuilders.DeviceParameters,
-        resourceIds: MutableList<String>
+        resourceIds: List<String>
     ) {
         val resources = mapOf(
             ID_LOCAL_TIMER to R.drawable.ic_hourglass_empty,
@@ -123,12 +123,13 @@ class SleepTimerTileRenderer(context: Context, debugResourceMode: Boolean = fals
         return "isLocalTimer=${state.isLocalTimer}"
     }
 
-    override val freshnessIntervalMillis: Long
-        get() = if (state.isLocalTimer) {
+    override fun getFreshnessIntervalMillis(state: TimerState): Long {
+        return if (state.isLocalTimer) {
             60000
         } else {
-            super.freshnessIntervalMillis
+            super.getFreshnessIntervalMillis(state)
         }
+    }
 }
 
 internal enum class TimerTileDuration {
