@@ -22,6 +22,7 @@ import androidx.annotation.CallSuper
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.thewizrd.shared_resources.R
@@ -275,7 +276,7 @@ abstract class BaseTimerService : Service() {
             model.stopTimer()
             sendTimerCancelled()
         }
-        stopForeground(true)
+        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         NotificationManagerCompat.from(this).cancel(notificationId)
         stopSelf()
     }
@@ -463,7 +464,7 @@ abstract class BaseTimerService : Service() {
         // Background restrictions don't apply to bound services
         // We can remove the notification now
         mIsBound = true
-        stopForeground(true)
+        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
 
         return binder
     }
@@ -512,7 +513,7 @@ abstract class BaseTimerService : Service() {
         timerFallback?.purge()
         scope.cancel()
         super.onDestroy()
-        stopForeground(true)
+        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
     }
 
     final override fun onRebind(intent: Intent?) {
@@ -521,7 +522,7 @@ abstract class BaseTimerService : Service() {
 
         // Background restrictions don't apply to bound services
         // We can remove the notification now
-        stopForeground(true)
+        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
     }
 
     final override fun onUnbind(intent: Intent?): Boolean {

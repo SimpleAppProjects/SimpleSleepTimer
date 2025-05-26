@@ -49,6 +49,7 @@ class SleepTimerLocalTileService : SuspendingTileService() {
                 SleepTimerTileRenderer.ID_15MIN -> timerBinder.startTimer(15)
                 SleepTimerTileRenderer.ID_20MIN -> timerBinder.startTimer(20)
                 SleepTimerTileRenderer.ID_30MIN -> timerBinder.startTimer(30)
+                SleepTimerTileRenderer.ID_STOP -> timerBinder.cancelTimer()
             }
         }
 

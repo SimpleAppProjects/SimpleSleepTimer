@@ -19,19 +19,20 @@ import androidx.wear.ongoing.Status
 import com.google.android.gms.wearable.CapabilityInfo
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.Node
-import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableListenerService
+import com.thewizrd.shared_resources.appLib
 import com.thewizrd.shared_resources.helpers.WearableHelper
 import com.thewizrd.shared_resources.helpers.toImmutableCompatFlag
 import com.thewizrd.shared_resources.sleeptimer.SleepTimerHelper
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.shared_resources.utils.JSONParser
-import com.thewizrd.shared_resources.utils.Logger
 import com.thewizrd.shared_resources.utils.bytesToString
 import com.thewizrd.simplesleeptimer.R
 import com.thewizrd.simplesleeptimer.SleepTimerActivity
+import com.thewizrd.simplesleeptimer.datastore.remoteTimerDataStore
 import com.thewizrd.simplesleeptimer.wearable.tiles.SleepTimerTileService
-import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 
 class WearableDataListenerService : WearableListenerService() {
     companion object {
@@ -60,8 +61,58 @@ class WearableDataListenerService : WearableListenerService() {
                 this.startActivity(startIntent)
             }
 
-            SleepTimerHelper.SleepTimerStartPath, SleepTimerHelper.SleepTimerStopPath -> {
-                SleepTimerTileService.requestTileUpdate(this)
+            SleepTimerHelper.SleepTimerStartPath,
+            SleepTimerHelper.SleepTimerStatusPath -> {
+                val jsonData = messageEvent.data?.bytesToString()
+                val model = jsonData?.let {
+                    JSONParser.deserializer(it, TimerModel::class.java)
+                }
+
+                appLib.appScope.launch {
+                    runCatching {
+                        val tileDataStore = appLib.context.remoteTimerDataStore
+                        val currentState = tileDataStore.data.firstOrNull()
+
+                        tileDataStore.updateData { cache ->
+                            cache.copy(
+                                isLocalTimer = false,
+                                timerModel = model?.apply {
+                                    // Add a second for latency
+                                    endTimeInMs += 500
+                                    updateModel(this)
+                                }
+                            )
+                        }
+
+                        if (model?.isRunning != currentState?.timerModel?.isRunning ||
+                            model?.endTimeInMs != currentState?.timerModel?.endTimeInMs
+                        ) {
+                            SleepTimerTileService.requestTileUpdate(this@WearableDataListenerService)
+                        }
+                    }
+                }
+            }
+
+            SleepTimerHelper.SleepTimerStopPath -> {
+                appLib.appScope.launch {
+                    runCatching {
+                        val tileDataStore = appLib.context.remoteTimerDataStore
+
+                        tileDataStore.updateData { cache ->
+                            cache.copy(
+                                isLocalTimer = false,
+                                timerModel = cache.timerModel?.let {
+                                    it.stopTimer()
+                                    TimerModel().apply {
+                                        updateModel(it)
+                                    }
+                                }
+                            )
+                        }
+
+                        SleepTimerTileService.requestTileUpdate(this@WearableDataListenerService)
+                    }
+                }
             }
 
             SleepTimerHelper.SleepTimerBridgePath -> {
@@ -177,15 +228,6 @@ class WearableDataListenerService : WearableListenerService() {
         if (mPhoneNodeWithApp == null) {
             // Disconnect or dismiss any ongoing activity
             dismissTimerOngoingActivity()
-        }
-    }
-
-    private suspend fun sendMessage(nodeID: String, path: String, data: ByteArray?) {
-        try {
-            Wearable.getMessageClient(this@WearableDataListenerService)
-                .sendMessage(nodeID, path, data).await()
-        } catch (e: Exception) {
-            Logger.error(TAG, e, "Error")
         }
     }
 

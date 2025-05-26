@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalWearFoundationApi::class)
+
 package com.thewizrd.simplesleeptimer.ui
 
 import android.content.Context
@@ -52,6 +54,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.wear.compose.foundation.ExperimentalWearFoundationApi
+import androidx.wear.compose.foundation.rememberActiveFocusRequester
+import androidx.wear.compose.foundation.rotary.rotaryScrollable
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.ChipDefaults
@@ -65,7 +70,7 @@ import androidx.wear.compose.ui.tooling.preview.WearPreviewFontScales
 import com.google.android.horologist.annotations.ExperimentalHorologistApi
 import com.google.android.horologist.compose.material.AlertDialog
 import com.google.android.horologist.compose.material.Chip
-import com.google.android.horologist.compose.rotaryinput.onRotaryInputAccumulatedWithFocus
+import com.google.android.horologist.compose.rotaryinput.accumulatedBehavior
 import com.google.android.horologist.images.base.paintable.ImageVectorPaintable.Companion.asPaintable
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.shared_resources.utils.Logger
@@ -123,9 +128,9 @@ fun StartTimerScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .onRotaryInputAccumulatedWithFocus(
-                isLowRes = false,
-                onValueChange = {
+            .rotaryScrollable(
+                focusRequester = rememberActiveFocusRequester(),
+                behavior = accumulatedBehavior {
                     if (it.sign > 0) {
                         timerModel.requestTimerOp(ADD_1M)
                     } else {
@@ -142,7 +147,7 @@ fun StartTimerScreen(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(TopEdgePadding() + 12.dp))
+            Spacer(modifier = Modifier.height(topEdgePadding() + 12.dp))
             if (!state.isLocalTimer) {
                 Icon(
                     modifier = Modifier
@@ -261,7 +266,7 @@ fun StartTimerScreen(
             }
             Box(
                 modifier = Modifier
-                    .padding(top = 8.dp, bottom = TopEdgePadding())
+                    .padding(top = 8.dp, bottom = topEdgePadding())
                     .weight(fill = true, weight = 1.5f),
                 contentAlignment = Alignment.Center
             ) {
@@ -339,7 +344,7 @@ fun StartTimerScreen(
             icon = {
                 Icon(
                     imageVector = Icons.Default.Info,
-                    contentDescription = "Info"
+                    contentDescription = stringResource(R.string.label_info)
                 )
             },
             message = stringResource(R.string.message_alarms_permission)
@@ -347,13 +352,14 @@ fun StartTimerScreen(
             item {
                 Chip(
                     modifier = Modifier.fillMaxWidth(),
-                    label = "Settings",
+                    label = stringResource(R.string.label_settings),
                     icon = Icons.Default.Settings.asPaintable(),
                     colors = ChipDefaults.secondaryChipColors(),
                     onClick = {
                         runCatching {
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                                 context.startActivity(Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
+                                showAlarmPermissionDialog = false
                             }
                         }.onFailure {
                             Logger.error("SleepTimerActivity", it, "Error")
@@ -404,7 +410,7 @@ fun TimerInProgressScreen(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(TopEdgePadding()))
+            Spacer(modifier = Modifier.height(topEdgePadding()))
             Row(
                 modifier = Modifier
                     .wrapContentWidth()
@@ -478,7 +484,7 @@ fun TimerInProgressScreen(
             }
             Box(
                 modifier = Modifier
-                    .padding(top = 8.dp, bottom = TopEdgePadding())
+                    .padding(top = 8.dp, bottom = topEdgePadding())
                     .fillMaxHeight(),
                 contentAlignment = Alignment.Center
             ) {
@@ -555,7 +561,7 @@ private fun PreviewTimerInProgressScreen() {
 }
 
 @Composable
-private fun TopEdgePadding(): Dp {
+private fun topEdgePadding(): Dp {
     val isRound = LocalConfiguration.current.isScreenRound
     var inset: Dp = 12.dp
 

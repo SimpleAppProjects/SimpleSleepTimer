@@ -162,7 +162,7 @@ fun SleepTimerApp(
             icon = {
                 Icon(
                     painter = rememberVectorPainter(image = Icons.Default.Info),
-                    contentDescription = "Info"
+                    contentDescription = stringResource(R.string.label_info)
                 )
             },
             message = stringResource(id = R.string.message_wearappupdate_available)

@@ -41,6 +41,7 @@ import com.thewizrd.simplesleeptimer.BuildConfig
 import com.thewizrd.simplesleeptimer.R
 import com.thewizrd.simplesleeptimer.wearable.tiles.SleepTimerTileRenderer.Companion.ID_LOCAL_TIMER
 import com.thewizrd.simplesleeptimer.wearable.tiles.SleepTimerTileRenderer.Companion.ID_REMOTE_TIMER
+import com.thewizrd.simplesleeptimer.wearable.tiles.SleepTimerTileRenderer.Companion.ID_STOP
 import com.thewizrd.simplesleeptimer.wearable.tiles.TimerState
 import com.thewizrd.simplesleeptimer.wearable.tiles.TimerTileDuration
 import java.time.Instant
@@ -85,23 +86,72 @@ fun TimerProgressLayout(
     deviceParameters: DeviceParameters,
     state: TimerState
 ): LayoutElementBuilders.LayoutElement {
-    val timerLengthInMins = state.timerModel.timerLengthInMins
+    val timerLengthInMins = state.timerModel?.timerLengthInMins ?: 0
     val hours = timerLengthInMins / 60
     val minutes = timerLengthInMins - (hours * 60)
 
-    return Column.Builder()
-        .setHorizontalAlignment(HORIZONTAL_ALIGN_CENTER)
-        .setHeight(wrap())
-        .setWidth(expand())
-        .addContent(
-            Image.Builder()
-                .setResourceId(if (state.isLocalTimer) ID_LOCAL_TIMER else ID_REMOTE_TIMER)
-                .setHeight(dp(24f))
-                .setWidth(dp(24f))
-                .setContentScaleMode(CONTENT_SCALE_MODE_FIT)
-                .setColorFilter(
-                    ColorFilter.Builder()
-                        .setTint(
+    return PrimaryLayout.Builder(deviceParameters)
+        .setResponsiveContentInsetEnabled(true)
+        .setContent(
+            Column.Builder()
+                .setHorizontalAlignment(HORIZONTAL_ALIGN_CENTER)
+                .setHeight(wrap())
+                .setWidth(expand())
+                .addContent(
+                    Image.Builder()
+                        .setResourceId(if (state.isLocalTimer) ID_LOCAL_TIMER else ID_REMOTE_TIMER)
+                        .setHeight(dp(24f))
+                        .setWidth(dp(24f))
+                        .setContentScaleMode(CONTENT_SCALE_MODE_FIT)
+                        .setColorFilter(
+                            ColorFilter.Builder()
+                                .setTint(
+                                    ColorBuilders.argb(
+                                        ContextCompat.getColor(context, R.color.colorSecondary)
+                                    )
+                                )
+                                .build()
+                        )
+                        .build()
+                )
+                .addContent(Spacer.Builder().setHeight(DEFAULT_VERTICAL_SPACER_HEIGHT).build())
+                .addContent(
+                    Column.Builder()
+                        .setHorizontalAlignment(HORIZONTAL_ALIGN_CENTER)
+                        .setHeight(wrap())
+                        .setWidth(expand())
+                        .addContent(
+                            Text.Builder(
+                                context,
+                                StringProp.Builder("--")
+                                    .setDynamicValue(
+                                        getDynamicDurationText(state)
+                                    )
+                                    .build(),
+                                StringLayoutConstraint.Builder("99 : 99 : 99")
+                                    .build()
+                            )
+                                .setMaxLines(1)
+                                .setTypography(Typography.TYPOGRAPHY_TITLE3)
+                                .setColor(
+                                    ColorBuilders.argb(Color.WHITE)
+                                )
+                                .build()
+                        )
+                        .build()
+                )
+                .addContent(
+                    Text.Builder(
+                        context,
+                        if (hours > 0) {
+                            context.getString(R.string.label_tile_duration_hr_min, hours, minutes)
+                        } else {
+                            context.getString(R.string.label_tile_duration_mins, minutes)
+                        }
+                    )
+                        .setMaxLines(1)
+                        .setTypography(Typography.TYPOGRAPHY_TITLE3)
+                        .setColor(
                             ColorBuilders.argb(
                                 ContextCompat.getColor(context, R.color.colorSecondary)
                             )
@@ -110,49 +160,19 @@ fun TimerProgressLayout(
                 )
                 .build()
         )
-        .addContent(Spacer.Builder().setHeight(DEFAULT_VERTICAL_SPACER_HEIGHT).build())
-        .addContent(
-            Column.Builder()
-                .setHorizontalAlignment(HORIZONTAL_ALIGN_CENTER)
-                .setHeight(wrap())
-                .setWidth(expand())
-                .addContent(
-                    Text.Builder(
-                        context,
-                        StringProp.Builder("--")
-                            .setDynamicValue(
-                                getDynamicDurationText(state)
-                            )
-                            .build(),
-                        StringLayoutConstraint.Builder("99 : 99 : 99")
+        .setPrimaryChipContent(
+            CompactChip.Builder(
+                context,
+                context.getString(R.string.label_stop),
+                Clickable.Builder()
+                    .setId(ID_STOP)
+                    .setOnClick(
+                        ActionBuilders.LoadAction.Builder()
                             .build()
                     )
-                        .setMaxLines(1)
-                        .setTypography(Typography.TYPOGRAPHY_TITLE3)
-                        .setColor(
-                            ColorBuilders.argb(Color.WHITE)
-                        )
-                        .build()
-                )
-                .build()
-        )
-        .addContent(
-            Text.Builder(
-                context,
-                if (hours > 0) {
-                    context.getString(R.string.label_tile_duration_hr_min, hours, minutes)
-                } else {
-                    context.getString(R.string.label_tile_duration_mins, minutes)
-                }
-            )
-                .setMaxLines(1)
-                .setTypography(Typography.TYPOGRAPHY_TITLE3)
-                .setColor(
-                    ColorBuilders.argb(
-                        ContextCompat.getColor(context, R.color.colorSecondary)
-                    )
-                )
-                .build()
+                    .build(),
+                deviceParameters
+            ).build()
         )
         .build()
 }
@@ -251,7 +271,11 @@ private fun TimerButton(
 
 private fun getDynamicDurationText(state: TimerState): DynamicString {
     val durationUntilEnd =
-        DynamicBuilders.DynamicInstant.withSecondsPrecision(Instant.ofEpochMilli(state.timerModel.endTimeInMs))
+        DynamicBuilders.DynamicInstant.withSecondsPrecision(
+            Instant.ofEpochMilli(
+                state.timerModel?.endTimeInMs ?: 0
+            )
+        )
             .durationUntil(
                 DynamicBuilders.DynamicInstant.platformTimeWithSecondsPrecision()
             )

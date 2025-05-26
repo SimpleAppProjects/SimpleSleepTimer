@@ -33,7 +33,8 @@
 #-keep class com.google.gson.stream.** { *; }
 
 # Application classes that will be serialized/deserialized over Gson
--keep class com.thewizrd.simplewear.viewmodels.ConfirmationData { *; }
+-keep class com.thewizrd.simplesleeptimer.datastore.RemoteTimerStateCache { *; }
+-keep class com.thewizrd.simplesleeptimer.viewmodels.ConfirmationData { *; }
 
 # Prevent proguard from stripping interface information from TypeAdapter, TypeAdapterFactory,
 # JsonSerializer, JsonDeserializer instances (so they can be used in @JsonAdapter)

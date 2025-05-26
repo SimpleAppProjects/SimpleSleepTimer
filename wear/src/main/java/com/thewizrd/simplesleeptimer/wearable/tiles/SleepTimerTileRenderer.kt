@@ -28,20 +28,17 @@ class SleepTimerTileRenderer(context: Context, debugResourceMode: Boolean = fals
         internal const val ID_15MIN = "id_15m"
         internal const val ID_20MIN = "id_20m"
         internal const val ID_30MIN = "id_30m"
+        internal const val ID_STOP = "id_stop"
 
         // Resource IDs
         internal const val ID_LOCAL_TIMER = "id_local_timer_ico"
         internal const val ID_REMOTE_TIMER = "id_remote_timer_ico"
     }
 
-    private lateinit var state: TimerState
-
     override fun renderTile(
         state: TimerState,
         deviceParameters: DeviceParametersBuilders.DeviceParameters
     ): LayoutElementBuilders.LayoutElement {
-        this.state = state
-
         return LayoutElementBuilders.Box.Builder()
             .setModifiers(
                 ModifiersBuilders.Modifiers.Builder()
@@ -79,7 +76,7 @@ class SleepTimerTileRenderer(context: Context, debugResourceMode: Boolean = fals
         state: TimerState,
         deviceParameters: DeviceParametersBuilders.DeviceParameters
     ): LayoutElementBuilders.LayoutElement {
-        return if (state.timerModel.isRunning) {
+        return if (state.timerModel?.isRunning == true) {
             TimerProgressLayout(
                 context = context,
                 deviceParameters,
