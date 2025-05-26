@@ -1,6 +1,8 @@
 package com.thewizrd.simplesleeptimer.ui
 
 import android.content.Context
+import android.content.Intent
+import android.os.Build
 import android.text.format.DateUtils
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -15,12 +17,20 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -34,16 +44,17 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
-import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
+import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.CircularProgressIndicator
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.MaterialTheme
@@ -52,8 +63,12 @@ import androidx.wear.compose.material.TimeText
 import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
 import androidx.wear.compose.ui.tooling.preview.WearPreviewFontScales
 import com.google.android.horologist.annotations.ExperimentalHorologistApi
+import com.google.android.horologist.compose.material.AlertDialog
+import com.google.android.horologist.compose.material.Chip
 import com.google.android.horologist.compose.rotaryinput.onRotaryInputAccumulatedWithFocus
+import com.google.android.horologist.images.base.paintable.ImageVectorPaintable.Companion.asPaintable
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
+import com.thewizrd.shared_resources.utils.Logger
 import com.thewizrd.shared_resources.utils.TimerStringFormatter
 import com.thewizrd.simplesleeptimer.R
 import com.thewizrd.simplesleeptimer.preferences.Settings
@@ -68,6 +83,7 @@ import com.thewizrd.simplesleeptimer.viewmodels.TimerOperation.MINUS_5M
 import com.thewizrd.simplesleeptimer.viewmodels.TimerOperation.START
 import com.thewizrd.simplesleeptimer.viewmodels.TimerOperation.STOP
 import com.thewizrd.simplesleeptimer.viewmodels.TimerViewModel
+import kotlinx.coroutines.launch
 import java.time.Duration
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -90,6 +106,7 @@ fun StartTimerScreen(
     var showMusicPlayerDialog by remember {
         mutableStateOf(false)
     }
+    var showAlarmPermissionDialog by remember { mutableStateOf(false) }
 
     val timerDuration = remember(state) {
         Duration.ofMillis(state.timerLengthInMs)
@@ -133,7 +150,7 @@ fun StartTimerScreen(
                         .clickable(role = Role.Button) {
                             showMusicPlayerDialog = true
                         },
-                    painter = painterResource(id = R.drawable.ic_music_note),
+                    imageVector = Icons.Default.MusicNote,
                     contentDescription = stringResource(id = R.string.title_audioplayer)
                 )
             }
@@ -213,7 +230,7 @@ fun StartTimerScreen(
                         .clickable {
                             timerModel.updateTimerState(timerLengthInMs = TimerModel.DEFAULT_TIME_MIN * DateUtils.MINUTE_IN_MILLIS)
                         },
-                    painter = painterResource(id = R.drawable.ic_baseline_restart_alt_24),
+                    imageVector = Icons.Default.RestartAlt,
                     contentDescription = stringResource(id = R.string.action_reset),
                     tint = MaterialTheme.colors.onBackground
                 )
@@ -271,7 +288,7 @@ fun StartTimerScreen(
                             modifier = Modifier.size(
                                 if (isLarge) ButtonDefaults.DefaultIconSize else ButtonDefaults.SmallIconSize
                             ),
-                            painter = painterResource(id = R.drawable.ic_play_arrow),
+                            imageVector = Icons.Default.PlayArrow,
                             contentDescription = stringResource(id = R.string.label_start)
                         )
                     }
@@ -292,6 +309,18 @@ fun StartTimerScreen(
         }
     }
 
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycleScope.launch {
+            timerModel.eventFlow.collect { event ->
+                when (event.eventType) {
+                    android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM -> {
+                        showAlarmPermissionDialog = true
+                    }
+                }
+            }
+        }
+    }
+
     SleepTimePickerDialog(
         showDialog = showPickerDialog,
         onDismissRequest = { showPickerDialog = false },
@@ -304,6 +333,36 @@ fun StartTimerScreen(
     )
 
     if (!isPreview) {
+        AlertDialog(
+            showDialog = showAlarmPermissionDialog,
+            onDismiss = { showAlarmPermissionDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = "Info"
+                )
+            },
+            message = stringResource(R.string.message_alarms_permission)
+        ) {
+            item {
+                Chip(
+                    modifier = Modifier.fillMaxWidth(),
+                    label = "Settings",
+                    icon = Icons.Default.Settings.asPaintable(),
+                    colors = ChipDefaults.secondaryChipColors(),
+                    onClick = {
+                        runCatching {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                context.startActivity(Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
+                            }
+                        }.onFailure {
+                            Logger.error("SleepTimerActivity", it, "Error")
+                        }
+                    }
+                )
+            }
+        }
+
         MusicPlayersDialog(
             showDialog = showMusicPlayerDialog,
             onDismissRequest = { showMusicPlayerDialog = false }
@@ -438,7 +497,7 @@ fun TimerInProgressScreen(
                         modifier = Modifier.size(
                             if (isLarge) ButtonDefaults.LargeIconSize else ButtonDefaults.DefaultIconSize
                         ),
-                        painter = painterResource(id = R.drawable.ic_stop),
+                        imageVector = Icons.Default.Stop,
                         contentDescription = stringResource(id = R.string.label_stop)
                     )
                 }

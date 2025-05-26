@@ -12,6 +12,7 @@ import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.shared_resources.utils.JSONParser
 import com.thewizrd.shared_resources.utils.bytesToInt
 import com.thewizrd.shared_resources.utils.bytesToString
+import com.thewizrd.shared_resources.utils.longToBytes
 import com.thewizrd.simplesleeptimer.SleepTimerActivity
 import com.thewizrd.simplesleeptimer.services.TimerService
 import kotlinx.coroutines.Dispatchers
@@ -74,6 +75,11 @@ class WearableDataListenerService : WearableListenerService() {
                     TimerDataModel.getDataModel().updateModel(model)
                     updateSleepTimer()
                 }
+            } else if (messageEvent.path == WearableHelper.VersionPath) {
+                mWearMgr.sendMessage(
+                    messageEvent.sourceNodeId, messageEvent.path,
+                    WearableHelper.getAppVersionCode().longToBytes()
+                )
             }
         }
     }

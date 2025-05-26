@@ -11,6 +11,7 @@ import com.thewizrd.shared_resources.SharedModule
 import com.thewizrd.shared_resources.appLib
 import com.thewizrd.shared_resources.helpers.AppState
 import com.thewizrd.shared_resources.sharedDeps
+import com.thewizrd.shared_resources.utils.Logger
 import kotlinx.coroutines.cancel
 
 class App : Application(), Application.ActivityLifecycleCallbacks {
@@ -62,7 +63,7 @@ class App : Application(), Application.ActivityLifecycleCallbacks {
     override fun onTerminate() {
         super.onTerminate()
         // Shutdown logger
-        //Logger.shutdown()
+        Logger.shutdown()
         appLib.appScope.cancel()
     }
 
@@ -72,7 +73,7 @@ class App : Application(), Application.ActivityLifecycleCallbacks {
     }
 
     override fun onActivityResumed(activity: Activity) {
-        if ((activity is WearableListenerActivity || activity is SleepTimerLocalActivity) && applicationState != AppState.FOREGROUND) {
+        if ((activity is PhoneSyncActivity || activity is SleepTimerActivity || activity is SleepTimerLocalActivity) && applicationState != AppState.FOREGROUND) {
             applicationState = AppState.FOREGROUND
         }
     }

@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -25,7 +27,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -163,7 +164,7 @@ private fun MusicPlayersDialog(
                     icon = {
                         Icon(
                             modifier = Modifier.requiredSize(ChipDefaults.SmallIconSize),
-                            painter = painterResource(id = R.drawable.ic_baseline_refresh_24),
+                            imageVector = Icons.Default.Refresh,
                             contentDescription = stringResource(id = R.string.action_retry)
                         )
                     },
