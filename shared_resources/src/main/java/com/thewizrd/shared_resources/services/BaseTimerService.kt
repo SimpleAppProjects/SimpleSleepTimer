@@ -437,8 +437,10 @@ abstract class BaseTimerService : Service() {
 
         // Send pause event to which ever player has audio focus
         val audioMan = this.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        val event = KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE)
-        audioMan.dispatchMediaKeyEvent(event)
+        if (audioMan.isMusicActive) {
+            val event = KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE)
+            audioMan.dispatchMediaKeyEvent(event)
+        }
 
         // Use AudioFocus as a fallback
         if (audioMan.isMusicActive) {
