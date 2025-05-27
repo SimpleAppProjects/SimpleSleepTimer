@@ -20,7 +20,7 @@ object WearableHelper {
     // Name of capability listed in Wear app's wear.xml
     const val CAPABILITY_WEAR_APP = "com.thewizrd.simplesleeptimer_wear_app"
 
-    private const val SUPPORTED_VERSION_CODE: Long = 341400000
+    private const val SUPPORTED_VERSION_CODE: Long = 341500000
 
     fun getPlayStoreURI(): Uri = SleepTimerHelper.getPlayStoreURI()
 
