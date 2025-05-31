@@ -64,7 +64,8 @@
             android:name=".services.TimerService"
             android:exported="false"
             android:enabled="true"
-            android:foregroundServiceType="systemExempted" />
+            android:foregroundServiceType="systemExempted"
+            tools:ignore="ForegroundServicePermission" />
 
         <service
             android:name=".wearable.WearableDataListenerService"
