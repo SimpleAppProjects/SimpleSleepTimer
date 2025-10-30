@@ -1,7 +1,7 @@
 [versions]
-compileSdkVersion = "35"
+compileSdkVersion = "36"
 minSdkVersion = "24"
-targetSdkVersion = "34"
+targetSdkVersion = "35"
 
 gradleVersion = "8.13.0"
 kotlin_version = '2.1.20'
