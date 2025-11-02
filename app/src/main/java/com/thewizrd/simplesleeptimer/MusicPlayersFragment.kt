@@ -53,7 +53,7 @@ class MusicPlayersFragment : Fragment() {
         }
 
         binding.bottomSheetToolbar.setNavigationOnClickListener {
-            requireActivity().onBackPressed()
+            requireActivity().onBackPressedDispatcher.onBackPressed()
         }
 
         playerAdapter = PlayerListAdapter()

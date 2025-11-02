@@ -23,6 +23,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.view.Window
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -71,6 +72,8 @@ class SleepTimerActivity : AppCompatActivity() {
     private lateinit var mBroadcastReceiver: BroadcastReceiver
 
     private lateinit var permissionRequestLauncher: ActivityResultLauncher<String>
+
+    private lateinit var onBackPressedCallback: OnBackPressedCallback
 
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
@@ -268,6 +271,21 @@ class SleepTimerActivity : AppCompatActivity() {
             }
         }
 
+        onBackPressedCallback =
+            object : OnBackPressedCallback(supportFragmentManager.backStackEntryCount > 0) {
+                override fun handleOnBackPressed() {
+                    if (supportFragmentManager.backStackEntryCount > 0) {
+                        supportFragmentManager.popBackStack()
+                    }
+                }
+            }
+
+        supportFragmentManager.addOnBackStackChangedListener {
+            onBackPressedCallback.isEnabled = supportFragmentManager.backStackEntryCount > 0
+        }
+
+        onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
+
         lifecycleScope.launch {
             if (inAppUpdateManager.shouldStartImmediateUpdateFlow()) {
                 inAppUpdateManager.startImmediateUpdateFlow(
@@ -328,14 +346,6 @@ class SleepTimerActivity : AppCompatActivity() {
         stopUpdatingTime()
         unbindService(connection)
         mBound = false
-    }
-
-    override fun onBackPressed() {
-        if (supportFragmentManager.backStackEntryCount > 0) {
-            supportFragmentManager.popBackStack()
-        } else {
-            super.onBackPressed()
-        }
     }
 
     /* Views */
