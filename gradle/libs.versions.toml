@@ -9,7 +9,7 @@ kotlinx_version = '1.10.2'
 
 desugar_version = '2.1.5'
 
-firebase_version = "34.4.0"
+firebase_version = "34.5.0"
 firebaseCrashlyticsGradleVersion = "3.0.6"
 gmsVersion = "4.4.4"
 appUpdateKtxVersion = "2.1.0"
