@@ -5,21 +5,16 @@ package com.thewizrd.simplesleeptimer.ui
 import android.content.Intent
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.graphics.res.animatedVectorResource
 import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
 import androidx.compose.animation.graphics.vector.AnimatedImageVector
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
@@ -30,7 +25,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
@@ -40,19 +34,14 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.wear.compose.material.ChipDefaults
-import androidx.wear.compose.material.CircularProgressIndicator
-import androidx.wear.compose.material.Icon
-import androidx.wear.compose.material.MaterialTheme
-import androidx.wear.compose.material.Scaffold
-import androidx.wear.compose.material.TimeText
-import androidx.wear.compose.material.dialog.Dialog
+import androidx.wear.compose.material3.AlertDialog
+import androidx.wear.compose.material3.AlertDialogDefaults
+import androidx.wear.compose.material3.AppScaffold
+import androidx.wear.compose.material3.Button
+import androidx.wear.compose.material3.FilledTonalButton
+import androidx.wear.compose.material3.Icon
+import androidx.wear.compose.material3.Text
 import com.google.android.horologist.annotations.ExperimentalHorologistApi
-import com.google.android.horologist.compose.layout.ScalingLazyColumnDefaults
-import com.google.android.horologist.compose.layout.rememberColumnState
-import com.google.android.horologist.compose.material.AlertContent
-import com.google.android.horologist.compose.material.AlertDialog
-import com.google.android.horologist.compose.material.Chip
 import com.thewizrd.shared_resources.helpers.WearConnectionStatus
 import com.thewizrd.shared_resources.helpers.WearableHelper
 import com.thewizrd.shared_resources.utils.JSONParser
@@ -60,6 +49,7 @@ import com.thewizrd.shared_resources.utils.Logger
 import com.thewizrd.simplesleeptimer.PhoneSyncActivity
 import com.thewizrd.simplesleeptimer.R
 import com.thewizrd.simplesleeptimer.preferences.Settings
+import com.thewizrd.simplesleeptimer.ui.components.AnimatedLoadingContent
 import com.thewizrd.simplesleeptimer.ui.components.ConfirmationOverlay
 import com.thewizrd.simplesleeptimer.ui.theme.WearAppTheme
 import com.thewizrd.simplesleeptimer.ui.theme.activityViewModel
@@ -100,62 +90,31 @@ fun SleepTimerApp(
     var showAppUpdateConfirmation by remember { mutableStateOf(false) }
 
     WearAppTheme {
-        Scaffold(
-            modifier = modifier.background(MaterialTheme.colors.background),
-            timeText = {
-                TimeText()
-            },
-            vignette = null
-        ) {
-            AnimatedVisibility(
-                visible = uiState.isRunning && !uiState.isLoading,
-                enter = fadeIn(animationSpec = tween(250)) + slideInVertically(
+        AppScaffold {
+            AnimatedLoadingContent(
+                empty = !uiState.isRunning,
+                loading = uiState.isLoading,
+                enter = fadeIn(animationSpec = tween(250)) + slideInHorizontally(
                     animationSpec = tween(
                         500
                     )
                 ),
-                exit = fadeOut(animationSpec = tween(250)) + slideOutVertically(
+                exit = fadeOut(animationSpec = tween(250)) + slideOutHorizontally(
                     animationSpec = tween(
                         500
                     )
                 ),
+                emptyContent = {
+                    StartTimerScreen(timerModel = timerModel)
+                }
             ) {
                 TimerInProgressScreen(timerModel = timerModel)
-            }
-
-            AnimatedVisibility(
-                visible = !uiState.isRunning && !uiState.isLoading,
-                enter = fadeIn(animationSpec = tween(250)) + slideInVertically(
-                    animationSpec = tween(
-                        500
-                    )
-                ),
-                exit = fadeOut(animationSpec = tween(250)) + slideOutVertically(
-                    animationSpec = tween(
-                        500
-                    )
-                ),
-            ) {
-                StartTimerScreen(timerModel = timerModel)
-            }
-
-            AnimatedVisibility(
-                visible = uiState.isLoading,
-                enter = fadeIn(),
-                exit = fadeOut()
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
             }
         }
 
         AlertDialog(
-            showDialog = showUpdateDialog,
-            onDismiss = {
+            visible = showUpdateDialog,
+            onDismissRequest = {
                 Settings.setLastUpdateCheckTime(Instant.now())
                 showUpdateDialog = false
             },
@@ -165,15 +124,19 @@ fun SleepTimerApp(
                     contentDescription = stringResource(R.string.label_info)
                 )
             },
-            message = stringResource(id = R.string.message_wearappupdate_available)
+            title = {},
+            text = {
+                Text(text = stringResource(id = R.string.message_wearappupdate_available))
+            }
         ) {
             item {
                 Spacer(modifier = Modifier.height(12.dp))
             }
             item {
-                Chip(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    label = stringResource(id = R.string.action_update),
+                Button(
+                    label = {
+                        Text(text = stringResource(id = R.string.action_update))
+                    },
                     onClick = {
                         runCatching {
                             // Open store on device
@@ -189,57 +152,55 @@ fun SleepTimerApp(
             }
             if (inAppUpdateMgr.updatePriority <= 3) {
                 item {
-                    Chip(
-                        label = stringResource(id = android.R.string.cancel),
+                    FilledTonalButton(
+                        label = {
+                            Text(text = stringResource(id = android.R.string.cancel))
+                        },
                         onClick = {
                             Settings.setLastUpdateCheckTime(Instant.now())
                             showUpdateDialog = false
-                        },
-                        colors = ChipDefaults.secondaryChipColors()
+                        }
                     )
                 }
             }
         }
 
-        if (showAppUpdateConfirmation) {
-            var startAnim by remember { mutableStateOf(false) }
-            val dialogScrollState = rememberColumnState(
-                ScalingLazyColumnDefaults.responsive(),
-            )
+        AlertDialog(
+            visible = showAppUpdateConfirmation,
+            onDismissRequest = {
+                Settings.setLastUpdateCheckTime(Instant.now())
+                showAppUpdateConfirmation = false
+            },
+            icon = {
+                var startAnim by remember { mutableStateOf(false) }
 
-            Dialog(
-                showDialog = showAppUpdateConfirmation,
-                onDismissRequest = {
-                    Settings.setLastUpdateCheckTime(Instant.now())
-                    showAppUpdateConfirmation = false
-                },
-                scrollState = dialogScrollState.state
-            ) {
-                AlertContent(
-                    icon = {
-                        Icon(
-                            modifier = Modifier.size(36.dp),
-                            painter = rememberAnimatedVectorPainter(
-                                animatedImageVector = AnimatedImageVector.animatedVectorResource(id = R.drawable.open_on_phone_animation),
-                                atEnd = startAnim
-                            ),
-                            contentDescription = null
-                        )
-                    },
-                    message = stringResource(id = R.string.message_phoneappupdate_available),
-                    onOk = {
+                Icon(
+                    modifier = Modifier.size(36.dp),
+                    painter = rememberAnimatedVectorPainter(
+                        animatedImageVector = AnimatedImageVector.animatedVectorResource(id = R.drawable.open_on_phone_animation),
+                        atEnd = startAnim
+                    ),
+                    contentDescription = null
+                )
+
+                LaunchedEffect(showAppUpdateConfirmation) {
+                    delay(250)
+                    startAnim = true
+                }
+            },
+            title = {},
+            text = {
+                Text(text = stringResource(id = R.string.message_phoneappupdate_available))
+            },
+            edgeButton = {
+                AlertDialogDefaults.EdgeButton(
+                    onClick = {
                         Settings.setLastUpdateCheckTime(Instant.now())
                         showAppUpdateConfirmation = false
-                    },
-                    state = dialogScrollState
+                    }
                 )
             }
-
-            LaunchedEffect(showAppUpdateConfirmation) {
-                delay(250)
-                startAnim = true
-            }
-        }
+        )
 
         ConfirmationOverlay(
             confirmationData = confirmationData,

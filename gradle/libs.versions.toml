@@ -41,13 +41,13 @@ material_compose_version = '1.5.0-alpha07'
 compose_bom_version = "2025.10.01"
 compose_compiler_version = '1.5.14'
 
-protolayoutMaterialVersion = "1.3.0"
 wearableVersion = "2.9.0"
 wear_ongoing_version = "1.1.0"
 wear_phone_interactions_version = "1.1.0"
 wear_remote_interactions_version = "1.1.0"
 wear_version = "1.3.0"
 wear_compose_version = "1.5.4"
+wear_protolayout_version = "1.3.0"
 wear_tiles_version = "1.5.0"
 wear_tooling_preview_version = "1.0.0"
 horologist_version = "0.7.15"
@@ -74,7 +74,6 @@ androidx-fragment-ktx = { module = "androidx.fragment:fragment-ktx", version.ref
 androidx-junit = { module = "androidx.test.ext:junit", version.ref = "junit_version" }
 androidx-palette-ktx = { module = "androidx.palette:palette-ktx", version.ref = "paletteKtxVersion" }
 androidx-preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "preference_version" }
-androidx-protolayout-material = { module = "androidx.wear.protolayout:protolayout-material", version.ref = "protolayoutMaterialVersion" }
 androidx-recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "recyclerview_version" }
 androidx-runtime-livedata = { module = "androidx.compose.runtime:runtime-livedata" }
 androidx-truth = { module = "androidx.test.ext:truth", version.ref = "androidx_truth_version" }
@@ -114,9 +113,10 @@ timber = { module = "com.jakewharton.timber:timber", version.ref = "timber_versi
 wear-remote-interactions = { module = "androidx.wear:wear-remote-interactions", version.ref = "wear_remote_interactions_version" }
 wearable = { module = "com.google.android.wearable:wearable", version.ref = "wearableVersion" }
 wear-compose-foundation = { module = "androidx.wear.compose:compose-foundation", version.ref = "wear_compose_version" }
-wear-compose-material = { module = "androidx.wear.compose:compose-material", version.ref = "wear_compose_version" }
+wear-compose-material3 = { module = "androidx.wear.compose:compose-material3", version.ref = "wear_compose_version" }
 wear-compose-navigation = { module = "androidx.wear.compose:compose-navigation", version.ref = "wear_compose_version" }
 wear-compose-ui-tooling = { module = "androidx.wear.compose:compose-ui-tooling", version.ref = "wear_compose_version" }
+wear-protolayout-material3 = { module = "androidx.wear.protolayout:protolayout-material3", version.ref = "wear_protolayout_version" }
 wear-tiles = { module = "androidx.wear.tiles:tiles", version.ref = "wear_tiles_version" }
 wear-tiles-testing = { module = "androidx.wear.tiles:tiles-testing", version.ref = "wear_tiles_version" }
 wear-tiles-renderer = { module = "androidx.wear.tiles:tiles-renderer", version.ref = "wear_tiles_version" }

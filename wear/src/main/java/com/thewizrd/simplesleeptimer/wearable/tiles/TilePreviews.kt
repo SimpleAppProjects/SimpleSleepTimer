@@ -1,12 +1,14 @@
+@file:Suppress("FunctionName")
+
 package com.thewizrd.simplesleeptimer.wearable.tiles
 
 import android.content.Context
 import androidx.wear.tiles.tooling.preview.TilePreviewData
 import com.thewizrd.shared_resources.helpers.WearConnectionStatus
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
-import com.thewizrd.simplesleeptimer.ui.tools.WearTilePreviewDevices
+import com.thewizrd.simplesleeptimer.ui.tiles.tools.WearPreviewDevices
 
-@WearTilePreviewDevices
+@WearPreviewDevices
 fun StartLocalTimerLayoutPreview(context: Context): TilePreviewData {
     val state = TimerTileState(
         isLocalTimer = true,
@@ -23,7 +25,7 @@ fun StartLocalTimerLayoutPreview(context: Context): TilePreviewData {
     )
 }
 
-@WearTilePreviewDevices
+@WearPreviewDevices
 fun DisconnectedRemoteTimerLayoutPreview(context: Context): TilePreviewData {
     val state = RemoteTimerTileState(
         connectionStatus = WearConnectionStatus.DISCONNECTED,
@@ -41,7 +43,7 @@ fun DisconnectedRemoteTimerLayoutPreview(context: Context): TilePreviewData {
     )
 }
 
-@WearTilePreviewDevices
+@WearPreviewDevices
 fun ConnectingRemoteTimerLayoutPreview(context: Context): TilePreviewData {
     val state = RemoteTimerTileState(
         connectionStatus = WearConnectionStatus.CONNECTING,
@@ -59,7 +61,7 @@ fun ConnectingRemoteTimerLayoutPreview(context: Context): TilePreviewData {
     )
 }
 
-@WearTilePreviewDevices
+@WearPreviewDevices
 fun ProgressLocalTimerLayoutPreview(context: Context): TilePreviewData {
     val state = TimerTileState(
         isLocalTimer = true,
@@ -77,7 +79,7 @@ fun ProgressLocalTimerLayoutPreview(context: Context): TilePreviewData {
     )
 }
 
-@WearTilePreviewDevices
+@WearPreviewDevices
 fun ProgressRemoteTimerLayoutPreview(context: Context): TilePreviewData {
     val state = TimerTileState(
         isLocalTimer = false,

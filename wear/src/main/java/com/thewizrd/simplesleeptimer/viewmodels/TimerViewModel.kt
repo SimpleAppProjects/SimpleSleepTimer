@@ -220,7 +220,8 @@ class TimerViewModel(app: Application) : WearableListenerViewModel(app) {
                                     putString(
                                         EXTRA_EVENTDATA,
                                         JSONParser.serializer(
-                                            ConfirmationData.failure(), ConfirmationData::class.java
+                                            ConfirmationData(confirmationType = ConfirmationType.Failure),
+                                            ConfirmationData::class.java
                                         )
                                     )
                                 }
@@ -295,7 +296,8 @@ class TimerViewModel(app: Application) : WearableListenerViewModel(app) {
                                         EXTRA_EVENTDATA,
                                         JSONParser.serializer(
                                             ConfirmationData(
-                                                title = appContext.getString(R.string.error_permissiondenied)
+                                                message = appContext.getString(R.string.error_permissiondenied),
+                                                confirmationType = ConfirmationType.Failure
                                             ), ConfirmationData::class.java
                                         )
                                     )
@@ -322,7 +324,7 @@ class TimerViewModel(app: Application) : WearableListenerViewModel(app) {
 data class TimerUiState(
     val isRunning: Boolean = false,
     val timerLengthInMs: Long = TimerModel.DEFAULT_TIME_MIN * DateUtils.MINUTE_IN_MILLIS,
-    val remainingTimeInMs: Long = 0,
+    val remainingTimeInMs: Long = timerLengthInMs,
     val isLocalTimer: Boolean = true,
     val isLoading: Boolean = false
 ) {

@@ -8,6 +8,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.annotation.RestrictTo
 import androidx.annotation.VisibleForTesting
+import androidx.concurrent.futures.await
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.wear.phone.interactions.PhoneTypeHelper
@@ -26,10 +27,10 @@ import com.thewizrd.shared_resources.helpers.WearableHelper
 import com.thewizrd.shared_resources.utils.Logger
 import com.thewizrd.simplesleeptimer.helpers.showConfirmationOverlay
 import com.thewizrd.simplesleeptimer.utils.ErrorMessage
+import com.thewizrd.simplesleeptimer.viewmodels.WearableListenerViewModel.Companion.ACTION_OPENONPHONE
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlin.coroutines.cancellation.CancellationException
@@ -130,8 +131,7 @@ abstract class WearableListenerViewModel(private val app: Application) : Android
             .setData(WearableHelper.getPlayStoreURI())
 
         runCatching {
-            remoteActivityHelper.startRemoteActivity(intentAndroid)
-                .await()
+            remoteActivityHelper.startRemoteActivity(intentAndroid).await()
 
             if (showAnimation) {
                 activity.showConfirmationOverlay(true)

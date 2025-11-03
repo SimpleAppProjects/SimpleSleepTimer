@@ -108,7 +108,7 @@ dependencies {
     testImplementation libs.wear.tiles.testing
     debugImplementation libs.wear.tiles.tooling
     implementation libs.wear.tiles.tooling.preview
-    implementation libs.androidx.protolayout.material
+    implementation libs.wear.protolayout.material3
     implementation libs.horologist.tiles
 
     // WearOS Compose
@@ -122,7 +122,7 @@ dependencies {
     implementation libs.androidx.compose.material.icons.extended
     implementation libs.lifecycle.viewmodel.compose
     implementation libs.wear.compose.foundation
-    implementation libs.wear.compose.material
+    implementation libs.wear.compose.material3
     implementation libs.wear.compose.navigation
     implementation libs.wear.compose.ui.tooling
     implementation libs.wear.tooling.preview
