@@ -2,7 +2,6 @@ package com.thewizrd.simplesleeptimer.wearable.tiles
 
 import android.content.Context
 import androidx.wear.protolayout.ResourceBuilders
-import androidx.wear.tiles.EventBuilders
 import androidx.wear.tiles.RequestBuilders
 import androidx.wear.tiles.TileBuilders
 import com.google.android.horologist.annotations.ExperimentalHorologistApi
@@ -31,10 +30,6 @@ class SleepTimerLocalTileService : SuspendingTileService() {
     override fun onDestroy() {
         Logger.debug(this::class.java.simpleName, "destroying service...")
         super.onDestroy()
-    }
-
-    override fun onTileEnterEvent(requestParams: EventBuilders.TileEnterEvent) {
-        super.onTileEnterEvent(requestParams)
     }
 
     override suspend fun tileRequest(requestParams: RequestBuilders.TileRequest): TileBuilders.Tile {

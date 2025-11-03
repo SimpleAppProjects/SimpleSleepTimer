@@ -61,7 +61,6 @@ class SleepTimerTileRenderer(context: Context, debugResourceMode: Boolean = fals
                     } else {
                         renderTileForConnectionStatus(
                             state.connectionStatus,
-                            state,
                             deviceParameters
                         )
                     }
@@ -93,7 +92,6 @@ class SleepTimerTileRenderer(context: Context, debugResourceMode: Boolean = fals
 
     private fun renderTileForConnectionStatus(
         connectionStatus: WearConnectionStatus,
-        state: TimerState,
         deviceParameters: DeviceParametersBuilders.DeviceParameters
     ): LayoutElementBuilders.LayoutElement {
         return WearConnectionStatusLayout(context, deviceParameters, connectionStatus)

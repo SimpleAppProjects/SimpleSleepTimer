@@ -36,7 +36,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
 import java.util.Date
 import java.util.Timer
 import java.util.concurrent.Executors
@@ -475,37 +474,27 @@ abstract class BaseTimerService : Service() {
         fun isRunning(): Boolean = model.isRunning
 
         fun cancelTimer() {
-            scope.launch {
-                this@BaseTimerService.cancelTimer()
-            }
+            this@BaseTimerService.cancelTimer()
         }
 
         fun startTimer(timeInMin: Int) {
-            scope.launch {
-                this@BaseTimerService.startTimer(timeInMin)
-            }
+            this@BaseTimerService.startTimer(timeInMin)
         }
 
         fun updateTimer() {
-            scope.launch {
-                this@BaseTimerService.updateTimer()
-            }
+            this@BaseTimerService.updateTimer()
         }
 
         fun extend1MinTimer() {
-            scope.launch {
-                model.extend1Min()
-                this@BaseTimerService.updateExpireIntent()
-                this@BaseTimerService.updateTimer()
-            }
+            model.extend1Min()
+            this@BaseTimerService.updateExpireIntent()
+            this@BaseTimerService.updateTimer()
         }
 
         fun extend5MinTimer() {
-            scope.launch {
-                model.extend5Min()
-                this@BaseTimerService.updateExpireIntent()
-                this@BaseTimerService.updateTimer()
-            }
+            model.extend5Min()
+            this@BaseTimerService.updateExpireIntent()
+            this@BaseTimerService.updateTimer()
         }
     }
 

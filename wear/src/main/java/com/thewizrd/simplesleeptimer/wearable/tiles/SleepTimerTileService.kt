@@ -5,13 +5,15 @@ package com.thewizrd.simplesleeptimer.wearable.tiles
 import android.content.Context
 import android.os.Bundle
 import android.os.SystemClock
+import androidx.concurrent.futures.SuspendToFutureAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.wear.protolayout.ResourceBuilders
-import androidx.wear.tiles.EventBuilders
+import androidx.wear.tiles.EventBuilders.TileInteractionEvent
 import androidx.wear.tiles.RequestBuilders
 import androidx.wear.tiles.TileBuilders
 import com.google.android.horologist.annotations.ExperimentalHorologistApi
 import com.google.android.horologist.tiles.SuspendingTileService
+import com.google.common.util.concurrent.ListenableFuture
 import com.thewizrd.shared_resources.appLib
 import com.thewizrd.shared_resources.utils.AnalyticsLogger
 import com.thewizrd.shared_resources.utils.Logger
@@ -24,6 +26,7 @@ import com.thewizrd.simplesleeptimer.wearable.tiles.SleepTimerTileRenderer.Compa
 import com.thewizrd.simplesleeptimer.wearable.tiles.SleepTimerTileRenderer.Companion.ID_STOP
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -38,7 +41,6 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeoutOrNull
 import java.time.Duration
 import kotlin.coroutines.cancellation.CancellationException
-import kotlin.coroutines.coroutineContext
 
 class SleepTimerTileService : SuspendingTileService() {
     companion object {
@@ -104,9 +106,7 @@ class SleepTimerTileService : SuspendingTileService() {
         super.onDestroy()
     }
 
-    override fun onTileEnterEvent(requestParams: EventBuilders.TileEnterEvent) {
-        super.onTileEnterEvent(requestParams)
-
+    private fun onTileInteractionEnterEvent(requestParams: TileInteractionEvent) {
         Logger.debug(TAG, "onTileEnterEvent called with: tileId = ${requestParams.tileId}")
         AnalyticsLogger.logEvent("on_tile_enter", Bundle().apply {
             putString("tile", TAG)
@@ -124,10 +124,30 @@ class SleepTimerTileService : SuspendingTileService() {
         }
     }
 
-    override fun onTileLeaveEvent(requestParams: EventBuilders.TileLeaveEvent) {
-        super.onTileLeaveEvent(requestParams)
+    private fun onTileInteractionLeaveEvent(requestParams: TileInteractionEvent) {
         Logger.debug(TAG, "$TAG: onTileLeaveEvent called with: tileId = ${requestParams.tileId}")
         isInFocus = false
+    }
+
+    override fun onRecentInteractionEventsAsync(events: List<TileInteractionEvent>): ListenableFuture<Void?> {
+        return SuspendToFutureAdapter.launchFuture {
+            val lastEvent = events.lastOrNull()
+
+            when (lastEvent?.eventType) {
+                TileInteractionEvent.ENTER -> {
+                    onTileInteractionEnterEvent(lastEvent)
+                }
+
+                TileInteractionEvent.LEAVE -> {
+                    onTileInteractionLeaveEvent(lastEvent)
+                }
+
+                TileInteractionEvent.UNKNOWN -> { /* no-op */
+                }
+            }
+
+            null
+        }
     }
 
     override suspend fun tileRequest(requestParams: RequestBuilders.TileRequest): TileBuilders.Tile {
@@ -153,7 +173,7 @@ class SleepTimerTileService : SuspendingTileService() {
 
         if (tileState.isEmpty) {
             AnalyticsLogger.logEvent("dashtile_state_empty", Bundle().apply {
-                putBoolean("isCoroutineActive", coroutineContext.isActive)
+                putBoolean("isCoroutineActive", currentCoroutineContext().isActive)
             })
         }
 
