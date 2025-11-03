@@ -164,7 +164,7 @@ private fun PhoneSyncUi(
 
                 WearConnectionStatus.APPNOTINSTALLED -> {
                     lifecycleOwner.lifecycleScope.launch {
-                        phoneSyncViewModel.openPlayStore(activity)
+                        phoneSyncViewModel.openPlayStore()
                     }
                 }
 

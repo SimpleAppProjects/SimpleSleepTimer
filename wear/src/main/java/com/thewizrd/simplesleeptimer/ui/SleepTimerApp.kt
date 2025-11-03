@@ -235,7 +235,7 @@ fun SleepTimerApp(
                                 WearConnectionStatus.CONNECTING -> {}
                                 WearConnectionStatus.APPNOTINSTALLED -> {
                                     // Open store on remote device
-                                    timerModel.openPlayStore(activity)
+                                    timerModel.openPlayStore()
 
                                     // Navigate
                                     activity.startActivity(
@@ -292,7 +292,7 @@ fun SleepTimerApp(
                         phoneVersionCode?.let {
                             showAppUpdateConfirmation = !WearableHelper.isAppUpToDate(it)
                             if (showAppUpdateConfirmation) {
-                                timerModel.openPlayStore(activity, false)
+                                timerModel.openPlayStore(false)
                             }
                         }
                     }

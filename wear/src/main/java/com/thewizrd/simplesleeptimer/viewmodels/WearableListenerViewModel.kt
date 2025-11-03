@@ -24,8 +24,8 @@ import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableStatusCodes
 import com.thewizrd.shared_resources.helpers.WearConnectionStatus
 import com.thewizrd.shared_resources.helpers.WearableHelper
+import com.thewizrd.shared_resources.utils.JSONParser
 import com.thewizrd.shared_resources.utils.Logger
-import com.thewizrd.simplesleeptimer.helpers.showConfirmationOverlay
 import com.thewizrd.simplesleeptimer.utils.ErrorMessage
 import com.thewizrd.simplesleeptimer.viewmodels.WearableListenerViewModel.Companion.ACTION_OPENONPHONE
 import kotlinx.coroutines.channels.BufferOverflow
@@ -84,7 +84,7 @@ abstract class WearableListenerViewModel(private val app: Application) : Android
         activityContext = null
     }
 
-    fun openAppOnPhone(activity: Activity, showAnimation: Boolean = true) {
+    fun openAppOnPhone(showAnimation: Boolean = true) {
         viewModelScope.launch {
             connect()
 
@@ -93,7 +93,7 @@ abstract class WearableListenerViewModel(private val app: Application) : Android
 
                 when (PhoneTypeHelper.getPhoneDeviceType(appContext)) {
                     PhoneTypeHelper.DEVICE_TYPE_ANDROID -> {
-                        openPlayStore(activity, showAnimation)
+                        openPlayStore(showAnimation)
                     }
 
                     PhoneTypeHelper.DEVICE_TYPE_IOS -> {
@@ -111,34 +111,31 @@ abstract class WearableListenerViewModel(private val app: Application) : Android
                     WearableHelper.StartActivityPath,
                     ByteArray(0)
                 )
+                val success = result != -1
 
                 if (showAnimation) {
-                    activity.showConfirmationOverlay(result != -1)
+                    sendConfirmationEvent(success)
                 }
-
-                _eventsFlow.tryEmit(WearableEvent(ACTION_OPENONPHONE, Bundle().apply {
-                    putBoolean(EXTRA_SUCCESS, result != -1)
-                    putBoolean(EXTRA_SHOWANIMATION, showAnimation)
-                }))
             }
         }
     }
 
-    suspend fun openPlayStore(activity: Activity, showAnimation: Boolean = true) {
+    suspend fun openPlayStore(showAnimation: Boolean = true) {
         // Open store on remote device
         val intentAndroid = Intent(Intent.ACTION_VIEW)
             .addCategory(Intent.CATEGORY_BROWSABLE)
             .setData(WearableHelper.getPlayStoreURI())
 
         runCatching {
-            remoteActivityHelper.startRemoteActivity(intentAndroid).await()
+            remoteActivityHelper.startRemoteActivity(intentAndroid)
+                .await()
 
             if (showAnimation) {
-                activity.showConfirmationOverlay(true)
+                sendConfirmationEvent(true)
             }
         }.onFailure {
             if (it !is CancellationException && showAnimation) {
-                activity.showConfirmationOverlay(false)
+                sendConfirmationEvent(false)
             }
         }
     }
@@ -268,6 +265,32 @@ abstract class WearableListenerViewModel(private val app: Application) : Android
             mPhoneNodeWithApp = checkIfPhoneHasApp()
 
         return mPhoneNodeWithApp != null
+    }
+
+    protected fun sendConfirmationEvent(success: Boolean) {
+        if (success) {
+            sendConfirmationEvent(ConfirmationType.OpenOnPhone)
+        } else {
+            sendConfirmationEvent(ConfirmationType.Failure)
+        }
+    }
+
+    protected fun sendConfirmationEvent(confirmationType: ConfirmationType) {
+        _eventsFlow.tryEmit(
+            WearableEvent(
+                ACTION_SHOWCONFIRMATION,
+                Bundle().apply {
+                    putString(
+                        EXTRA_EVENTDATA,
+                        JSONParser.serializer(
+                            ConfirmationData(
+                                confirmationType = confirmationType
+                            ), ConfirmationData::class.java
+                        )
+                    )
+                }
+            )
+        )
     }
 
     /*
