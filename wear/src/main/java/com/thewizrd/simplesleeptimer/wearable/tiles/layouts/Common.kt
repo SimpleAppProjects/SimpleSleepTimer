@@ -35,6 +35,7 @@ internal fun MaterialScope.TimerButton(
                 TimerTileDuration.DURATION_10 -> 10
                 TimerTileDuration.DURATION_15 -> 15
                 TimerTileDuration.DURATION_20 -> 20
+                TimerTileDuration.DURATION_25 -> 25
                 TimerTileDuration.DURATION_30 -> 30
             }
         )
@@ -47,6 +48,7 @@ internal fun MaterialScope.TimerButton(
                     TimerTileDuration.DURATION_10 -> 10
                     TimerTileDuration.DURATION_15 -> 15
                     TimerTileDuration.DURATION_20 -> 20
+                    TimerTileDuration.DURATION_25 -> 25
                     TimerTileDuration.DURATION_30 -> 30
                 }
             ).layoutString

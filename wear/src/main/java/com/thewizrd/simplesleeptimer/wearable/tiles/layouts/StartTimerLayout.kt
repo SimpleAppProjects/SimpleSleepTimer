@@ -64,6 +64,9 @@ fun StartTimerLayout(
                                 TimerButton(context, state, TimerTileDuration.DURATION_20)
                             }
                             buttonGroupItem {
+                                TimerButton(context, state, TimerTileDuration.DURATION_25)
+                            }
+                            buttonGroupItem {
                                 TimerButton(context, state, TimerTileDuration.DURATION_30)
                             }
                         }

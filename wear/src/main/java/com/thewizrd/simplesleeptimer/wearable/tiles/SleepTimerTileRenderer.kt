@@ -132,5 +132,6 @@ internal enum class TimerTileDuration {
     DURATION_10,
     DURATION_15,
     DURATION_20,
+    DURATION_25,
     DURATION_30,
 }
