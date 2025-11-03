@@ -20,7 +20,6 @@ import android.text.format.DateUtils
 import android.view.KeyEvent
 import androidx.annotation.CallSuper
 import androidx.annotation.RequiresApi
-import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
@@ -32,13 +31,8 @@ import com.thewizrd.shared_resources.helpers.toImmutableCompatFlag
 import com.thewizrd.shared_resources.sleeptimer.TimerDataModel
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.shared_resources.utils.Logger
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.cancel
 import java.util.Date
 import java.util.Timer
-import java.util.concurrent.Executors
 import kotlin.concurrent.schedule
 
 abstract class BaseTimerService : Service() {
@@ -82,10 +76,6 @@ abstract class BaseTimerService : Service() {
 
     // Timer
     private val model = TimerDataModel.getDataModel()
-
-    private val scope = CoroutineScope(
-        SupervisorJob() + Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-    )
 
     protected abstract val notificationId: Int
     protected abstract val notificationChannelId: String
@@ -151,23 +141,7 @@ abstract class BaseTimerService : Service() {
 
     private fun getForegroundNotification(): Notification {
         if (mForegroundNotification == null) {
-            mForegroundNotification =
-                NotificationCompat.Builder(this, notificationChannelId)
-                    .setSmallIcon(R.drawable.ic_hourglass_empty)
-                    .setContentTitle(getString(R.string.title_sleeptimer))
-                    .setContentText("--:--:--")
-                    .setColor(ContextCompat.getColor(this, R.color.colorPrimary))
-                    .setOngoing(true)
-                    .setOnlyAlertOnce(true)
-                    .setSound(null)
-                    .addAction(
-                        0,
-                        getString(android.R.string.cancel),
-                        getCancelIntent(this)
-                    )
-                    .setContentIntent(getClickIntent(this))
-                    .setPriority(NotificationCompat.PRIORITY_LOW)
-                    .build()
+            mForegroundNotification = updateTimerNotification(model.toModel())
         }
 
         return mForegroundNotification!!
@@ -254,7 +228,7 @@ abstract class BaseTimerService : Service() {
     }
 
     private fun updateTimer() {
-        if (!mIsBound) {
+        if (!mIsBound || shouldKeepNotificationActive()) {
             updateNotification()
         } else {
             NotificationManagerCompat.from(this).cancel(notificationId)
@@ -465,7 +439,12 @@ abstract class BaseTimerService : Service() {
         // Background restrictions don't apply to bound services
         // We can remove the notification now
         mIsBound = true
-        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+
+        if (shouldRemoveForegroundNotification()) {
+            ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+        } else {
+            ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_DETACH)
+        }
 
         return binder
     }
@@ -502,9 +481,12 @@ abstract class BaseTimerService : Service() {
     override fun onDestroy() {
         cancelTimer()
         timerFallback?.purge()
-        scope.cancel()
         super.onDestroy()
-        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+        if (shouldRemoveForegroundNotification()) {
+            ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+        } else {
+            ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_DETACH)
+        }
     }
 
     final override fun onRebind(intent: Intent?) {
@@ -513,7 +495,11 @@ abstract class BaseTimerService : Service() {
 
         // Background restrictions don't apply to bound services
         // We can remove the notification now
-        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+        if (shouldRemoveForegroundNotification()) {
+            ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+        } else {
+            ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_DETACH)
+        }
     }
 
     final override fun onUnbind(intent: Intent?): Boolean {
@@ -523,5 +509,13 @@ abstract class BaseTimerService : Service() {
         startForegroundIfNeeded(true)
 
         return true // Allow re-binding
+    }
+
+    protected open fun shouldRemoveForegroundNotification(): Boolean {
+        return true
+    }
+
+    protected open fun shouldKeepNotificationActive(): Boolean {
+        return false
     }
 }

@@ -37,10 +37,6 @@ class TimerService : BaseTimerService() {
     override val notificationChannelId: String
         get() = NOT_CHANNEL_ID
 
-    override fun onCreate() {
-        super.onCreate()
-    }
-
     override fun updateTimerNotification(model: TimerModel): Notification {
         val notifBuilder = NotificationCompat.Builder(this, NOT_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_hourglass_empty)
@@ -92,6 +88,7 @@ class TimerService : BaseTimerService() {
             val ongoingActivity =
                 OngoingActivity.Builder(applicationContext, NOTIFICATION_ID, notifBuilder)
                     .setStaticIcon(R.drawable.ic_hourglass_empty)
+                    .setAnimatedIcon(R.drawable.avd_hourglass_rotate)
                     .setTitle(getString(R.string.title_sleeptimer))
                     .setStatus(ongoingActivityStatus)
                     .setLocusId(LocusIdCompat(LOCAL_TIMER_LOCUS_ID))
@@ -180,5 +177,13 @@ class TimerService : BaseTimerService() {
                 }
             }
         }
+    }
+
+    override fun shouldRemoveForegroundNotification(): Boolean {
+        return !getTimerModel().isRunning
+    }
+
+    override fun shouldKeepNotificationActive(): Boolean {
+        return true
     }
 }

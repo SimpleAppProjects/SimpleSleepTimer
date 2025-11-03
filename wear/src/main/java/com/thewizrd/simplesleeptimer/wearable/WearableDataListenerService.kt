@@ -165,6 +165,7 @@ class WearableDataListenerService : WearableListenerService() {
                 NOTIFICATION_ID, notifBuilder
             )
                 .setStaticIcon(R.drawable.ic_hourglass_empty)
+                .setAnimatedIcon(R.drawable.avd_hourglass_rotate)
                 .setTitle(getString(R.string.title_sleeptimer_remote))
                 .setStatus(ongoingActivityStatus)
                 .setLocusId(LocusIdCompat(REMOTE_TIMER_LOCUS_ID))
