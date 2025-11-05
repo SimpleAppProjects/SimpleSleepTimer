@@ -25,11 +25,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Bluetooth
-import androidx.compose.material.icons.filled.PhonelinkErase
-import androidx.compose.material.icons.filled.Sync
-import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.material.icons.rounded.Bluetooth
+import androidx.compose.material.icons.rounded.PhonelinkErase
 import androidx.compose.material.icons.rounded.Sync
+import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -248,7 +247,7 @@ private fun PhoneSyncUi(
                     ) {
                         Icon(
                             modifier = Modifier.requiredSize(IconButtonDefaults.SmallIconSize - 4.dp),
-                            imageVector = Icons.Default.Wifi,
+                            imageVector = Icons.Rounded.Wifi,
                             contentDescription = stringResource(id = R.string.label_wifi)
                         )
                     }
@@ -308,7 +307,7 @@ private fun PhoneSyncUi(
                                 ),
                             painter = when (uiState.connectionStatus) {
                                 WearConnectionStatus.DISCONNECTED -> {
-                                    rememberVectorPainter(Icons.Default.PhonelinkErase)
+                                    rememberVectorPainter(Icons.Rounded.PhonelinkErase)
                                 }
 
                                 WearConnectionStatus.CONNECTING, WearConnectionStatus.CONNECTED -> {
@@ -319,7 +318,7 @@ private fun PhoneSyncUi(
                                     painterResource(id = R.drawable.common_full_open_on_phone)
                                 }
 
-                                null -> rememberVectorPainter(Icons.Default.Sync)
+                                null -> rememberVectorPainter(Icons.Rounded.Sync)
                             },
                             contentDescription = when (uiState.connectionStatus) {
                                 WearConnectionStatus.DISCONNECTED -> stringResource(R.string.status_disconnected)
@@ -351,7 +350,7 @@ private fun PhoneSyncUi(
                     ) {
                         Icon(
                             modifier = Modifier.requiredSize(IconButtonDefaults.SmallIconSize - 4.dp),
-                            imageVector = Icons.Default.Bluetooth,
+                            imageVector = Icons.Rounded.Bluetooth,
                             contentDescription = stringResource(id = R.string.label_bt)
                         )
                     }

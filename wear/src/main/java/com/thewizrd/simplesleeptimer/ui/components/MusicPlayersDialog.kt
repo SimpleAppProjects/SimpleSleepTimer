@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -96,7 +96,7 @@ private fun MusicPlayersDialog(
                         },
                         icon = {
                             Icon(
-                                imageVector = Icons.Default.Refresh,
+                                imageVector = Icons.Rounded.Refresh,
                                 contentDescription = stringResource(id = R.string.action_retry)
                             )
                         },

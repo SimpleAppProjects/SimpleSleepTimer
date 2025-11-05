@@ -420,21 +420,19 @@ class SleepTimerActivity : AppCompatActivity() {
                     viewTreeObserver.removeOnPreDrawListener(this)
                 }
 
-                val distanceY =
-                    toView.context.resources.getDimensionPixelSize(R.dimen.mtrl_transition_shared_axis_slide_distance)
-                        .toFloat()
-                val translationDistance = if (!isRunning) distanceY else -distanceY
+                val distanceX = -toView.measuredWidth / 2f
+                val translationDistance = if (!isRunning) distanceX else -distanceX
 
-                toView.translationY = -translationDistance
-                currentView.translationY = 0f
+                toView.translationX = -translationDistance
+                currentView.translationX = 0f
                 toView.alpha = 0f
                 currentView.alpha = 1f
 
                 val translateCurrent = ObjectAnimator.ofFloat(
                     currentView,
-                    View.TRANSLATION_Y, translationDistance
+                    View.TRANSLATION_X, translationDistance
                 )
-                val translateNew = ObjectAnimator.ofFloat(toView, View.TRANSLATION_Y, 0f)
+                val translateNew = ObjectAnimator.ofFloat(toView, View.TRANSLATION_X, 0f)
                 val translationAnimatorSet = AnimatorSet().apply {
                     playTogether(translateCurrent, translateNew)
                     duration = animDuration
@@ -507,8 +505,8 @@ class SleepTimerActivity : AppCompatActivity() {
                 animatorSet.addListener(object : AnimatorListenerAdapter() {
                     override fun onAnimationEnd(animation: Animator) {
                         super.onAnimationEnd(animation)
-                        currentView.translationY = 0f
-                        toView.translationY = 0f
+                        currentView.translationX = 0f
+                        toView.translationX = 0f
                         currentView.alpha = 1f
                         toView.alpha = 1f
                     }
