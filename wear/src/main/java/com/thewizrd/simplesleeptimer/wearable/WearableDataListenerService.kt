@@ -229,6 +229,8 @@ class WearableDataListenerService : WearableListenerService() {
         if (mPhoneNodeWithApp == null) {
             // Disconnect or dismiss any ongoing activity
             dismissTimerOngoingActivity()
+        } else if (SleepTimerTileService.isInFocus) {
+            SleepTimerTileService.requestTileUpdate(this)
         }
     }
 

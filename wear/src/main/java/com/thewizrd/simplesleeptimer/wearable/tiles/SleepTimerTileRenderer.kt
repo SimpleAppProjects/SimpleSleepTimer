@@ -117,14 +117,6 @@ class SleepTimerTileRenderer(context: Context, debugResourceMode: Boolean = fals
     override fun getResourcesVersionForTileState(state: TimerState): String {
         return "isLocalTimer=${state.isLocalTimer}"
     }
-
-    override fun getFreshnessIntervalMillis(state: TimerState): Long {
-        return if (state.isLocalTimer) {
-            60000
-        } else {
-            super.getFreshnessIntervalMillis(state)
-        }
-    }
 }
 
 internal enum class TimerTileDuration {
