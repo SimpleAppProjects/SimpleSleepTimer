@@ -1,20 +1,29 @@
 package com.thewizrd.simplesleeptimer
 
 import android.Manifest
-import android.animation.*
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.ActivityOptions
-import android.content.*
+import android.content.BroadcastReceiver
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.content.ServiceConnection
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.os.SystemClock
 import android.provider.Settings
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.view.Window
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -24,8 +33,10 @@ import androidx.core.content.PermissionChecker
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
+import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.material.animation.AnimationUtils
 import com.google.android.material.color.DynamicColors
@@ -38,12 +49,20 @@ import com.thewizrd.shared_resources.services.BaseTimerService
 import com.thewizrd.shared_resources.sleeptimer.TimerDataModel
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.shared_resources.utils.ContextUtils.isWatchUi
+import com.thewizrd.shared_resources.utils.Logger
 import com.thewizrd.simplesleeptimer.databinding.ActivityMainBinding
 import com.thewizrd.simplesleeptimer.services.TimerService
+import com.thewizrd.simplesleeptimer.updates.InAppUpdateManager
 import com.thewizrd.simplesleeptimer.wearable.WearPermissionsActivity
+import kotlinx.coroutines.launch
 import com.thewizrd.simplesleeptimer.preferences.Settings as SleepTimerSettings
 
 class SleepTimerActivity : AppCompatActivity() {
+    companion object {
+        private const val INSTALL_REQUESTCODE = 168
+    }
+
+    private lateinit var inAppUpdateManager: InAppUpdateManager
     private lateinit var binding: ActivityMainBinding
 
     private val timerModel: TimerModel by viewModels()
@@ -53,6 +72,8 @@ class SleepTimerActivity : AppCompatActivity() {
     private lateinit var mBroadcastReceiver: BroadcastReceiver
 
     private lateinit var permissionRequestLauncher: ActivityResultLauncher<String>
+
+    private lateinit var onBackPressedCallback: OnBackPressedCallback
 
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
@@ -86,6 +107,8 @@ class SleepTimerActivity : AppCompatActivity() {
 
         // Note: needed due to splash screen theme
         DynamicColors.applyToActivityIfAvailable(this)
+
+        inAppUpdateManager = InAppUpdateManager.create(applicationContext)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -147,7 +170,7 @@ class SleepTimerActivity : AppCompatActivity() {
                                 runCatching {
                                     startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
                                 }.onFailure { t ->
-                                    Log.e("SleepTimerActivity", "Error", t)
+                                    Logger.error("SleepTimerActivity", t, "Error")
                                 }
                             }
                         }.show()
@@ -169,7 +192,7 @@ class SleepTimerActivity : AppCompatActivity() {
                                 runCatching {
                                     permissionRequestLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                                 }.onFailure { t ->
-                                    Log.e("SleepTimerActivity", "Error", t)
+                                    Logger.error("SleepTimerActivity", t, "Error")
                                 }
                             }
                         }.show()
@@ -247,6 +270,30 @@ class SleepTimerActivity : AppCompatActivity() {
                 mTimerBinder.extend5MinTimer()
             }
         }
+
+        onBackPressedCallback =
+            object : OnBackPressedCallback(supportFragmentManager.backStackEntryCount > 0) {
+                override fun handleOnBackPressed() {
+                    if (supportFragmentManager.backStackEntryCount > 0) {
+                        supportFragmentManager.popBackStack()
+                    }
+                }
+            }
+
+        supportFragmentManager.addOnBackStackChangedListener {
+            onBackPressedCallback.isEnabled = supportFragmentManager.backStackEntryCount > 0
+        }
+
+        onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
+
+        lifecycleScope.launch {
+            if (inAppUpdateManager.shouldStartImmediateUpdateFlow()) {
+                inAppUpdateManager.startImmediateUpdateFlow(
+                    this@SleepTimerActivity,
+                    INSTALL_REQUESTCODE
+                )
+            }
+        }
     }
 
     override fun onStart() {
@@ -282,6 +329,10 @@ class SleepTimerActivity : AppCompatActivity() {
         }
         LocalBroadcastManager.getInstance(this)
             .registerReceiver(mBroadcastReceiver, filter)
+
+        // Checks that the update is not stalled during 'onResume()'.
+        // However, you should execute this check at all entry points into the app.
+        inAppUpdateManager.resumeUpdateIfStarted(this, INSTALL_REQUESTCODE)
     }
 
     override fun onPause() {
@@ -295,14 +346,6 @@ class SleepTimerActivity : AppCompatActivity() {
         stopUpdatingTime()
         unbindService(connection)
         mBound = false
-    }
-
-    override fun onBackPressed() {
-        if (supportFragmentManager.backStackEntryCount > 0) {
-            supportFragmentManager.popBackStack()
-        } else {
-            super.onBackPressed()
-        }
     }
 
     /* Views */
@@ -350,8 +393,8 @@ class SleepTimerActivity : AppCompatActivity() {
     private fun animateToView(isRunning: Boolean) {
         dismissPlayersFragment()
 
-        if (isRunning && binding.timerProgressView.visibility == View.VISIBLE ||
-            !isRunning && binding.timerStartView.visibility == View.VISIBLE
+        if (isRunning && binding.timerProgressView.isVisible ||
+            !isRunning && binding.timerStartView.isVisible
         ) {
             return
         }
@@ -377,21 +420,19 @@ class SleepTimerActivity : AppCompatActivity() {
                     viewTreeObserver.removeOnPreDrawListener(this)
                 }
 
-                val distanceY =
-                    toView.context.resources.getDimensionPixelSize(R.dimen.mtrl_transition_shared_axis_slide_distance)
-                        .toFloat()
-                val translationDistance = if (!isRunning) distanceY else -distanceY
+                val distanceX = -toView.measuredWidth / 2f
+                val translationDistance = if (!isRunning) distanceX else -distanceX
 
-                toView.translationY = -translationDistance
-                currentView.translationY = 0f
+                toView.translationX = -translationDistance
+                currentView.translationX = 0f
                 toView.alpha = 0f
                 currentView.alpha = 1f
 
                 val translateCurrent = ObjectAnimator.ofFloat(
                     currentView,
-                    View.TRANSLATION_Y, translationDistance
+                    View.TRANSLATION_X, translationDistance
                 )
-                val translateNew = ObjectAnimator.ofFloat(toView, View.TRANSLATION_Y, 0f)
+                val translateNew = ObjectAnimator.ofFloat(toView, View.TRANSLATION_X, 0f)
                 val translationAnimatorSet = AnimatorSet().apply {
                     playTogether(translateCurrent, translateNew)
                     duration = animDuration
@@ -464,8 +505,8 @@ class SleepTimerActivity : AppCompatActivity() {
                 animatorSet.addListener(object : AnimatorListenerAdapter() {
                     override fun onAnimationEnd(animation: Animator) {
                         super.onAnimationEnd(animation)
-                        currentView.translationY = 0f
-                        toView.translationY = 0f
+                        currentView.translationX = 0f
+                        toView.translationX = 0f
                         currentView.alpha = 1f
                         toView.alpha = 1f
                     }
@@ -500,6 +541,18 @@ class SleepTimerActivity : AppCompatActivity() {
             val endTime = SystemClock.elapsedRealtime()
 
             binding.fragmentContainer.postOnAnimationDelayed(this, startTime + 50 - endTime)
+        }
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == INSTALL_REQUESTCODE) {
+            if (resultCode != RESULT_OK) {
+                // Update flow failed; exit
+                finishAffinity()
+            }
+        } else {
+            super.onActivityResult(requestCode, resultCode, data)
         }
     }
 }

@@ -1,19 +1,13 @@
-<?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item
-        android:height="24dp"
-        android:width="24dp">
-        <shape>
-            <corners android:radius="@dimen/button_corner_radius" />
-            <solid android:color="@color/colorPrimary" />
-            <stroke
-                android:color="#00FFFFFF"
-                android:width="1dp" />
-        </shape>
-    </item>
-    <item
-        android:height="16dp"
-        android:width="16dp"
-        android:gravity="center"
-        android:drawable="@drawable/ic_hourglass_empty" />
-</layer-list>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="2160"
+    android:viewportHeight="2160">
+    <path
+        android:pathData="M1080,1080m-1080,0a1080,1080 0,1 1,2160 0a1080,1080 0,1 1,-2160 0"
+        android:strokeWidth="25.7142"
+        android:fillColor="#0070c0" />
+    <path
+        android:pathData="m847.8,1539l464.4,0l0,-171.4q0,-97.2 -67.5,-164 -67.5,-66.8 -164.7,-66.8 -97.2,0 -164.7,66.8 -67.5,66.8 -67.5,164zM1080,1023.3q97.2,0 164.7,-67.5 67.5,-67.5 67.5,-164.7L1312.2,621L847.8,621l0,170.1q0,97.2 67.5,164.7 67.5,67.5 164.7,67.5zM688.5,1620q-17.2,0 -28.8,-11.7 -11.7,-11.7 -11.7,-29 0,-17.3 11.7,-28.8 11.6,-11.5 28.8,-11.5l78.3,0l0,-171.4q0,-95.8 54,-174.2 54,-78.3 143.1,-113.4 -89.1,-36.5 -143.1,-114.8 -54,-78.3 -54,-174.2l0,-170.1l-78.3,0q-17.2,0 -28.8,-11.7 -11.7,-11.7 -11.7,-29 0,-17.3 11.7,-28.8 11.6,-11.5 28.8,-11.5l783,0q17.2,0 28.9,11.7 11.6,11.7 11.6,29 0,17.3 -11.6,28.8 -11.7,11.5 -28.9,11.5l-78.3,0l0,170.1q0,95.8 -54,174.2 -54,78.3 -143.1,114.8 89.1,35.1 143.1,113.4 54,78.3 54,174.2l0,171.4l78.3,0q17.2,0 28.9,11.7 11.6,11.7 11.6,29 0,17.3 -11.6,28.8 -11.7,11.5 -28.9,11.5zM1080,1539zM1080,621z"
+        android:fillColor="#ffffff" />
+</vector>

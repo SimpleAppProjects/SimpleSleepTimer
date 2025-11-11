@@ -1,9 +1,24 @@
 package com.thewizrd.simplesleeptimer.viewmodels
 
+import android.app.Application
+import android.os.Build
+import android.os.Bundle
 import android.text.format.DateUtils
-import androidx.lifecycle.ViewModel
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.viewModelScope
+import com.google.android.gms.wearable.MessageClient
+import com.google.android.gms.wearable.MessageEvent
+import com.google.android.gms.wearable.Wearable
+import com.thewizrd.shared_resources.helpers.WearableHelper
+import com.thewizrd.shared_resources.sleeptimer.SleepTimerHelper
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
+import com.thewizrd.shared_resources.utils.JSONParser
+import com.thewizrd.shared_resources.utils.bytesToBool
+import com.thewizrd.shared_resources.utils.bytesToLong
+import com.thewizrd.shared_resources.utils.bytesToString
+import com.thewizrd.shared_resources.utils.intToBytes
+import com.thewizrd.shared_resources.utils.stringToBytes
+import com.thewizrd.simplesleeptimer.R
 import com.thewizrd.simplesleeptimer.preferences.Settings
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -13,9 +28,12 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.tasks.await
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.resume
 
-open class TimerViewModel : ViewModel() {
+class TimerViewModel(app: Application) : WearableListenerViewModel(app) {
     companion object {
         private val MAX_TIME_IN_MINS = TimeUnit.HOURS.toMinutes(24)
         private val MAX_TIME_IN_MILLIS = TimeUnit.MINUTES.toMillis(MAX_TIME_IN_MINS)
@@ -39,6 +57,16 @@ open class TimerViewModel : ViewModel() {
         SharingStarted.Lazily,
         0
     )
+
+    init {
+        viewModelScope.launch {
+            eventFlow.collect { event ->
+                when (event.eventType) {
+
+                }
+            }
+        }
+    }
 
     fun updateTimerState(
         isRunning: Boolean? = null,
@@ -124,12 +152,179 @@ open class TimerViewModel : ViewModel() {
             }
         }
     }
+
+    @RequiresApi(Build.VERSION_CODES.S)
+    fun notifyAlarmPermissionDenied() {
+        _eventsFlow.tryEmit(
+            WearableEvent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+        )
+    }
+
+    /* Remote Timer */
+    fun refreshStatus() {
+        viewModelState.update {
+            it.copy(isLoading = true)
+        }
+
+        viewModelScope.launch {
+            updateConnectionStatus()
+            requestTimerStatus()
+        }
+    }
+
+    private suspend fun requestTimerStatus() {
+        if (connect()) {
+            sendMessage(mPhoneNodeWithApp!!.id, SleepTimerHelper.SleepTimerStatusPath, null)
+        }
+    }
+
+    fun requestSleepTimerStop() {
+        viewModelScope.launch {
+            if (connect()) {
+                sendMessage(mPhoneNodeWithApp!!.id, SleepTimerHelper.SleepTimerStopPath, null)
+            }
+        }
+    }
+
+    fun requestUpdateTimer(model: TimerModel) {
+        viewModelScope.launch {
+            if (connect()) {
+                sendMessage(
+                    mPhoneNodeWithApp!!.id, SleepTimerHelper.SleepTimerUpdateStatePath,
+                    JSONParser.serializer(model, TimerModel::class.java).stringToBytes()
+                )
+            }
+        }
+    }
+
+    fun requestSleepTimerStart(timeInMins: Int, selectedPlayer: SelectedPlayerState? = null) {
+        viewModelScope.launch {
+            if (connect()) {
+                sendMessage(
+                    mPhoneNodeWithApp!!.id, SleepTimerHelper.SleepTimerStartPath,
+                    timeInMins.intToBytes()
+                )
+
+                if (selectedPlayer?.isValid == true) {
+                    val intent = WearableHelper.createRemoteActivityIntent(
+                        selectedPlayer.packageName!!,
+                        selectedPlayer.activityName!!
+                    )
+                    val success = startRemoteActivity(intent)
+
+                    if (!success) {
+                        _eventsFlow.tryEmit(
+                            WearableEvent(
+                                ACTION_SHOWCONFIRMATION,
+                                Bundle().apply {
+                                    putString(
+                                        EXTRA_EVENTDATA,
+                                        JSONParser.serializer(
+                                            ConfirmationData(confirmationType = ConfirmationType.Failure),
+                                            ConfirmationData::class.java
+                                        )
+                                    )
+                                }
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    suspend fun requestPhoneAppVersion(): Long {
+        return suspendCancellableCoroutine { continuation ->
+            val listener = MessageClient.OnMessageReceivedListener { event ->
+                when (event.path) {
+                    WearableHelper.VersionPath -> {
+                        if (continuation.isActive) {
+                            val versionCode = event.data.bytesToLong()
+                            continuation.resume(versionCode)
+                        }
+                    }
+                }
+            }
+
+            continuation.invokeOnCancellation {
+                Wearable.getMessageClient(appContext)
+                    .removeListener(listener)
+            }
+
+            viewModelScope.launch {
+                Wearable.getMessageClient(appContext)
+                    .addListener(
+                        listener,
+                        WearableHelper.getWearDataUri("*", WearableHelper.VersionPath),
+                        MessageClient.FILTER_LITERAL
+                    ).await()
+
+                if (connect()) {
+                    sendMessage(mPhoneNodeWithApp!!.id, WearableHelper.VersionPath, null)
+                }
+            }
+        }
+    }
+
+    override fun onMessageReceived(messageEvent: MessageEvent) {
+        if (!uiState.value.isLocalTimer) {
+            when (messageEvent.path) {
+                SleepTimerHelper.SleepTimerStatusPath, SleepTimerHelper.SleepTimerStartPath -> {
+                    val data = messageEvent.data.bytesToString()
+                    _eventsFlow.tryEmit(
+                        WearableEvent(
+                            messageEvent.path,
+                            Bundle().apply {
+                                putString(EXTRA_EVENTDATA, data)
+                            }
+                        )
+                    )
+                }
+
+                SleepTimerHelper.SleepTimerStopPath -> {
+                    _eventsFlow.tryEmit(WearableEvent(messageEvent.path))
+                }
+
+                WearableHelper.OpenMusicPlayerPath -> {
+                    val success = messageEvent.data.bytesToBool()
+                    if (!success) {
+                        _eventsFlow.tryEmit(
+                            WearableEvent(
+                                ACTION_SHOWCONFIRMATION,
+                                Bundle().apply {
+                                    putString(
+                                        EXTRA_EVENTDATA,
+                                        JSONParser.serializer(
+                                            ConfirmationData(
+                                                message = appContext.getString(R.string.error_permissiondenied),
+                                                confirmationType = ConfirmationType.Failure
+                                            ), ConfirmationData::class.java
+                                        )
+                                    )
+                                }
+                            )
+                        )
+
+                        viewModelScope.launch {
+                            sendMessage(
+                                messageEvent.sourceNodeId,
+                                WearableHelper.StartPermissionsActivityPath,
+                                null
+                            )
+                        }
+                    }
+                }
+            }
+        } else {
+            super.onMessageReceived(messageEvent)
+        }
+    }
 }
 
 data class TimerUiState(
     val isRunning: Boolean = false,
     val timerLengthInMs: Long = TimerModel.DEFAULT_TIME_MIN * DateUtils.MINUTE_IN_MILLIS,
-    val remainingTimeInMs: Long = 0,
+    val remainingTimeInMs: Long = timerLengthInMs,
     val isLocalTimer: Boolean = true,
     val isLoading: Boolean = false
 ) {

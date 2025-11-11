@@ -1,15 +1,14 @@
 package com.thewizrd.simplesleeptimer.wearable.tiles
 
 import android.content.Context
-import android.util.Log
 import androidx.wear.protolayout.ResourceBuilders
-import androidx.wear.tiles.EventBuilders
 import androidx.wear.tiles.RequestBuilders
 import androidx.wear.tiles.TileBuilders
 import com.google.android.horologist.annotations.ExperimentalHorologistApi
 import com.google.android.horologist.tiles.SuspendingTileService
 import com.thewizrd.shared_resources.services.BaseTimerService
 import com.thewizrd.shared_resources.sleeptimer.TimerDataModel
+import com.thewizrd.shared_resources.utils.Logger
 import com.thewizrd.simplesleeptimer.services.TimerService
 import com.thewizrd.simplesleeptimer.utils.connectService
 
@@ -25,16 +24,12 @@ class SleepTimerLocalTileService : SuspendingTileService() {
 
     override fun onCreate() {
         super.onCreate()
-        Log.d(this::class.java.simpleName, "creating service...")
+        Logger.debug(this::class.java.simpleName, "creating service...")
     }
 
     override fun onDestroy() {
-        Log.d(this::class.java.simpleName, "destroying service...")
+        Logger.debug(this::class.java.simpleName, "destroying service...")
         super.onDestroy()
-    }
-
-    override fun onTileEnterEvent(requestParams: EventBuilders.TileEnterEvent) {
-        super.onTileEnterEvent(requestParams)
     }
 
     override suspend fun tileRequest(requestParams: RequestBuilders.TileRequest): TileBuilders.Tile {
@@ -49,6 +44,7 @@ class SleepTimerLocalTileService : SuspendingTileService() {
                 SleepTimerTileRenderer.ID_15MIN -> timerBinder.startTimer(15)
                 SleepTimerTileRenderer.ID_20MIN -> timerBinder.startTimer(20)
                 SleepTimerTileRenderer.ID_30MIN -> timerBinder.startTimer(30)
+                SleepTimerTileRenderer.ID_STOP -> timerBinder.cancelTimer()
             }
         }
 

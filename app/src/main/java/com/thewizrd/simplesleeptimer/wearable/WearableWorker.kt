@@ -1,13 +1,13 @@
 package com.thewizrd.simplesleeptimer.wearable
 
 import android.content.Context
-import android.util.Log
-import androidx.core.util.Pair
-import androidx.work.*
-import com.thewizrd.shared_resources.helpers.WearableHelper
+import androidx.work.CoroutineWorker
+import androidx.work.Data
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkManager
+import androidx.work.WorkerParameters
 import com.thewizrd.shared_resources.sleeptimer.SleepTimerHelper
-import com.thewizrd.shared_resources.sleeptimer.TimerDataModel
-import com.thewizrd.shared_resources.utils.JSONParser
+import com.thewizrd.shared_resources.utils.Logger
 
 class WearableWorker(appContext: Context, params: WorkerParameters) :
     CoroutineWorker(appContext, params) {
@@ -19,27 +19,12 @@ class WearableWorker(appContext: Context, params: WorkerParameters) :
         private const val KEY_DATA = "data"
         private const val KEY_NODEID = "node_id"
 
-        fun sendSupportedMusicPlayers(context: Context) {
-            startWork(
-                context,
-                Data.Builder()
-                    .putString(KEY_ACTION, WearableHelper.MusicPlayersPath)
-                    .build()
-            )
-        }
-
-        fun startMusicPlayer(context: Context, nodeID: String, jsonData: String) {
-            startWork(
-                context, Data.Builder()
-                    .putString(KEY_ACTION, WearableHelper.OpenMusicPlayerPath)
-                    .putString(KEY_NODEID, nodeID)
-                    .putString(KEY_DATA, jsonData)
-                    .build()
-            )
-        }
-
-        fun sendSleepTimerStatus(context: Context) {
-            startWork(context, SleepTimerHelper.SleepTimerStatusPath)
+        fun enqueueAction(context: Context, intentAction: String) {
+            when (intentAction) {
+                SleepTimerHelper.SleepTimerAudioPlayerPath -> {
+                    startWork(context, intentAction)
+                }
+            }
         }
 
         fun sendSelectedAudioPlayer(context: Context) {
@@ -51,13 +36,13 @@ class WearableWorker(appContext: Context, params: WorkerParameters) :
         }
 
         private fun startWork(context: Context, inputData: Data?) {
-            Log.i(TAG, "Requesting to start work")
+            Logger.info(TAG, "Requesting to start work")
             val updateRequest = OneTimeWorkRequest.Builder(WearableWorker::class.java)
             if (inputData != null) {
                 updateRequest.setInputData(inputData)
             }
             WorkManager.getInstance(context.applicationContext).enqueue(updateRequest.build())
-            Log.i(TAG, "One-time work enqueued")
+            Logger.info(TAG, "One-time work enqueued")
         }
     }
 
@@ -66,22 +51,8 @@ class WearableWorker(appContext: Context, params: WorkerParameters) :
         val mWearMgr = WearableManager(applicationContext)
 
         when (action) {
-            WearableHelper.MusicPlayersPath -> {
-                mWearMgr.sendSupportedMusicPlayers()
-            }
-            WearableHelper.OpenMusicPlayerPath -> {
-                val nodeID = inputData.getString(KEY_NODEID)
-                val jsonData = inputData.getString(KEY_DATA)
-                val pair = JSONParser.deserializer(jsonData, Pair::class.java)
-                val pkgName = pair?.first.toString()
-                val activityName = pair?.second.toString()
-                mWearMgr.startMusicPlayer(nodeID, pkgName, activityName)
-            }
-            SleepTimerHelper.SleepTimerStatusPath -> {
-                mWearMgr.sendSleepTimerUpdate(null, TimerDataModel.getDataModel().toModel())
-            }
             SleepTimerHelper.SleepTimerAudioPlayerPath -> {
-                mWearMgr.sendSelectedAudioPlayer()
+                mWearMgr.sendSelectedAudioPlayer(null)
             }
         }
 

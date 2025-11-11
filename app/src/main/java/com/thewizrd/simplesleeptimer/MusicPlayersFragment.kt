@@ -25,6 +25,7 @@ import com.thewizrd.simplesleeptimer.databinding.FragmentMusicPlayersBinding
 import com.thewizrd.simplesleeptimer.preferences.Settings
 import com.thewizrd.simplesleeptimer.wearable.WearableWorker
 import kotlinx.coroutines.launch
+import java.util.Collections
 
 class MusicPlayersFragment : Fragment() {
     private lateinit var binding: FragmentMusicPlayersBinding
@@ -52,7 +53,7 @@ class MusicPlayersFragment : Fragment() {
         }
 
         binding.bottomSheetToolbar.setNavigationOnClickListener {
-            requireActivity().onBackPressed()
+            requireActivity().onBackPressedDispatcher.onBackPressed()
         }
 
         playerAdapter = PlayerListAdapter()
@@ -86,7 +87,26 @@ class MusicPlayersFragment : Fragment() {
     }
 
     private fun updateSupportedMusicPlayers() {
-        val supportedPlayers = ArrayList<String>()
+        val appInfos = mutableListOf<ApplicationInfo>()
+
+        /* Media Button Receivers */
+        requireContext().packageManager.queryBroadcastReceivers(
+            Intent(Intent.ACTION_MEDIA_BUTTON), PackageManager.GET_RESOLVED_FILTER
+        ).mapTo(appInfos) { it.activityInfo.applicationInfo }
+
+        /* MediaBrowser services */
+        requireContext().packageManager.queryIntentServices(
+            Intent(MediaBrowserService.SERVICE_INTERFACE),
+            PackageManager.GET_RESOLVED_FILTER
+        ).mapTo(appInfos) { it.serviceInfo.applicationInfo }
+
+        // Sort result
+        Collections.sort(
+            appInfos,
+            ApplicationInfo.DisplayNameComparator(requireContext().packageManager)
+        )
+
+        val supportedPlayers = ArrayList<String>(appInfos.size)
         val playerModels = ArrayList<MusicPlayerViewModel>()
 
         fun addPlayerInfo(appInfo: ApplicationInfo) {
@@ -110,7 +130,7 @@ class MusicPlayersFragment : Fragment() {
                         val drawable =
                             requireContext().packageManager.getActivityIcon(activityCmpName)
                         iconBmp = drawable.toBitmap()
-                    } catch (e: PackageManager.NameNotFoundException) {
+                    } catch (_: PackageManager.NameNotFoundException) {
                     }
 
                     playerModels.add(MusicPlayerViewModel().apply {
@@ -124,29 +144,9 @@ class MusicPlayersFragment : Fragment() {
             }
         }
 
-        /* Media Button Receivers */
-        val infos = requireContext().packageManager.queryBroadcastReceivers(
-            Intent(Intent.ACTION_MEDIA_BUTTON), PackageManager.GET_RESOLVED_FILTER
-        )
-
-        for (info in infos) {
-            val appInfo = info.activityInfo.applicationInfo
-            addPlayerInfo(appInfo)
+        for (info in appInfos) {
+            addPlayerInfo(info)
         }
-
-        /* MediaBrowser services */
-        val mediaBrowserInfos = requireContext().packageManager.queryIntentServices(
-            Intent(MediaBrowserService.SERVICE_INTERFACE),
-            PackageManager.GET_RESOLVED_FILTER
-        )
-
-        for (info in mediaBrowserInfos) {
-            val appInfo = info.serviceInfo.applicationInfo
-            addPlayerInfo(appInfo)
-        }
-
-        // Sort result
-        playerModels.sortBy { it.appLabel?.lowercase() }
 
         val playerPref = Settings.getMusicPlayer()
         val model = playerModels.find { i -> i.key != null && i.key == playerPref }

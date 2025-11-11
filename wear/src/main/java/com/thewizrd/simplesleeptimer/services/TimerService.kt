@@ -7,7 +7,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.SystemClock
 import android.text.format.DateUtils
-import android.util.Log
 import android.view.KeyEvent
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
@@ -19,6 +18,7 @@ import androidx.wear.ongoing.OngoingActivity
 import androidx.wear.ongoing.Status
 import com.thewizrd.shared_resources.services.BaseTimerService
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
+import com.thewizrd.shared_resources.utils.Logger
 import com.thewizrd.shared_resources.utils.TimerStringFormatter
 import com.thewizrd.simplesleeptimer.R
 import com.thewizrd.simplesleeptimer.SleepTimerLocalActivity
@@ -36,10 +36,6 @@ class TimerService : BaseTimerService() {
         get() = NOTIFICATION_ID
     override val notificationChannelId: String
         get() = NOT_CHANNEL_ID
-
-    override fun onCreate() {
-        super.onCreate()
-    }
 
     override fun updateTimerNotification(model: TimerModel): Notification {
         val notifBuilder = NotificationCompat.Builder(this, NOT_CHANNEL_ID)
@@ -92,6 +88,7 @@ class TimerService : BaseTimerService() {
             val ongoingActivity =
                 OngoingActivity.Builder(applicationContext, NOTIFICATION_ID, notifBuilder)
                     .setStaticIcon(R.drawable.ic_hourglass_empty)
+                    .setAnimatedIcon(R.drawable.avd_hourglass_rotate)
                     .setTitle(getString(R.string.title_sleeptimer))
                     .setStatus(ongoingActivityStatus)
                     .setLocusId(LocusIdCompat(LOCAL_TIMER_LOCUS_ID))
@@ -174,11 +171,19 @@ class TimerService : BaseTimerService() {
                         runCatching {
                             applicationContext.sendBroadcast(pauseKeyIntent)
                         }.onFailure {
-                            Log.e("TimerService", "error sending pause intent", it)
+                            Logger.error("TimerService", it, "error sending pause intent")
                         }
                     }
                 }
             }
         }
+    }
+
+    override fun shouldRemoveForegroundNotification(): Boolean {
+        return !getTimerModel().isRunning
+    }
+
+    override fun shouldKeepNotificationActive(): Boolean {
+        return true
     }
 }

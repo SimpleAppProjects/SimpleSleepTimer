@@ -4,25 +4,21 @@ import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
-import android.content.DialogInterface
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.ServiceConnection
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
-import android.provider.Settings
-import android.util.Log
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.PermissionChecker
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.thewizrd.shared_resources.services.BaseTimerService
 import com.thewizrd.shared_resources.sleeptimer.TimerDataModel
-import com.thewizrd.simplesleeptimer.helpers.AcceptDenyDialog
 import com.thewizrd.simplesleeptimer.services.TimerService
 import com.thewizrd.simplesleeptimer.ui.SleepTimerApp
 import com.thewizrd.simplesleeptimer.viewmodels.TimerOperation
@@ -37,7 +33,7 @@ import com.thewizrd.simplesleeptimer.preferences.Settings as SleepTimerSettings
 /**
  * Sleep Timer for local WearOS device
  */
-class SleepTimerLocalActivity : AppCompatActivity() {
+class SleepTimerLocalActivity : ComponentActivity() {
     private val timerViewModel: TimerViewModel by viewModels()
     private var timerUpdateJob: Job? = null
 
@@ -193,18 +189,7 @@ class SleepTimerLocalActivity : AppCompatActivity() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
                 !BaseTimerService.checkExactAlarmsPermission(this)
             ) {
-                AcceptDenyDialog.Builder(this) { _, which ->
-                    if (which == DialogInterface.BUTTON_POSITIVE) {
-                        runCatching {
-                            startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
-                        }.onFailure {
-                            Log.e("SleepTimerActivity", "Error", it)
-                        }
-                    }
-                }
-                    .setMessage(R.string.message_alarms_permission)
-                    .show()
-
+                timerViewModel.notifyAlarmPermissionDenied()
                 return
             }
 

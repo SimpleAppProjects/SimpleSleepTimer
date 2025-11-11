@@ -2,13 +2,16 @@ package com.thewizrd.shared_resources.helpers
 
 import android.content.ComponentName
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
-import android.util.Log
+import android.os.Build
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
+import com.google.android.gms.wearable.Node
 import com.google.android.gms.wearable.PutDataRequest
-import com.thewizrd.shared_resources.SimpleLibrary
+import com.thewizrd.shared_resources.sharedDeps
 import com.thewizrd.shared_resources.sleeptimer.SleepTimerHelper
+import com.thewizrd.shared_resources.utils.Logger
 
 object WearableHelper {
     // Name of capability listed in Phone app's wear.xml
@@ -16,6 +19,8 @@ object WearableHelper {
 
     // Name of capability listed in Wear app's wear.xml
     const val CAPABILITY_WEAR_APP = "com.thewizrd.simplesleeptimer_wear_app"
+
+    private const val SUPPORTED_VERSION_CODE: Long = 341500020
 
     fun getPlayStoreURI(): Uri = SleepTimerHelper.getPlayStoreURI()
 
@@ -26,6 +31,7 @@ object WearableHelper {
     const val OpenMusicPlayerPath = "/music/start-activity"
     const val BtDiscoverPath = "/bluetooth/discoverable"
     const val PingPath = "/ping"
+    const val VersionPath = "/version"
 
     // For Music Player DataMap
     const val KEY_SUPPORTEDPLAYERS = "key_supported_players"
@@ -43,15 +49,14 @@ object WearableHelper {
 
     fun isGooglePlayServicesInstalled(): Boolean {
         val queryResult = GoogleApiAvailability.getInstance()
-            .isGooglePlayServicesAvailable(SimpleLibrary.instance.app.appContext)
+            .isGooglePlayServicesAvailable(sharedDeps.context)
         if (queryResult == ConnectionResult.SUCCESS) {
-            Log.println(Log.INFO, "App", "Google Play Services is installed on this device.")
+            Logger.info("App", "Google Play Services is installed on this device.")
             return true
         }
         if (GoogleApiAvailability.getInstance().isUserResolvableError(queryResult)) {
             val errorString = GoogleApiAvailability.getInstance().getErrorString(queryResult)
-            Log.println(
-                Log.INFO,
+            Logger.info(
                 "App",
                 "There is a problem with Google Play Services on this device: $queryResult - $errorString"
             )
@@ -106,5 +111,43 @@ object WearableHelper {
                     this.getQueryParameter(URI_PARAM_ACTIVITYNAME)!!
                 )
             )
+    }
+
+    /*
+     * There should only ever be one phone in a node set (much less w/ the correct capability), so
+     * I am just grabbing the first one (which should be the only one).
+    */
+    fun pickBestNodeId(nodes: Collection<Node>): Node? {
+        var bestNode: Node? = null
+
+        // Find a nearby node/phone or pick one arbitrarily. Realistically, there is only one phone.
+        for (node in nodes) {
+            if (node.isNearby) {
+                return node
+            }
+            bestNode = node
+        }
+        return bestNode
+    }
+
+    fun isAppUpToDate(versionCode: Long): Boolean {
+        return versionCode >= SUPPORTED_VERSION_CODE
+    }
+
+    fun getAppVersionCode(): Long = try {
+        val context = sharedDeps.context
+        val packageInfo = context.run {
+            packageManager.getPackageInfo(packageName, 0)
+        }
+
+        val versionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            packageInfo.longVersionCode
+        } else {
+            packageInfo.versionCode.toLong()
+        }
+
+        versionCode
+    } catch (e: PackageManager.NameNotFoundException) {
+        0
     }
 }

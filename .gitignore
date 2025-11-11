@@ -11,5 +11,8 @@
 /captures
 .externalNativeBuild
 .cxx
+.kotlin
 /app/release
+/app/google-services.json
 /wear/release
+/wear/google-services.json

@@ -1,22 +1,18 @@
 package com.thewizrd.simplesleeptimer.viewmodels
 
 import android.app.Application
-import android.util.Log
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.android.gms.wearable.DataMapItem
-import com.google.android.gms.wearable.Wearable
-import com.thewizrd.shared_resources.helpers.WearableHelper
+import com.google.android.gms.wearable.MessageEvent
 import com.thewizrd.shared_resources.sleeptimer.SleepTimerHelper
-import kotlinx.coroutines.Dispatchers
+import com.thewizrd.shared_resources.utils.bytesToString
+import com.thewizrd.shared_resources.utils.stringToBytes
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 
-class SelectedPlayerViewModel(private val app: Application) : AndroidViewModel(app) {
+class SelectedPlayerViewModel(app: Application) : WearableListenerViewModel(app) {
     private val selectedPlayerState = MutableStateFlow(SelectedPlayerState())
 
     val selectedPlayer = selectedPlayerState.stateIn(
@@ -25,6 +21,17 @@ class SelectedPlayerViewModel(private val app: Application) : AndroidViewModel(a
         selectedPlayerState.value
     )
 
+    override fun onMessageReceived(messageEvent: MessageEvent) {
+        when (messageEvent.path) {
+            SleepTimerHelper.SleepTimerAudioPlayerPath -> {
+                val prefKey = messageEvent.data.bytesToString()
+                updateSelectedPlayer(prefKey)
+            }
+
+            else -> super.onMessageReceived(messageEvent)
+        }
+    }
+
     fun updateSelectedPlayer(key: String?) {
         selectedPlayerState.update {
             it.copy(key = key)
@@ -32,37 +39,24 @@ class SelectedPlayerViewModel(private val app: Application) : AndroidViewModel(a
     }
 
     fun getSelectedPlayerData() {
-        viewModelScope.launch(Dispatchers.IO) {
-            var prefKey: String? = null
-            try {
-                val buff = Wearable.getDataClient(app.applicationContext)
-                    .getDataItems(
-                        WearableHelper.getWearDataUri(
-                            "*",
-                            SleepTimerHelper.SleepTimerAudioPlayerPath
-                        )
-                    )
-                    .await()
-
-                for (i in 0 until buff.count) {
-                    val item = buff[i]
-                    if (SleepTimerHelper.SleepTimerAudioPlayerPath == item.uri.path) {
-                        try {
-                            val dataMap = DataMapItem.fromDataItem(item).dataMap
-                            prefKey = dataMap.getString(SleepTimerHelper.KEY_SELECTEDPLAYER, "")
-                        } catch (e: Exception) {
-                            Log.e("SelectedPlayerViewModel", "Error", e)
-                        }
-                        break
-                    }
-                }
-                buff.release()
-            } catch (e: Exception) {
-                Log.e("SelectedPlayerViewModel", "Error", e)
-                prefKey = null
+        viewModelScope.launch {
+            if (connect()) {
+                sendMessage(
+                    mPhoneNodeWithApp!!.id,
+                    SleepTimerHelper.SleepTimerAudioPlayerPath,
+                    null
+                )
             }
+        }
+    }
 
-            updateSelectedPlayer(prefKey)
+    suspend fun sendSelectedPlayerUpdate(key: String?) {
+        if (connect()) {
+            sendMessage(
+                mPhoneNodeWithApp!!.id,
+                SleepTimerHelper.SleepTimerUpdateAudioPlayerPath,
+                key?.stringToBytes()
+            )
         }
     }
 }

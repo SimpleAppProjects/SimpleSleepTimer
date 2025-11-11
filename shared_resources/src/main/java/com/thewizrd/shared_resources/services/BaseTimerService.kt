@@ -17,28 +17,22 @@ import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import android.text.format.DateUtils
-import android.util.Log
 import android.view.KeyEvent
 import androidx.annotation.CallSuper
 import androidx.annotation.RequiresApi
-import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.thewizrd.shared_resources.R
-import com.thewizrd.shared_resources.SimpleLibrary
+import com.thewizrd.shared_resources.appLib
 import com.thewizrd.shared_resources.helpers.AppState
 import com.thewizrd.shared_resources.helpers.toImmutableCompatFlag
 import com.thewizrd.shared_resources.sleeptimer.TimerDataModel
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
+import com.thewizrd.shared_resources.utils.Logger
 import java.util.Date
 import java.util.Timer
-import java.util.concurrent.Executors
 import kotlin.concurrent.schedule
 
 abstract class BaseTimerService : Service() {
@@ -55,7 +49,7 @@ abstract class BaseTimerService : Service() {
         private const val EXTRA_FORCEFOREGROUND = "SimpleSleepTimer.extra.FORCE_FOREGROUND"
 
         fun enqueueWork(context: Context, work: Intent) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && SimpleLibrary.instance.app.applicationState != AppState.FOREGROUND) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && appLib.appState != AppState.FOREGROUND) {
                 context.startForegroundService(work.putExtra(EXTRA_FORCEFOREGROUND, true))
             } else {
                 context.startService(work)
@@ -83,10 +77,6 @@ abstract class BaseTimerService : Service() {
     // Timer
     private val model = TimerDataModel.getDataModel()
 
-    private val scope = CoroutineScope(
-        SupervisorJob() + Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-    )
-
     protected abstract val notificationId: Int
     protected abstract val notificationChannelId: String
 
@@ -103,7 +93,7 @@ abstract class BaseTimerService : Service() {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             initChannel()
-            if (SimpleLibrary.instance.app.applicationState != AppState.FOREGROUND) {
+            if (appLib.appState != AppState.FOREGROUND) {
                 startForegroundIfNeeded()
             }
         }
@@ -151,23 +141,7 @@ abstract class BaseTimerService : Service() {
 
     private fun getForegroundNotification(): Notification {
         if (mForegroundNotification == null) {
-            mForegroundNotification =
-                NotificationCompat.Builder(this, notificationChannelId)
-                    .setSmallIcon(R.drawable.ic_hourglass_empty)
-                    .setContentTitle(getString(R.string.title_sleeptimer))
-                    .setContentText("--:--:--")
-                    .setColor(ContextCompat.getColor(this, R.color.colorPrimary))
-                    .setOngoing(true)
-                    .setOnlyAlertOnce(true)
-                    .setSound(null)
-                    .addAction(
-                        0,
-                        getString(android.R.string.cancel),
-                        getCancelIntent(this)
-                    )
-                    .setContentIntent(getClickIntent(this))
-                    .setPriority(NotificationCompat.PRIORITY_LOW)
-                    .build()
+            mForegroundNotification = updateTimerNotification(model.toModel())
         }
 
         return mForegroundNotification!!
@@ -254,7 +228,7 @@ abstract class BaseTimerService : Service() {
     }
 
     private fun updateTimer() {
-        if (!mIsBound) {
+        if (!mIsBound || shouldKeepNotificationActive()) {
             updateNotification()
         } else {
             NotificationManagerCompat.from(this).cancel(notificationId)
@@ -275,7 +249,7 @@ abstract class BaseTimerService : Service() {
             model.stopTimer()
             sendTimerCancelled()
         }
-        stopForeground(true)
+        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         NotificationManagerCompat.from(this).cancel(notificationId)
         stopSelf()
     }
@@ -409,7 +383,7 @@ abstract class BaseTimerService : Service() {
                 mAlarmManager.setExact(AlarmManager.RTC_WAKEUP, rtcExpireTimeInMs, pi)
             }
         }.onFailure {
-            Log.e("BaseTimerService", "Error", it)
+            Logger.error("BaseTimerService", it, "Error")
         }
     }
 
@@ -436,8 +410,10 @@ abstract class BaseTimerService : Service() {
 
         // Send pause event to which ever player has audio focus
         val audioMan = this.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        val event = KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE)
-        audioMan.dispatchMediaKeyEvent(event)
+        if (audioMan.isMusicActive) {
+            val event = KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE)
+            audioMan.dispatchMediaKeyEvent(event)
+        }
 
         // Use AudioFocus as a fallback
         if (audioMan.isMusicActive) {
@@ -463,7 +439,12 @@ abstract class BaseTimerService : Service() {
         // Background restrictions don't apply to bound services
         // We can remove the notification now
         mIsBound = true
-        stopForeground(true)
+
+        if (shouldRemoveForegroundNotification()) {
+            ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+        } else {
+            ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_DETACH)
+        }
 
         return binder
     }
@@ -472,37 +453,27 @@ abstract class BaseTimerService : Service() {
         fun isRunning(): Boolean = model.isRunning
 
         fun cancelTimer() {
-            scope.launch {
-                this@BaseTimerService.cancelTimer()
-            }
+            this@BaseTimerService.cancelTimer()
         }
 
         fun startTimer(timeInMin: Int) {
-            scope.launch {
-                this@BaseTimerService.startTimer(timeInMin)
-            }
+            this@BaseTimerService.startTimer(timeInMin)
         }
 
         fun updateTimer() {
-            scope.launch {
-                this@BaseTimerService.updateTimer()
-            }
+            this@BaseTimerService.updateTimer()
         }
 
         fun extend1MinTimer() {
-            scope.launch {
-                model.extend1Min()
-                this@BaseTimerService.updateExpireIntent()
-                this@BaseTimerService.updateTimer()
-            }
+            model.extend1Min()
+            this@BaseTimerService.updateExpireIntent()
+            this@BaseTimerService.updateTimer()
         }
 
         fun extend5MinTimer() {
-            scope.launch {
-                model.extend5Min()
-                this@BaseTimerService.updateExpireIntent()
-                this@BaseTimerService.updateTimer()
-            }
+            model.extend5Min()
+            this@BaseTimerService.updateExpireIntent()
+            this@BaseTimerService.updateTimer()
         }
     }
 
@@ -510,9 +481,12 @@ abstract class BaseTimerService : Service() {
     override fun onDestroy() {
         cancelTimer()
         timerFallback?.purge()
-        scope.cancel()
         super.onDestroy()
-        stopForeground(true)
+        if (shouldRemoveForegroundNotification()) {
+            ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+        } else {
+            ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_DETACH)
+        }
     }
 
     final override fun onRebind(intent: Intent?) {
@@ -521,7 +495,11 @@ abstract class BaseTimerService : Service() {
 
         // Background restrictions don't apply to bound services
         // We can remove the notification now
-        stopForeground(true)
+        if (shouldRemoveForegroundNotification()) {
+            ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+        } else {
+            ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_DETACH)
+        }
     }
 
     final override fun onUnbind(intent: Intent?): Boolean {
@@ -531,5 +509,13 @@ abstract class BaseTimerService : Service() {
         startForegroundIfNeeded(true)
 
         return true // Allow re-binding
+    }
+
+    protected open fun shouldRemoveForegroundNotification(): Boolean {
+        return true
+    }
+
+    protected open fun shouldKeepNotificationActive(): Boolean {
+        return false
     }
 }

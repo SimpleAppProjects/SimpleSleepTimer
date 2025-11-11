@@ -11,14 +11,17 @@
     <!-- Setup -->
     <string name="message_gettingstatus">Getting connection status…</string>
     <string name="error_syncing">Unable to sync data</string>
-
     <string name="error_permissiondenied">Permission denied for action. Please check permission on phone app</string>
-
     <string name="error_sleeptimer_notinstalled">SleepTimer app not installed.\nPlease install to continue.</string>
+    <string name="message_enablebt">Please enable Bluetooth for a reliable connection</string>
+    <string name="label_wifi">WiFi</string>
+    <string name="label_bt">Bluetooth</string>
 
     <string name="action_retry">Retry</string>
     <string name="action_open">Open</string>
     <string name="label_remote">Remote</string>
+    <string name="label_info">Info</string>
+    <string name="label_settings">Settings</string>
 
     <string name="label_tile_duration_hr_min">%1$02dh:%2$02dm Timer</string>
     <string name="label_tile_duration_mins">%1$dm Timer</string>

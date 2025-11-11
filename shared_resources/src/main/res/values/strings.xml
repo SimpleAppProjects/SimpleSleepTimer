@@ -21,4 +21,9 @@
     <string name="label_start">Start</string>
     <string name="action_reset">Reset</string>
 
+    <!-- In-App Updates -->
+    <string name="message_wearappupdate_available">App update available on watch. Please update to continue…</string>
+    <string name="message_phoneappupdate_available">App update available on phone. Please update to continue…</string>
+    <string name="action_update">Update</string>
+
 </resources>

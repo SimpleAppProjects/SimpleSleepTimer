@@ -9,22 +9,33 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Build
 import android.service.media.MediaBrowserService
-import android.util.Log
 import android.util.TypedValue
 import androidx.annotation.RestrictTo
-import com.google.android.gms.wearable.*
+import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.CapabilityClient.OnCapabilityChangedListener
+import com.google.android.gms.wearable.CapabilityInfo
+import com.google.android.gms.wearable.Node
+import com.google.android.gms.wearable.Wearable
+import com.thewizrd.shared_resources.data.AppItemData
 import com.thewizrd.shared_resources.helpers.WearableHelper
+import com.thewizrd.shared_resources.media.MusicPlayersData
 import com.thewizrd.shared_resources.sleeptimer.SleepTimerHelper
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
 import com.thewizrd.shared_resources.utils.ImageUtils
+import com.thewizrd.shared_resources.utils.ImageUtils.toByteArray
 import com.thewizrd.shared_resources.utils.JSONParser
+import com.thewizrd.shared_resources.utils.Logger
 import com.thewizrd.shared_resources.utils.booleanToBytes
 import com.thewizrd.shared_resources.utils.stringToBytes
 import com.thewizrd.simplesleeptimer.preferences.Settings
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import java.util.*
+import kotlinx.coroutines.withContext
+import java.util.Collections
 
 @RestrictTo(RestrictTo.Scope.LIBRARY_GROUP)
 class WearableManager(private val mContext: Context) : OnCapabilityChangedListener {
@@ -67,7 +78,7 @@ class WearableManager(private val mContext: Context) : OnCapabilityChangedListen
             )
                 .await()
         } catch (e: Exception) {
-            Log.e(TAG, "Error", e)
+            Logger.error(TAG, e, "Error")
         }
         return capabilityInfo?.nodes
     }
@@ -105,11 +116,30 @@ class WearableManager(private val mContext: Context) : OnCapabilityChangedListen
         }
     }
 
-    suspend fun sendSupportedMusicPlayers() {
-        val mapRequest = PutDataMapRequest.create(WearableHelper.MusicPlayersPath)
-        val supportedPlayers = ArrayList<String>()
+    suspend fun sendSupportedMusicPlayers(nodeID: String) {
+        val appInfos = mutableListOf<ApplicationInfo>()
 
-        fun addPlayerInfo(appInfo: ApplicationInfo) {
+        /* Media Button Receivers */
+        mContext.packageManager.queryBroadcastReceivers(
+            Intent(Intent.ACTION_MEDIA_BUTTON), PackageManager.GET_RESOLVED_FILTER
+        ).mapTo(appInfos) { it.activityInfo.applicationInfo }
+
+        /* MediaBrowser services */
+        mContext.packageManager.queryIntentServices(
+            Intent(MediaBrowserService.SERVICE_INTERFACE),
+            PackageManager.GET_RESOLVED_FILTER
+        ).mapTo(appInfos) { it.serviceInfo.applicationInfo }
+
+        // Sort result
+        Collections.sort(
+            appInfos,
+            ApplicationInfo.DisplayNameComparator(mContext.packageManager)
+        )
+
+        val supportedPlayers = ArrayList<String>(appInfos.size)
+        val musicPlayers = mutableSetOf<AppItemData>()
+
+        suspend fun addPlayerInfo(appInfo: ApplicationInfo) {
             val launchIntent =
                 mContext.packageManager.getLaunchIntentForPackage(appInfo.packageName)
             if (launchIntent != null) {
@@ -135,57 +165,49 @@ class WearableManager(private val mContext: Context) : OnCapabilityChangedListen
                         iconBmp = ImageUtils.bitmapFromDrawable(iconDrwble, size, size)
                     } catch (ignored: PackageManager.NameNotFoundException) {
                     }
-                    val map = DataMap()
-                    map.putString(WearableHelper.KEY_LABEL, label)
-                    map.putString(WearableHelper.KEY_PKGNAME, appInfo.packageName)
-                    map.putString(WearableHelper.KEY_ACTIVITYNAME, activityInfo.activityInfo.name)
-                    map.putAsset(
-                        WearableHelper.KEY_ICON,
-                        iconBmp?.let { ImageUtils.createAssetFromBitmap(iconBmp) }
-                            ?: Asset.createFromBytes(
-                                ByteArray(0)
-                            )
+
+                    musicPlayers.add(
+                        AppItemData(
+                            label = label,
+                            packageName = appInfo.packageName,
+                            activityName = activityInfo.activityInfo.name,
+                            iconBitmap = iconBmp?.toByteArray()
+                        )
                     )
-                    mapRequest.dataMap.putDataMap(key, map)
                     supportedPlayers.add(key)
                 }
             }
         }
 
-        /* Media Button Receivers */
-        val infos = mContext.packageManager.queryBroadcastReceivers(
-            Intent(Intent.ACTION_MEDIA_BUTTON), PackageManager.GET_RESOLVED_FILTER
-        )
-
-        for (info in infos) {
-            val appInfo = info.activityInfo.applicationInfo
-            addPlayerInfo(appInfo)
+        for (info in appInfos) {
+            addPlayerInfo(info)
         }
 
-        /* MediaBrowser services */
-        val mediaBrowserInfos = mContext.packageManager.queryIntentServices(
-            Intent(MediaBrowserService.SERVICE_INTERFACE),
-            PackageManager.GET_RESOLVED_FILTER
-        )
+        val playersData = MusicPlayersData(musicPlayers = musicPlayers)
 
-        for (info in mediaBrowserInfos) {
-            val appInfo = info.serviceInfo.applicationInfo
-            addPlayerInfo(appInfo)
-        }
-
-        // Sort result...
-        supportedPlayers.sortBy {
-            mapRequest.dataMap.getDataMap(it)?.getString(WearableHelper.KEY_LABEL)?.lowercase()
-        }
-
-        mapRequest.dataMap.putStringArrayList(WearableHelper.KEY_SUPPORTEDPLAYERS, supportedPlayers)
-        mapRequest.setUrgent()
         try {
-            Wearable.getDataClient(mContext)
-                .putDataItem(mapRequest.asPutDataRequest())
-                .await()
+            val channelClient = Wearable.getChannelClient(mContext)
+
+            withContext(Dispatchers.IO) {
+                val channel =
+                    channelClient.openChannel(nodeID, WearableHelper.MusicPlayersPath).await()
+                val outputStream = channelClient.getOutputStream(channel).await()
+                outputStream.bufferedWriter().use { writer ->
+                    writer.write(
+                        "data: ${
+                            JSONParser.serializer(
+                                playersData,
+                                MusicPlayersData::class.java
+                            )
+                        }"
+                    )
+                    writer.newLine()
+                    writer.flush()
+                }
+                channelClient.close(channel)
+            }
         } catch (e: Exception) {
-            Log.e(TAG, "Error", e)
+            Logger.error(TAG, e, "Error")
         }
     }
 
@@ -208,32 +230,20 @@ class WearableManager(private val mContext: Context) : OnCapabilityChangedListen
 
     suspend fun sendSleepTimerStatusBridge(model: TimerModel) {
         if (Settings.isBridgeTimerEnabled()) {
-            val mapRequest = PutDataMapRequest.create(SleepTimerHelper.SleepTimerBridgePath)
-            mapRequest.dataMap.putString(
-                SleepTimerHelper.KEY_TIMERDATA,
-                JSONParser.serializer(model, TimerModel::class.java)
+            sendMessage(
+                null,
+                SleepTimerHelper.SleepTimerBridgePath,
+                JSONParser.serializer(model, TimerModel::class.java)?.stringToBytes()
             )
-            mapRequest.setUrgent()
-            try {
-                Wearable.getDataClient(mContext)
-                    .putDataItem(mapRequest.asPutDataRequest())
-                    .await()
-            } catch (e: Exception) {
-                Log.e(TAG, "Error", e)
-            }
         }
     }
 
     suspend fun removeSleepTimerStatusBridge() {
-        try {
-            Wearable.getDataClient(mContext)
-                .deleteDataItems(
-                    WearableHelper.getWearDataUri(SleepTimerHelper.SleepTimerBridgePath)
-                )
-                .await()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error", e)
-        }
+        sendMessage(
+            null,
+            SleepTimerHelper.SleepTimerBridgePath,
+            null
+        )
     }
 
     fun sendSleepCancelled() {
@@ -250,20 +260,11 @@ class WearableManager(private val mContext: Context) : OnCapabilityChangedListen
         )
     }
 
-    suspend fun sendSelectedAudioPlayer() {
-        val mapRequest = PutDataMapRequest.create(SleepTimerHelper.SleepTimerAudioPlayerPath)
-        mapRequest.dataMap.putString(
-            SleepTimerHelper.KEY_SELECTEDPLAYER,
-            Settings.getMusicPlayer() ?: ""
+    suspend fun sendSelectedAudioPlayer(nodeID: String?) {
+        sendMessage(
+            nodeID, SleepTimerHelper.SleepTimerAudioPlayerPath,
+            Settings.getMusicPlayer()?.stringToBytes()
         )
-        mapRequest.setUrgent()
-        try {
-            Wearable.getDataClient(mContext)
-                .putDataItem(mapRequest.asPutDataRequest())
-                .await()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error", e)
-        }
     }
 
     suspend fun sendMessage(nodeID: String?, path: String, data: ByteArray?) {
@@ -280,7 +281,7 @@ class WearableManager(private val mContext: Context) : OnCapabilityChangedListen
                     .sendMessage(nodeID, path, data)
                     .await()
             } catch (e: Exception) {
-                Log.e(TAG, "Error", e)
+                Logger.error(TAG, e, "Error")
             }
         } else {
             for (node in mWearNodesWithApp!!) {
@@ -289,7 +290,7 @@ class WearableManager(private val mContext: Context) : OnCapabilityChangedListen
                         .sendMessage(node.id, path, data)
                         .await()
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error", e)
+                    Logger.error(TAG, e, "Error")
                 }
             }
         }

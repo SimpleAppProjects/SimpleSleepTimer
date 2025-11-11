@@ -1,58 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/player_item"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    style="@style/Widget.Material3.CardView.Filled"
+    app:cardBackgroundColor="@android:color/transparent"
+    android:minHeight="56dp"
+    app:contentPaddingTop="8dp"
+    app:contentPaddingBottom="8dp"
+    app:cardCornerRadius="0dp"
+    tools:theme="@style/Theme.Material3Expressive.DayNight">
 
-    <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/player_icon"
-        android:layout_width="56dp"
-        android:layout_height="0dp"
-        android:adjustViewBounds="true"
-        android:paddingTop="10dp"
-        android:paddingBottom="10dp"
-        android:paddingStart="10dp"
-        android:paddingEnd="10dp"
-        android:scaleType="fitCenter"
-        app:layout_constraintBottom_toBottomOf="@id/player_name"
-        app:layout_constraintEnd_toStartOf="@id/player_name"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/player_name"
-        app:layout_constraintVertical_bias="0.5"
-        app:srcCompat="@drawable/ic_play_circle_filled" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:layout_gravity="center_vertical">
 
-    <TextView
-        android:id="@+id/player_name"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:ellipsize="marquee"
-        android:marqueeRepeatLimit="marquee_forever"
-        android:maxLines="2"
-        android:paddingTop="16dp"
-        android:paddingBottom="16dp"
-        android:textAppearance="?textAppearanceBodyMedium"
-        app:layout_constrainedWidth="true"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/radioButton"
-        app:layout_constraintHeight_min="56dp"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toEndOf="@id/player_icon"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.5"
-        tools:text="Music Player" />
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/player_icon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginHorizontal="16dp"
+            android:layout_gravity="center_vertical"
+            android:background="?colorPrimary"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.Material3.Button"
+            app:srcCompat="@drawable/ic_play_circle_filled" />
 
-    <RadioButton
-        android:id="@+id/radioButton"
-        style="@style/Widget.Material3.CompoundButton.RadioButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:padding="4dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/player_name"
-        app:layout_constraintTop_toTopOf="parent" />
+        <TextView
+            android:id="@+id/player_name"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:maxLines="2"
+            android:textAppearance="?textAppearanceBodyMedium"
+            tools:text="Music Player" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <RadioButton
+            android:id="@+id/radioButton"
+            style="@style/Widget.Material3.CompoundButton.RadioButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:padding="4dp" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

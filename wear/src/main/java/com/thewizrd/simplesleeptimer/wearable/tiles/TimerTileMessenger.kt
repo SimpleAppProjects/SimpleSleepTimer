@@ -1,96 +1,79 @@
 package com.thewizrd.simplesleeptimer.wearable.tiles
 
 import android.content.Context
-import android.text.format.DateUtils
 import android.util.Log
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.CapabilityInfo
-import com.google.android.gms.wearable.MessageClient
-import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.Node
 import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableStatusCodes
 import com.thewizrd.shared_resources.helpers.WearConnectionStatus
 import com.thewizrd.shared_resources.helpers.WearableHelper
 import com.thewizrd.shared_resources.sleeptimer.SleepTimerHelper
-import com.thewizrd.shared_resources.sleeptimer.TimerModel
-import com.thewizrd.shared_resources.utils.JSONParser
-import com.thewizrd.shared_resources.utils.bytesToString
+import com.thewizrd.shared_resources.utils.Logger
 import com.thewizrd.shared_resources.utils.intToBytes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
-import kotlin.coroutines.resume
 
 class TimerTileMessenger(private val context: Context) :
-    CapabilityClient.OnCapabilityChangedListener, MessageClient.OnMessageReceivedListener {
+    CapabilityClient.OnCapabilityChangedListener {
     companion object {
         private const val TAG = "TimerTileMessenger"
     }
 
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
     @Volatile
     private var mPhoneNodeWithApp: Node? = null
-    private var mConnectionStatus = WearConnectionStatus.DISCONNECTED
-    private var timerModel = TimerModel()
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val _connectionState = MutableStateFlow(WearConnectionStatus.DISCONNECTED)
+    val connectionState = _connectionState.stateIn(
+        scope,
+        SharingStarted.Eagerly,
+        _connectionState.value
+    )
 
     fun register() {
         Wearable.getCapabilityClient(context)
             .addListener(this, WearableHelper.CAPABILITY_PHONE_APP)
-
-        Wearable.getMessageClient(context)
-            .addListener(this)
     }
 
     fun unregister() {
         Wearable.getCapabilityClient(context)
             .removeListener(this, WearableHelper.CAPABILITY_PHONE_APP)
 
-        Wearable.getMessageClient(context)
-            .removeListener(this)
-
         scope.cancel()
-    }
-
-    override fun onMessageReceived(messageEvent: MessageEvent) {
-        Log.d(TAG, "message received - path: ${messageEvent.path}")
-
-        scope.launch {
-            when (messageEvent.path) {
-                SleepTimerHelper.SleepTimerStatusPath, SleepTimerHelper.SleepTimerStartPath -> {
-                    val data = JSONParser.deserializer(
-                        messageEvent.data.bytesToString(),
-                        TimerModel::class.java
-                    )
-
-                    data?.let {
-                        // Add a second for latency
-                        it.endTimeInMs = it.endTimeInMs + DateUtils.SECOND_IN_MILLIS
-                        timerModel.updateModel(it)
-                    } ?: return@launch
-
-                    // something
-                }
-
-                SleepTimerHelper.SleepTimerStopPath -> {
-                    timerModel.stopTimer()
-                }
-            }
-        }
     }
 
     override fun onCapabilityChanged(capabilityInfo: CapabilityInfo) {
         scope.launch {
             val connectedNodes = getConnectedNodes()
-            mPhoneNodeWithApp = pickBestNodeId(capabilityInfo.nodes)
-
-            if (mPhoneNodeWithApp == null) {
+            mPhoneNodeWithApp = WearableHelper.pickBestNodeId(capabilityInfo.nodes)
+            mPhoneNodeWithApp?.let { node ->
+                if (node.isNearby && connectedNodes.any { it.id == node.id }) {
+                    _connectionState.update { WearConnectionStatus.CONNECTED }
+                } else {
+                    try {
+                        sendPing(node.id)
+                        _connectionState.update { WearConnectionStatus.CONNECTED }
+                    } catch (e: ApiException) {
+                        if (e.statusCode == WearableStatusCodes.TARGET_NODE_NOT_CONNECTED) {
+                            _connectionState.update { WearConnectionStatus.DISCONNECTED }
+                        } else {
+                            Logger.writeLine(Log.ERROR, e)
+                        }
+                    }
+                }
+            } ?: run {
                 /*
                  * If a device is disconnected from the wear network, capable nodes are empty
                  *
@@ -99,24 +82,11 @@ class TimerTileMessenger(private val context: Context) :
                  *
                  * Verify if we're connected to any nodes; if not, we're truly disconnected
                  */
-                mConnectionStatus = if (connectedNodes.isEmpty()) {
-                    WearConnectionStatus.DISCONNECTED
-                } else {
-                    WearConnectionStatus.APPNOTINSTALLED
-                }
-            } else {
-                if (mPhoneNodeWithApp!!.isNearby && connectedNodes.any { it.id == mPhoneNodeWithApp!!.id }) {
-                    mConnectionStatus = WearConnectionStatus.CONNECTED
-                } else {
-                    try {
-                        sendPing(mPhoneNodeWithApp!!.id)
-                        mConnectionStatus = WearConnectionStatus.CONNECTED
-                    } catch (e: ApiException) {
-                        if (e.statusCode == WearableStatusCodes.TARGET_NODE_NOT_CONNECTED) {
-                            mConnectionStatus = WearConnectionStatus.DISCONNECTED
-                        } else {
-                            Log.e(TAG, "Error", e)
-                        }
+                _connectionState.update {
+                    if (connectedNodes.isEmpty()) {
+                        WearConnectionStatus.DISCONNECTED
+                    } else {
+                        WearConnectionStatus.APPNOTINSTALLED
                     }
                 }
             }
@@ -127,7 +97,22 @@ class TimerTileMessenger(private val context: Context) :
         val connectedNodes = getConnectedNodes()
         mPhoneNodeWithApp = checkIfPhoneHasApp()
 
-        if (mPhoneNodeWithApp == null) {
+        mPhoneNodeWithApp?.let { node ->
+            if (node.isNearby && connectedNodes.any { it.id == node.id }) {
+                _connectionState.update { WearConnectionStatus.CONNECTED }
+            } else {
+                try {
+                    sendPing(node.id)
+                    _connectionState.update { WearConnectionStatus.CONNECTED }
+                } catch (e: ApiException) {
+                    if (e.statusCode == WearableStatusCodes.TARGET_NODE_NOT_CONNECTED) {
+                        _connectionState.update { WearConnectionStatus.DISCONNECTED }
+                    } else {
+                        Logger.error(TAG, e)
+                    }
+                }
+            }
+        } ?: run {
             /*
              * If a device is disconnected from the wear network, capable nodes are empty
              *
@@ -136,24 +121,11 @@ class TimerTileMessenger(private val context: Context) :
              *
              * Verify if we're connected to any nodes; if not, we're truly disconnected
              */
-            mConnectionStatus = if (connectedNodes.isEmpty()) {
-                WearConnectionStatus.DISCONNECTED
-            } else {
-                WearConnectionStatus.APPNOTINSTALLED
-            }
-        } else {
-            if (mPhoneNodeWithApp!!.isNearby && connectedNodes.any { it.id == mPhoneNodeWithApp!!.id }) {
-                mConnectionStatus = WearConnectionStatus.CONNECTED
-            } else {
-                try {
-                    sendPing(mPhoneNodeWithApp!!.id)
-                    mConnectionStatus = WearConnectionStatus.CONNECTED
-                } catch (e: ApiException) {
-                    if (e.statusCode == WearableStatusCodes.TARGET_NODE_NOT_CONNECTED) {
-                        mConnectionStatus = WearConnectionStatus.DISCONNECTED
-                    } else {
-                        Log.e(TAG, "Error", e)
-                    }
+            _connectionState.update {
+                if (connectedNodes.isEmpty()) {
+                    WearConnectionStatus.DISCONNECTED
+                } else {
+                    WearConnectionStatus.APPNOTINSTALLED
                 }
             }
         }
@@ -171,7 +143,7 @@ class TimerTileMessenger(private val context: Context) :
                 .await()
             node = pickBestNodeId(capabilityInfo.nodes)
         } catch (e: Exception) {
-            Log.e(TAG, "Error", e)
+            Logger.error(TAG, e, "Error")
         }
 
         return node
@@ -184,55 +156,11 @@ class TimerTileMessenger(private val context: Context) :
         return mPhoneNodeWithApp != null
     }
 
-    suspend fun getRemoteTimerStatus(): RemoteTimerTileState =
-        suspendCancellableCoroutine { continuation ->
-            val listener = MessageClient.OnMessageReceivedListener { event ->
-                if (event.path == SleepTimerHelper.SleepTimerStartPath || event.path == SleepTimerHelper.SleepTimerStatusPath) {
-                    onMessageReceived(event)
-                    if (continuation.isActive) {
-                        continuation.resume(
-                            RemoteTimerTileState(
-                                isLocalTimer = false,
-                                connectionStatus = mConnectionStatus,
-                                timerModel = timerModel
-                            )
-                        )
-                        return@OnMessageReceivedListener
-                    }
-                }
-
-                if (continuation.isActive) {
-                    continuation.resume(
-                        RemoteTimerTileState(
-                            isLocalTimer = false,
-                            connectionStatus = mConnectionStatus,
-                            timerModel = timerModel
-                        )
-                    )
-                }
-            }
-
-            continuation.invokeOnCancellation {
-                Wearable.getMessageClient(context)
-                    .removeListener(listener)
-            }
-
-            scope.launch {
-                Wearable.getMessageClient(context)
-                    .addListener(listener)
-                    .await()
-
-                if (connect()) {
-                    sendMessage(mPhoneNodeWithApp!!.id, SleepTimerHelper.SleepTimerStatusPath, null)
-                }
-            }
+    suspend fun requestUpdate() {
+        if (connect()) {
+            sendMessage(mPhoneNodeWithApp!!.id, SleepTimerHelper.SleepTimerStatusPath, null)
         }
-
-    fun getRemoteTimerState(): RemoteTimerTileState = RemoteTimerTileState(
-        isLocalTimer = false,
-        connectionStatus = mConnectionStatus,
-        timerModel = timerModel
-    )
+    }
 
     suspend fun requestTimerStart(timerLengthInMins: Int): Boolean {
         return if (connect()) {
@@ -245,6 +173,12 @@ class TimerTileMessenger(private val context: Context) :
             }.getOrDefault(false)
         } else {
             false
+        }
+    }
+
+    suspend fun requestTimerStop() {
+        if (connect()) {
+            sendMessage(mPhoneNodeWithApp!!.id, SleepTimerHelper.SleepTimerStopPath, null)
         }
     }
 
@@ -271,7 +205,7 @@ class TimerTileMessenger(private val context: Context) :
                 .connectedNodes
                 .await()
         } catch (e: Exception) {
-            Log.e(TAG, "Error", e)
+            Logger.error(TAG, e, "Error")
         }
 
         return emptyList()
@@ -290,7 +224,7 @@ class TimerTileMessenger(private val context: Context) :
                 }
             }
 
-            Log.e(TAG, "Error", e)
+            Logger.error(TAG, e, "Error")
         }
     }
 
@@ -304,7 +238,7 @@ class TimerTileMessenger(private val context: Context) :
                 val apiException = e.cause as? ApiException ?: e as ApiException
                 throw apiException
             }
-            Log.e(TAG, "Error", e)
+            Logger.error(TAG, e, "Error")
         }
     }
 }

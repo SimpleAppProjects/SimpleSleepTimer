@@ -8,6 +8,7 @@ import android.graphics.drawable.Drawable
 import android.os.Build
 import android.util.Log
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.createBitmap
 import com.google.android.gms.wearable.Asset
 import com.google.android.gms.wearable.DataClient
 import kotlinx.coroutines.Dispatchers
@@ -38,12 +39,11 @@ object ImageUtils {
         }
 
         bitmap = if (drawable.intrinsicHeight <= 0 || drawable.intrinsicWidth <= 0) {
-            Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
+            createBitmap(1, 1)
         } else {
-            Bitmap.createBitmap(
-                Math.min(drawable.intrinsicWidth, maxWidth),
-                Math.min(drawable.intrinsicHeight, maxHeight),
-                Bitmap.Config.ARGB_8888
+            createBitmap(
+                drawable.intrinsicWidth.coerceAtMost(maxWidth),
+                drawable.intrinsicHeight.coerceAtMost(maxHeight)
             )
         }
 
@@ -67,6 +67,28 @@ object ImageUtils {
             Asset.createFromBytes(stream.toByteArray())
         }
     }
+
+    suspend fun Bitmap.toAsset() = withContext(Dispatchers.IO) {
+        val bmp = this@toAsset
+        return@withContext createAssetFromBitmap(bmp)
+    }
+
+    suspend fun Bitmap.toByteArray() = toByteArray(
+        format = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Bitmap.CompressFormat.WEBP_LOSSLESS
+        } else {
+            Bitmap.CompressFormat.WEBP
+        }
+    )
+
+    suspend fun Bitmap.toByteArray(format: Bitmap.CompressFormat, quality: Int = 100) =
+        withContext(Dispatchers.IO) {
+            val byteStream = ByteArrayOutputStream()
+            return@withContext byteStream.use { stream ->
+                compress(format, quality, stream)
+                stream.toByteArray()
+            }
+        }
 
     suspend fun bitmapFromAssetStream(client: DataClient, asset: Asset?): Bitmap? {
         return withContext(Dispatchers.IO) {
@@ -93,6 +115,23 @@ object ImageUtils {
                     Log.ERROR,
                     "ImageUtils",
                     "bitmapFromAssetStream: Failed to get asset"
+                )
+                return@withContext null
+            }
+        }
+    }
+
+    suspend fun ByteArray.toBitmap(): Bitmap? {
+        return withContext(Dispatchers.IO) {
+            try {
+                this@toBitmap.inputStream().use {
+                    BitmapFactory.decodeStream(it)
+                }
+            } catch (e: Exception) {
+                Log.println(
+                    Log.ERROR,
+                    "ImageUtils",
+                    "ByteArray.toBitmap: Error creating bitmap"
                 )
                 return@withContext null
             }
