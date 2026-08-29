@@ -1,10 +1,10 @@
 [versions]
-compileSdkVersion = "36"
+compileSdkVersion = "37"
 minSdkVersion = "24"
 targetSdkVersion = "36"
 
-gradleVersion = "8.13.2"
-kotlin_version = '2.1.20'
+gradleVersion = "9.3.2"
+kotlin_version = "2.3.21"
 kotlinx_version = "1.11.0"
 
 desugar_version = '2.1.5'
@@ -101,7 +101,7 @@ horologist-tiles = { module = "com.google.android.horologist:horologist-tiles", 
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx_version" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx_version" }
 kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "kotlinx_version" }
-kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin_version" }
+legacy-kapt-plugin = { module = "com.android.legacy-kapt:com.android.legacy-kapt.gradle.plugin", version.ref = "gradleVersion" }
 lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle_version" }
 lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle_version" }
 material = { module = "com.google.android.material:material", version.ref = "material_version" }

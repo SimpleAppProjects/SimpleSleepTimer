@@ -1,4 +1,6 @@
-apply plugin: 'com.android.library'
+plugins {
+    id 'com.android.library'
+}
 
 android {
     compileSdk = libs.versions.compileSdkVersion.get().toInteger()
@@ -17,6 +19,13 @@ android {
         }
     }
     namespace 'com.devadvance.circularseekbar'
+
+    lint {
+        targetSdk libs.versions.targetSdkVersion.get().toInteger()
+    }
+    testOptions {
+        targetSdk libs.versions.targetSdkVersion.get().toInteger()
+    }
 
 }
 
