@@ -285,6 +285,33 @@ class TimerViewModel(app: Application) : WearableListenerViewModel(app) {
                     _eventsFlow.tryEmit(WearableEvent(messageEvent.path))
                 }
 
+                SleepTimerHelper.SleepTimerPermDeniedPath -> {
+                    _eventsFlow.tryEmit(
+                        WearableEvent(
+                            ACTION_SHOWCONFIRMATION,
+                            Bundle().apply {
+                                putString(
+                                    EXTRA_EVENTDATA,
+                                    JSONParser.serializer(
+                                        ConfirmationData(
+                                            message = appContext.getString(R.string.error_permissiondenied),
+                                            confirmationType = ConfirmationType.Failure
+                                        ), ConfirmationData::class.java
+                                    )
+                                )
+                            }
+                        )
+                    )
+
+                    viewModelScope.launch {
+                        sendMessage(
+                            messageEvent.sourceNodeId,
+                            WearableHelper.StartPermissionsActivityPath,
+                            null
+                        )
+                    }
+                }
+
                 WearableHelper.OpenMusicPlayerPath -> {
                     val success = messageEvent.data.bytesToBool()
                     if (!success) {

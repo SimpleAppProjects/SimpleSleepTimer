@@ -49,72 +49,130 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <LinearLayout
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scrollView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
+        android:fillViewport="true"
+        android:scrollbars="vertical"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            style="@style/Permissions.Preference.Category.Expressive">
-
-            <TextView
-                android:id="@+id/settings_cat_title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                style="@style/Permissions.Preference.Category.Title.Expressive"
-                android:text="@string/cat_title_settings" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/bridge_timer_pref"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            style="@style/Permissions.Preference.Expressive"
-            android:background="@drawable/preference_round_background">
+            android:orientation="vertical">
 
             <LinearLayout
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_gravity="center_vertical"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                style="@style/Permissions.Preference.Category.Expressive">
 
                 <TextView
-                    android:id="@+id/bridge_timer_title"
-                    android:layout_width="wrap_content"
+                    android:id="@+id/settings_cat_title"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    style="@style/Permissions.Preference.Title.Expressive"
-                    android:text="@string/preference_title_timerbridge" />
-
-                <TextView
-                    android:id="@+id/bridge_timer_summary"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    style="@style/Permissions.Preference.Summary.Expressive"
-                    android:text="@string/preference_summary_timerbridge" />
+                    style="@style/Permissions.Preference.Category.Title.Expressive"
+                    android:text="@string/cat_title_settings" />
 
             </LinearLayout>
 
-            <com.google.android.material.materialswitch.MaterialSwitch
-                android:id="@+id/bridge_timer_toggle"
-                android:duplicateParentState="true"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:id="@+id/alarm_perm_pref"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingStart="0dp"
-                android:paddingEnd="16dp"
-                android:checked="true"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                app:thumbIcon="@drawable/m3_ic_check_24px" />
+                android:orientation="vertical"
+                style="@style/Permissions.Preference.Expressive"
+                android:tag="settings"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <TextView
+                    android:id="@+id/alarm_perm_pref_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/Permissions.Preference.Title.Expressive"
+                    android:text="@string/title_alarms_permission" />
+
+                <TextView
+                    android:id="@+id/alarm_perm_pref_summary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/Permissions.Preference.Summary.Expressive"
+                    android:text="@string/error_permissiondenied" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/notif_pref"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/Permissions.Preference.Expressive"
+                android:tag="settings"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <TextView
+                    android:id="@+id/notif_pref_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/Permissions.Preference.Title.Expressive"
+                    android:text="@string/permission_title_notifications" />
+
+                <TextView
+                    android:id="@+id/notif_pref_summary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/Permissions.Preference.Summary.Expressive"
+                    android:text="@string/permission_notifications_disabled" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/bridge_timer_pref"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                style="@style/Permissions.Preference.Expressive"
+                android:tag="settings">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_gravity="center_vertical"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/bridge_timer_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        style="@style/Permissions.Preference.Title.Expressive"
+                        android:text="@string/preference_title_timerbridge" />
+
+                    <TextView
+                        android:id="@+id/bridge_timer_summary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        style="@style/Permissions.Preference.Summary.Expressive"
+                        android:text="@string/preference_summary_timerbridge" />
+
+                </LinearLayout>
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/bridge_timer_toggle"
+                    android:duplicateParentState="true"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="0dp"
+                    android:paddingEnd="16dp"
+                    android:checked="true"
+                    app:thumbIcon="@drawable/m3_ic_check_24px" />
+
+            </LinearLayout>
 
         </LinearLayout>
 
-    </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

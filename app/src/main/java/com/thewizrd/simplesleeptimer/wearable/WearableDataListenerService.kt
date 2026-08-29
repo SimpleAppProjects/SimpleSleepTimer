@@ -1,6 +1,7 @@
 package com.thewizrd.simplesleeptimer.wearable
 
 import android.content.Intent
+import android.os.Build
 import androidx.core.util.Pair
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
@@ -58,8 +59,18 @@ class WearableDataListenerService : WearableListenerService() {
                 val activityName = pair?.second.toString()
                 mWearMgr.startMusicPlayer(messageEvent.sourceNodeId, pkgName, activityName)
             } else if (messageEvent.path == SleepTimerHelper.SleepTimerStartPath) {
-                val timeInMins = messageEvent.data.bytesToInt()
-                timeInMins?.let { startSleepTimer(it) }
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S || BaseTimerService.checkExactAlarmsPermission(
+                        ctx
+                    )
+                ) {
+                    val timeInMins = messageEvent.data.bytesToInt()
+                    timeInMins?.let { startSleepTimer(it) }
+                } else {
+                    mWearMgr.sendMessage(
+                        messageEvent.sourceNodeId, SleepTimerHelper.SleepTimerPermDeniedPath,
+                        null
+                    )
+                }
             } else if (messageEvent.path == SleepTimerHelper.SleepTimerStopPath) {
                 stopSleepTimer()
             } else if (messageEvent.path == SleepTimerHelper.SleepTimerStatusPath) {

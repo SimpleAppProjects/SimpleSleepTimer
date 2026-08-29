@@ -14,6 +14,7 @@ object SleepTimerHelper {
     const val SleepTimerStartPath = "/status/sleeptimer/start"
     const val SleepTimerStopPath = "/status/sleeptimer/stop"
     const val SleepTimerStatusPath = "/status/sleeptimer/status"
+    const val SleepTimerPermDeniedPath = "/status/sleeptimer/error/permDenied"
     const val SleepTimerAudioPlayerPath = "/sleeptimer/audioplayer"
     const val SleepTimerUpdateAudioPlayerPath = "/sleeptimer/audioplayer/update"
     const val SleepTimerUpdateStatePath = "/status/sleeptimer/update"
