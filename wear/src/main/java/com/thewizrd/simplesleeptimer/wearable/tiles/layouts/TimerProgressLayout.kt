@@ -32,6 +32,7 @@ import com.thewizrd.simplesleeptimer.wearable.tiles.TimerTileState
 import java.time.Duration
 import java.time.Instant
 import java.util.Locale
+import com.thewizrd.shared_resources.R as sharedRes
 
 
 fun TimerProgressLayout(
@@ -52,7 +53,7 @@ fun TimerProgressLayout(
         primaryLayout(
             titleSlot = if (deviceConfiguration.isLargeHeight()) {
                 {
-                    text(text = context.getString(R.string.title_sleeptimer).layoutString)
+                    text(text = context.getString(sharedRes.string.title_sleeptimer).layoutString)
                 }
             } else null,
             mainSlot = {
@@ -116,7 +117,7 @@ fun TimerProgressLayout(
                 textEdgeButton(
                     onClick = clickable(id = ID_STOP),
                     labelContent = {
-                        text(text = context.getString(R.string.label_stop).layoutString)
+                        text(text = context.getString(sharedRes.string.label_stop).layoutString)
                     }
                 )
             }

@@ -65,6 +65,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import java.time.Duration
 import java.time.Instant
+import kotlin.time.Duration.Companion.milliseconds
+import androidx.wear.compose.material3.R as wearM3Res
+import com.thewizrd.shared_resources.R as sharedRes
 
 @Composable
 fun SleepTimerApp(
@@ -126,7 +129,7 @@ fun SleepTimerApp(
             },
             title = {},
             text = {
-                Text(text = stringResource(id = R.string.message_wearappupdate_available))
+                Text(text = stringResource(id = sharedRes.string.message_wearappupdate_available))
             }
         ) {
             item {
@@ -135,7 +138,7 @@ fun SleepTimerApp(
             item {
                 Button(
                     label = {
-                        Text(text = stringResource(id = R.string.action_update))
+                        Text(text = stringResource(id = sharedRes.string.action_update))
                     },
                     onClick = {
                         runCatching {
@@ -177,20 +180,20 @@ fun SleepTimerApp(
                 Icon(
                     modifier = Modifier.size(36.dp),
                     painter = rememberAnimatedVectorPainter(
-                        animatedImageVector = AnimatedImageVector.animatedVectorResource(id = R.drawable.open_on_phone_animation),
+                        animatedImageVector = AnimatedImageVector.animatedVectorResource(id = wearM3Res.drawable.wear_m3c_open_on_phone_animation),
                         atEnd = startAnim
                     ),
                     contentDescription = null
                 )
 
                 LaunchedEffect(showAppUpdateConfirmation) {
-                    delay(250)
+                    delay(250.milliseconds)
                     startAnim = true
                 }
             },
             title = {},
             text = {
-                Text(text = stringResource(id = R.string.message_phoneappupdate_available))
+                Text(text = stringResource(id = sharedRes.string.message_phoneappupdate_available))
             },
             edgeButton = {
                 AlertDialogDefaults.EdgeButton(
@@ -285,7 +288,7 @@ fun SleepTimerApp(
                 ) {
                     // Check phone version
                     runCatching {
-                        val phoneVersionCode = withTimeoutOrNull(15000) {
+                        val phoneVersionCode = withTimeoutOrNull(15000.milliseconds) {
                             timerModel.requestPhoneAppVersion()
                         }
 

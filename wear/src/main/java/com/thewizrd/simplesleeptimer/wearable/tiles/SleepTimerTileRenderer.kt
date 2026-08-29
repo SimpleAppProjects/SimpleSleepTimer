@@ -18,6 +18,7 @@ import com.thewizrd.simplesleeptimer.wearable.tiles.layouts.StartTimerLayout
 import com.thewizrd.simplesleeptimer.wearable.tiles.layouts.TimerProgressLayout
 import com.thewizrd.simplesleeptimer.wearable.tiles.layouts.WearConnectionStatusLayout
 import com.thewizrd.simplesleeptimer.wearable.tiles.layouts.getTapAction
+import com.thewizrd.shared_resources.R as sharedRes
 
 @OptIn(ExperimentalHorologistApi::class)
 class SleepTimerTileRenderer(context: Context, debugResourceMode: Boolean = false) :
@@ -103,7 +104,7 @@ class SleepTimerTileRenderer(context: Context, debugResourceMode: Boolean = fals
         resourceIds: List<String>
     ) {
         val resources = mapOf(
-            ID_LOCAL_TIMER to R.drawable.ic_hourglass_empty,
+            ID_LOCAL_TIMER to sharedRes.drawable.ic_hourglass_empty,
             ID_REMOTE_TIMER to R.drawable.ic_baseline_settings_remote_24
         )
 

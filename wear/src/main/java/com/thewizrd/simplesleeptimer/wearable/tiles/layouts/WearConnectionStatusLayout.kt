@@ -23,6 +23,7 @@ import com.thewizrd.simplesleeptimer.ui.theme.wearTileColorScheme
 import com.thewizrd.simplesleeptimer.ui.tiles.tools.WearPreviewDevices
 import com.thewizrd.simplesleeptimer.wearable.tiles.RemoteTimerTileState
 import com.thewizrd.simplesleeptimer.wearable.tiles.SleepTimerTileRenderer
+import com.thewizrd.shared_resources.R as sharedRes
 
 
 internal fun WearConnectionStatusLayout(
@@ -32,7 +33,7 @@ internal fun WearConnectionStatusLayout(
 ) = materialScope(context, deviceParameters, defaultColorScheme = wearTileColorScheme) {
     primaryLayout(
         titleSlot = {
-            text(text = context.getString(R.string.title_sleeptimer).layoutString)
+            text(text = context.getString(sharedRes.string.title_sleeptimer).layoutString)
         },
         mainSlot = {
             textDataCard(

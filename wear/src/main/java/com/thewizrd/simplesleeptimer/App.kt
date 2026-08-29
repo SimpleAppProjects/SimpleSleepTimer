@@ -3,8 +3,10 @@ package com.thewizrd.simplesleeptimer
 import android.app.Activity
 import android.app.Application
 import android.content.SharedPreferences
+import android.os.Build
 import android.os.Bundle
 import android.os.StrictMode
+import android.os.StrictMode.VmPolicy
 import android.preference.PreferenceManager
 import com.thewizrd.shared_resources.ApplicationLib
 import com.thewizrd.shared_resources.SharedModule
@@ -44,19 +46,41 @@ class App : Application(), Application.ActivityLifecycleCallbacks {
 
         // Debugging
         if (BuildConfig.DEBUG) {
-            StrictMode.setThreadPolicy(
-                StrictMode.ThreadPolicy.Builder()
-                    .detectCustomSlowCalls()
-                    .penaltyLog()
-                    .build()
-            )
-            StrictMode.setVmPolicy(
-                StrictMode.VmPolicy.Builder()
-                    .detectActivityLeaks()
-                    .detectLeakedRegistrationObjects()
-                    .penaltyLog()
-                    .build()
-            )
+            val threadPolicy = StrictMode.ThreadPolicy.Builder()
+                .detectCustomSlowCalls()
+                .penaltyLog()
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                threadPolicy.detectResourceMismatches()
+            }
+
+            StrictMode.setThreadPolicy(threadPolicy.build())
+
+            val vmPolicy = VmPolicy.Builder()
+                .detectActivityLeaks()
+                .detectLeakedClosableObjects()
+                .detectLeakedRegistrationObjects()
+                .detectLeakedSqlLiteObjects()
+                .penaltyLog()
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                vmPolicy.detectCleartextNetwork()
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                vmPolicy.detectNonSdkApiUsage()
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                vmPolicy.detectIncorrectContextUse()
+                    .detectUnsafeIntentLaunch()
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+                vmPolicy.detectBlockedBackgroundActivityLaunch()
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN) {
+                vmPolicy.detectImplicitUriPermissionGrant()
+            }
+
+            StrictMode.setVmPolicy(vmPolicy.build())
         }
     }
 

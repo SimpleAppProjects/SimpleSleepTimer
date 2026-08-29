@@ -14,6 +14,8 @@ import com.thewizrd.shared_resources.viewmodels.MusicPlayerViewModel
 import com.thewizrd.simplesleeptimer.R
 import com.thewizrd.simplesleeptimer.databinding.MusicplayerItemBinding
 import com.thewizrd.simplesleeptimer.preferences.Settings
+import com.google.android.material.R as materialRes
+import com.thewizrd.shared_resources.R as sharedRes
 
 class PlayerListAdapter : ListAdapter<MusicPlayerViewModel, PlayerListAdapter.ViewHolder>(
     MusicPlayerItemDiffer()
@@ -36,11 +38,11 @@ class PlayerListAdapter : ListAdapter<MusicPlayerViewModel, PlayerListAdapter.Vi
 
         fun bindModel(viewModel: MusicPlayerViewModel) {
             if (viewModel.bitmapIcon == null) {
-                binding.playerIcon.setImageResource(R.drawable.ic_play_circle_filled)
+                binding.playerIcon.setImageResource(sharedRes.drawable.ic_play_circle_filled)
                 ImageViewCompat.setImageTintList(
                     binding.playerIcon,
                     ColorStateList.valueOf(
-                        itemView.context.getAttrColor(R.attr.colorOnBackground)
+                        itemView.context.getAttrColor(materialRes.attr.colorOnBackground)
                     )
                 )
             } else {

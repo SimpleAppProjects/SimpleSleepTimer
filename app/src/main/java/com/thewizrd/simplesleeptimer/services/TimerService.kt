@@ -20,6 +20,7 @@ import com.thewizrd.simplesleeptimer.R
 import com.thewizrd.simplesleeptimer.SleepTimerActivity
 import com.thewizrd.simplesleeptimer.preferences.Settings
 import com.thewizrd.simplesleeptimer.wearable.WearableManager
+import com.thewizrd.shared_resources.R as sharedRes
 
 class TimerService : BaseTimerService() {
     companion object {
@@ -44,11 +45,11 @@ class TimerService : BaseTimerService() {
         val remainingTime = model.remainingTimeInMs
 
         return NotificationCompat.Builder(this, NOT_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_hourglass_empty)
-            .setContentTitle(getString(R.string.title_sleeptimer)).apply {
+            .setSmallIcon(sharedRes.drawable.ic_hourglass_empty)
+            .setContentTitle(getString(sharedRes.string.title_sleeptimer)).apply {
                 // Don't set color for Android S+ devices (Material You)
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-                    color = ContextCompat.getColor(this@TimerService, R.color.colorPrimary)
+                    color = ContextCompat.getColor(this@TimerService, sharedRes.color.colorPrimary)
                 }
             }
             .setOngoing(true)
@@ -88,7 +89,7 @@ class TimerService : BaseTimerService() {
                     addAction(
                         0,
                         "+" + TimerStringFormatter.getNumberFormattedQuantityString(
-                            this@TimerService, R.plurals.minutes_short, 1
+                            this@TimerService, sharedRes.plurals.minutes_short, 1
                         ),
                         getExtend1MinPendingIntent()
                     )
@@ -97,7 +98,7 @@ class TimerService : BaseTimerService() {
                     addAction(
                         0,
                         "+" + TimerStringFormatter.getNumberFormattedQuantityString(
-                            this@TimerService, R.plurals.minutes_short, 5
+                            this@TimerService, sharedRes.plurals.minutes_short, 5
                         ),
                         getExtend5MinPendingIntent()
                     )

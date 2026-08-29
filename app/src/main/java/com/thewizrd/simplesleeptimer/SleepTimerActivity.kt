@@ -55,6 +55,7 @@ import com.thewizrd.simplesleeptimer.services.TimerService
 import com.thewizrd.simplesleeptimer.updates.InAppUpdateManager
 import com.thewizrd.simplesleeptimer.wearable.WearPermissionsActivity
 import kotlinx.coroutines.launch
+import com.thewizrd.shared_resources.R as sharedRes
 import com.thewizrd.simplesleeptimer.preferences.Settings as SleepTimerSettings
 
 class SleepTimerActivity : AppCompatActivity() {
@@ -163,7 +164,7 @@ class SleepTimerActivity : AppCompatActivity() {
                     ) {
                         Snackbar.make(
                             it,
-                            R.string.message_alarms_permission,
+                            sharedRes.string.message_alarms_permission,
                             Snackbar.LENGTH_INDEFINITE
                         ).apply {
                             setAction(R.string.cat_title_settings) {
@@ -185,7 +186,7 @@ class SleepTimerActivity : AppCompatActivity() {
                     ) {
                         Snackbar.make(
                             it,
-                            R.string.notification_permission_prompt,
+                            sharedRes.string.notification_permission_prompt,
                             Snackbar.LENGTH_INDEFINITE
                         ).apply {
                             setAction(R.string.cat_title_permissions) {
@@ -376,11 +377,13 @@ class SleepTimerActivity : AppCompatActivity() {
 
     private fun updateFab() {
         if (TimerDataModel.getDataModel().isRunning) {
-            binding.fab.setImageResource(R.drawable.ic_stop)
-            binding.fab.contentDescription = binding.fab.context.getString(R.string.label_stop)
+            binding.fab.setImageResource(sharedRes.drawable.ic_stop)
+            binding.fab.contentDescription =
+                binding.fab.context.getString(sharedRes.string.label_stop)
         } else {
-            binding.fab.setImageResource(R.drawable.ic_play_arrow)
-            binding.fab.contentDescription = binding.fab.context.getString(R.string.label_start)
+            binding.fab.setImageResource(sharedRes.drawable.ic_play_arrow)
+            binding.fab.contentDescription =
+                binding.fab.context.getString(sharedRes.string.label_start)
         }
     }
 

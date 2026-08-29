@@ -24,6 +24,7 @@ import com.thewizrd.simplesleeptimer.R
 import com.thewizrd.simplesleeptimer.SleepTimerLocalActivity
 import com.thewizrd.simplesleeptimer.preferences.Settings
 import com.thewizrd.simplesleeptimer.wearable.tiles.SleepTimerLocalTileService
+import com.thewizrd.shared_resources.R as sharedRes
 
 class TimerService : BaseTimerService() {
     companion object {
@@ -39,8 +40,8 @@ class TimerService : BaseTimerService() {
 
     override fun updateTimerNotification(model: TimerModel): Notification {
         val notifBuilder = NotificationCompat.Builder(this, NOT_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_hourglass_empty)
-            .setColor(ContextCompat.getColor(this, R.color.colorPrimary))
+            .setSmallIcon(sharedRes.drawable.ic_hourglass_empty)
+            .setColor(ContextCompat.getColor(this, sharedRes.color.colorPrimary))
             .setColorized(true)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
@@ -64,7 +65,7 @@ class TimerService : BaseTimerService() {
                     addAction(
                         0,
                         "+" + TimerStringFormatter.getNumberFormattedQuantityString(
-                            this@TimerService, R.plurals.minutes_short, 1
+                            this@TimerService, sharedRes.plurals.minutes_short, 1
                         ),
                         getExtend1MinPendingIntent()
                     )
@@ -73,7 +74,7 @@ class TimerService : BaseTimerService() {
                     addAction(
                         0,
                         "+" + TimerStringFormatter.getNumberFormattedQuantityString(
-                            this@TimerService, R.plurals.minutes_short, 5
+                            this@TimerService, sharedRes.plurals.minutes_short, 5
                         ),
                         getExtend5MinPendingIntent()
                     )
@@ -87,9 +88,9 @@ class TimerService : BaseTimerService() {
 
             val ongoingActivity =
                 OngoingActivity.Builder(applicationContext, NOTIFICATION_ID, notifBuilder)
-                    .setStaticIcon(R.drawable.ic_hourglass_empty)
-                    .setAnimatedIcon(R.drawable.avd_hourglass_rotate)
-                    .setTitle(getString(R.string.title_sleeptimer))
+                    .setStaticIcon(sharedRes.drawable.ic_hourglass_empty)
+                    .setAnimatedIcon(sharedRes.drawable.avd_hourglass_rotate)
+                    .setTitle(getString(sharedRes.string.title_sleeptimer))
                     .setStatus(ongoingActivityStatus)
                     .setLocusId(LocusIdCompat(LOCAL_TIMER_LOCUS_ID))
                     .build()
@@ -102,7 +103,7 @@ class TimerService : BaseTimerService() {
 
     private fun createTimerShortcut() {
         val shortcut = ShortcutInfoCompat.Builder(this, LOCAL_TIMER_LOCUS_ID)
-            .setShortLabel(getString(R.string.title_sleeptimer))
+            .setShortLabel(getString(sharedRes.string.title_sleeptimer))
             .setIcon(IconCompat.createWithResource(this, R.drawable.ic_hourglass_simpleblue))
             .setIntent(
                 Intent(this, getOnClickActivityClass())

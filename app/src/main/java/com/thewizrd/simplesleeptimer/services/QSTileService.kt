@@ -15,8 +15,8 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.thewizrd.shared_resources.services.BaseTimerService
 import com.thewizrd.shared_resources.sleeptimer.SleepTimerHelper
 import com.thewizrd.shared_resources.sleeptimer.TimerDataModel
-import com.thewizrd.simplesleeptimer.R
 import com.thewizrd.simplesleeptimer.SleepTimerActivity
+import com.thewizrd.shared_resources.R as sharedRes
 
 @RequiresApi(Build.VERSION_CODES.N)
 class QSTileService : TileService() {
@@ -97,12 +97,12 @@ class QSTileService : TileService() {
         if (model.isRunning) {
             tile.state = Tile.STATE_ACTIVE
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                tile.subtitle = getString(R.string.label_stop)
+                tile.subtitle = getString(sharedRes.string.label_stop)
             }
         } else {
             tile.state = Tile.STATE_INACTIVE
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                tile.subtitle = getString(R.string.label_start)
+                tile.subtitle = getString(sharedRes.string.label_start)
             }
         }
         tile.updateTile()

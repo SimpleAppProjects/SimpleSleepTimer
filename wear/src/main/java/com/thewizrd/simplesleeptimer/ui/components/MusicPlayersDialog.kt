@@ -44,6 +44,7 @@ import com.thewizrd.simplesleeptimer.ui.theme.findActivity
 import com.thewizrd.simplesleeptimer.viewmodels.MusicPlayersViewModel
 import com.thewizrd.simplesleeptimer.viewmodels.SelectedPlayerViewModel
 import kotlinx.coroutines.flow.collectLatest
+import com.thewizrd.shared_resources.R as sharedRes
 
 @Composable
 fun MusicPlayersDialog(
@@ -87,7 +88,7 @@ private fun MusicPlayersDialog(
                 ) {
                     Text(
                         modifier = Modifier.padding(4.dp),
-                        text = stringResource(id = R.string.error_nomusicplayers),
+                        text = stringResource(id = sharedRes.string.error_nomusicplayers),
                         textAlign = TextAlign.Center
                     )
                     CompactButton(
@@ -130,7 +131,7 @@ private fun MusicPlayersDialog(
                             transformation = SurfaceTransformation(transformationSpec)
                         ) {
                             Text(
-                                text = stringResource(id = R.string.select_player_pause_prompt),
+                                text = stringResource(id = sharedRes.string.select_player_pause_prompt),
                                 textAlign = TextAlign.Center
                             )
                         }

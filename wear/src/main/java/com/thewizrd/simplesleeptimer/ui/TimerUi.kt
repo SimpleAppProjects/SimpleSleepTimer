@@ -104,6 +104,7 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.math.ceil
 import kotlin.math.sign
+import com.thewizrd.shared_resources.R as sharedRes
 
 @Composable
 fun StartTimerScreen(
@@ -184,7 +185,7 @@ fun StartTimerScreen(
             },
             title = {},
             text = {
-                Text(text = stringResource(R.string.message_alarms_permission))
+                Text(text = stringResource(sharedRes.string.message_alarms_permission))
             },
             edgeButton = {
                 AlertDialogDefaults.EdgeButton(
@@ -316,7 +317,7 @@ private fun StartTimerScreen(
                             content = {
                                 Icon(
                                     imageVector = Icons.Rounded.MusicNote,
-                                    contentDescription = stringResource(id = R.string.title_audioplayer)
+                                    contentDescription = stringResource(id = sharedRes.string.title_audioplayer)
                                 )
                             }
                         )
@@ -329,7 +330,7 @@ private fun StartTimerScreen(
                         content = {
                             Icon(
                                 imageVector = Icons.Rounded.RestartAlt,
-                                contentDescription = stringResource(id = R.string.action_reset),
+                                contentDescription = stringResource(id = sharedRes.string.action_reset),
                             )
                         }
                     )
@@ -400,7 +401,7 @@ private fun StartTimerScreen(
                                     onTimerOperation(MINUS_5M)
                                 },
                                 content = {
-                                    Text(text = stringResource(id = R.string.label_btn_minus5min))
+                                    Text(text = stringResource(id = sharedRes.string.label_btn_minus5min))
                                 },
                                 colors = TextButtonDefaults.textButtonColors(
                                     contentColor = MaterialTheme.colorScheme.secondary
@@ -413,7 +414,7 @@ private fun StartTimerScreen(
                                 onTimerOperation(MINUS_1M)
                             },
                             content = {
-                                Text(text = stringResource(id = R.string.label_btn_minus1min))
+                                Text(text = stringResource(id = sharedRes.string.label_btn_minus1min))
                             },
                             colors = TextButtonDefaults.textButtonColors(
                                 contentColor = MaterialTheme.colorScheme.secondary
@@ -452,7 +453,7 @@ private fun StartTimerScreen(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Rounded.PlayArrow,
-                                        contentDescription = stringResource(id = R.string.label_start)
+                                        contentDescription = stringResource(id = sharedRes.string.label_start)
                                     )
                                 }
                             }
@@ -472,7 +473,7 @@ private fun StartTimerScreen(
                                     onTimerOperation(ADD_5M)
                                 },
                                 content = {
-                                    Text(text = stringResource(id = R.string.label_btn_plus5min))
+                                    Text(text = stringResource(id = sharedRes.string.label_btn_plus5min))
                                 },
                                 colors = TextButtonDefaults.textButtonColors(
                                     contentColor = MaterialTheme.colorScheme.secondary
@@ -485,7 +486,7 @@ private fun StartTimerScreen(
                                 onTimerOperation(ADD_1M)
                             },
                             content = {
-                                Text(text = stringResource(id = R.string.label_btn_plus1min))
+                                Text(text = stringResource(id = sharedRes.string.label_btn_plus1min))
                             },
                             colors = TextButtonDefaults.textButtonColors(
                                 contentColor = MaterialTheme.colorScheme.secondary
@@ -632,7 +633,7 @@ private fun TimerInProgressScreen(
                                 onTimerOperation(EXTEND_1M)
                             },
                             content = {
-                                Text(text = stringResource(id = R.string.label_btn_plus1min))
+                                Text(text = stringResource(id = sharedRes.string.label_btn_plus1min))
                             },
                             colors = TextButtonDefaults.textButtonColors(
                                 contentColor = MaterialTheme.colorScheme.secondary
@@ -646,7 +647,7 @@ private fun TimerInProgressScreen(
                                 onTimerOperation(EXTEND_5M)
                             },
                             content = {
-                                Text(text = stringResource(id = R.string.label_btn_plus5min))
+                                Text(text = stringResource(id = sharedRes.string.label_btn_plus5min))
                             },
                             colors = TextButtonDefaults.textButtonColors(
                                 contentColor = MaterialTheme.colorScheme.secondary
@@ -700,7 +701,7 @@ private fun TimerInProgressScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.Stop,
-                                contentDescription = stringResource(id = R.string.label_stop)
+                                contentDescription = stringResource(id = sharedRes.string.label_stop)
                             )
                         }
                     }
@@ -771,10 +772,10 @@ private fun durationToTimerStartString(context: Context, duration: Duration): St
     val minutes = duration.toMinutesPart()
 
     return if (hours > 0) {
-        context.getString(R.string.timer_progress_hours_minutes, hours, minutes)
+        context.getString(sharedRes.string.timer_progress_hours_minutes, hours, minutes)
     } else {
         TimerStringFormatter.getNumberFormattedQuantityString(
-            context, R.plurals.minutes_short, minutes
+            context, sharedRes.plurals.minutes_short, minutes
         )
     }
 }

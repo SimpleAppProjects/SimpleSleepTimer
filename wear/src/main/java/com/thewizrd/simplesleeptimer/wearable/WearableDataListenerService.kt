@@ -33,6 +33,7 @@ import com.thewizrd.simplesleeptimer.datastore.remoteTimerDataStore
 import com.thewizrd.simplesleeptimer.wearable.tiles.SleepTimerTileService
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import com.thewizrd.shared_resources.R as sharedRes
 
 class WearableDataListenerService : WearableListenerService() {
     companion object {
@@ -136,8 +137,8 @@ class WearableDataListenerService : WearableListenerService() {
         }
 
         val notifBuilder = NotificationCompat.Builder(this, NOT_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_hourglass_empty)
-            .setColor(ContextCompat.getColor(this, R.color.colorPrimary))
+            .setSmallIcon(sharedRes.drawable.ic_hourglass_empty)
+            .setColor(ContextCompat.getColor(this, sharedRes.color.colorPrimary))
             .setColorized(true)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
@@ -164,9 +165,9 @@ class WearableDataListenerService : WearableListenerService() {
                 applicationContext,
                 NOTIFICATION_ID, notifBuilder
             )
-                .setStaticIcon(R.drawable.ic_hourglass_empty)
-                .setAnimatedIcon(R.drawable.avd_hourglass_rotate)
-                .setTitle(getString(R.string.title_sleeptimer_remote))
+                .setStaticIcon(sharedRes.drawable.ic_hourglass_empty)
+                .setAnimatedIcon(sharedRes.drawable.avd_hourglass_rotate)
+                .setTitle(getString(sharedRes.string.title_sleeptimer_remote))
                 .setStatus(ongoingActivityStatus)
                 .setLocusId(LocusIdCompat(REMOTE_TIMER_LOCUS_ID))
                 .build()
@@ -188,7 +189,7 @@ class WearableDataListenerService : WearableListenerService() {
     @RequiresApi(Build.VERSION_CODES.O)
     private fun initTimerNotifChannel() {
         var channel = mNotificationManager.getNotificationChannel(NOT_CHANNEL_ID)
-        val notChannelName = getString(R.string.title_sleeptimer_remote)
+        val notChannelName = getString(sharedRes.string.title_sleeptimer_remote)
         if (channel == null) {
             channel = NotificationChannel(
                 NOT_CHANNEL_ID, notChannelName, NotificationManager.IMPORTANCE_DEFAULT
@@ -202,7 +203,7 @@ class WearableDataListenerService : WearableListenerService() {
 
     private fun createTimerShortcut() {
         val shortcut = ShortcutInfoCompat.Builder(this, REMOTE_TIMER_LOCUS_ID)
-            .setShortLabel(getString(R.string.title_sleeptimer_remote))
+            .setShortLabel(getString(sharedRes.string.title_sleeptimer_remote))
             .setIcon(IconCompat.createWithResource(this, R.drawable.ic_hourglass_simpleblue))
             .setIntent(
                 Intent(this, SleepTimerActivity::class.java)

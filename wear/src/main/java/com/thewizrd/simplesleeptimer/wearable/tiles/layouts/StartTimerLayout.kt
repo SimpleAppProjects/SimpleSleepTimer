@@ -29,6 +29,7 @@ import com.thewizrd.simplesleeptimer.wearable.tiles.SleepTimerTileRenderer
 import com.thewizrd.simplesleeptimer.wearable.tiles.TimerState
 import com.thewizrd.simplesleeptimer.wearable.tiles.TimerTileDuration
 import com.thewizrd.simplesleeptimer.wearable.tiles.TimerTileState
+import com.thewizrd.shared_resources.R as sharedRes
 
 fun StartTimerLayout(
     context: Context,
@@ -38,7 +39,7 @@ fun StartTimerLayout(
     materialScope(context, deviceParameters, defaultColorScheme = wearTileColorScheme) {
         primaryLayout(
             titleSlot = {
-                text(text = context.getString(R.string.title_sleeptimer).layoutString)
+                text(text = context.getString(sharedRes.string.title_sleeptimer).layoutString)
             },
             mainSlot = {
                 Column.Builder()

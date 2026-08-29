@@ -80,6 +80,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import com.google.android.gms.base.R as gmsBaseRes
 
 @Composable
 fun PhoneSyncUi(
@@ -315,7 +316,7 @@ private fun PhoneSyncUi(
                                 }
 
                                 WearConnectionStatus.APPNOTINSTALLED -> {
-                                    painterResource(id = R.drawable.common_full_open_on_phone)
+                                    painterResource(id = gmsBaseRes.drawable.common_full_open_on_phone)
                                 }
 
                                 null -> rememberVectorPainter(Icons.Rounded.Sync)

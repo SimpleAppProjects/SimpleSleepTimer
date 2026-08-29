@@ -19,9 +19,11 @@ import androidx.wear.compose.material3.FailureConfirmationDialog
 import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.material3.SuccessConfirmationDialog
 import androidx.wear.compose.material3.Text
-import com.thewizrd.simplesleeptimer.R
 import com.thewizrd.simplesleeptimer.viewmodels.ConfirmationData
 import com.thewizrd.simplesleeptimer.viewmodels.ConfirmationType
+import androidx.wear.compose.material3.R as wearM3Res
+import com.google.android.gms.base.R as gmsBaseRes
+import com.google.android.material.R as materialRes
 
 @Composable
 fun ConfirmationOverlay(
@@ -90,7 +92,7 @@ fun ConfirmationOverlay(
                 },
                 content = {
                     val image =
-                        AnimatedImageVector.animatedVectorResource(R.drawable.open_on_phone_animation)
+                        AnimatedImageVector.animatedVectorResource(wearM3Res.drawable.wear_m3c_open_on_phone_animation)
                     var atEnd by remember { mutableStateOf(false) }
 
                     Icon(
@@ -102,7 +104,7 @@ fun ConfirmationOverlay(
                             }
                         ),
                         painter = rememberAnimatedVectorPainter(image, atEnd),
-                        contentDescription = stringResource(R.string.common_open_on_phone)
+                        contentDescription = stringResource(gmsBaseRes.string.common_open_on_phone)
                     )
 
                     LaunchedEffect(Unit) {
@@ -166,7 +168,7 @@ fun ConfirmationOverlay(
                                 ConfirmationDialogDefaults.IconSize
                             }
                         ),
-                        painter = painterResource(R.drawable.m3_ic_check_24px),
+                        painter = painterResource(materialRes.drawable.m3_ic_check_24px),
                         contentDescription = null
                     )
                 }
