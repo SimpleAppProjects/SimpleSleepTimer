@@ -11,6 +11,8 @@ import android.text.format.DateUtils
 import android.view.KeyEvent
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationCompat.Metric.TimeDifference.FORMAT_CHRONOMETER
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.thewizrd.shared_resources.services.BaseTimerService
 import com.thewizrd.shared_resources.sleeptimer.TimerModel
@@ -62,25 +64,44 @@ class TimerService : BaseTimerService() {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .apply {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    val chronoBase = SystemClock.elapsedRealtime() + remainingTime
+                val notifMgr = NotificationManagerCompat.from(this@TimerService)
 
-                    val remoteViews =
-                        RemoteViews(packageName, R.layout.chronometer_notif_content)
-                    remoteViews.setChronometerCountDown(R.id.chronometer, true)
-                    remoteViews.setChronometer(
-                        R.id.chronometer,
-                        chronoBase,
-                        null,
-                        model.isRunning
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN && notifMgr.canPostPromotedNotifications()) {
+                    setStyle(
+                        NotificationCompat.MetricStyle()
+                            .addMetric(
+                                NotificationCompat.Metric(
+                                    NotificationCompat.Metric.TimeDifference.forTimer(
+                                        SystemClock.elapsedRealtime() + remainingTime,
+                                        FORMAT_CHRONOMETER
+                                    ),
+                                    getString(sharedRes.string.timer_remaining_multiple)
+                                )
+                            )
                     )
-                    setCustomContentView(remoteViews)
+                    setRequestPromotedOngoing(true)
                 } else {
-                    setContentText(
-                        TimerStringFormatter.formatTimeRemaining(
-                            this@TimerService, remainingTime
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        val chronoBase = SystemClock.elapsedRealtime() + remainingTime
+
+                        val remoteViews =
+                            RemoteViews(packageName, R.layout.chronometer_notif_content)
+                        remoteViews.setChronometerCountDown(R.id.chronometer, true)
+                        remoteViews.setChronometer(
+                            R.id.chronometer,
+                            chronoBase,
+                            null,
+                            model.isRunning
                         )
-                    )
+                        setCustomContentView(remoteViews)
+                    } else {
+                        setContentText(
+                            TimerStringFormatter.formatTimeRemaining(
+                                this@TimerService, remainingTime
+                            )
+                        )
+                    }
+                    setStyle(NotificationCompat.DecoratedCustomViewStyle())
                 }
 
                 val remainingMinsMs =
@@ -104,7 +125,6 @@ class TimerService : BaseTimerService() {
                     )
                 }
             }
-            .setStyle(NotificationCompat.DecoratedCustomViewStyle())
             .build()
     }
 

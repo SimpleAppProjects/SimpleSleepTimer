@@ -408,7 +408,7 @@ abstract class BaseTimerService : Service() {
         // Check if audio player preference exists
         pauseSelectedMediaPlayer()
 
-        // Send pause event to which ever player has audio focus
+        // Send pause event to whichever player has audio focus
         val audioMan = this.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         if (audioMan.isMusicActive) {
             val event = KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PAUSE)
